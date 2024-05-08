@@ -1,2 +1,5 @@
 # open_echo
-Open source echolot/depth sounder for bathymetry and research.
+Open source sonar/depth sounder for bathymetry and research.
+
+
+### Currently in development. Not ready for external use!
