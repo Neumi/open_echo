@@ -5,7 +5,7 @@ const int interruptPin = 2; // Using pin 2 (INT0)
 const int analogPin = A2;
 
 // Number of samples to take (adjust based on your requirements)
-const int numSamples = 100;
+const int numSamples = 300;
 
 volatile bool interruptFlag = false;
 volatile bool measureFlag = false;
