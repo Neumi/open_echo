@@ -1,5 +1,5 @@
 # open_echo
-An ongoing open-source project is about building an open-source sonar for bathymetry and research.
+An ongoing open-source project about building a sonar for bathymetry and research.
 
 ### Currently in development. Not ready for external use!
 
