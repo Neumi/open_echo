@@ -17,7 +17,7 @@ Relevant pins on the LUCKY fish finder:
 Measured results using LUCKY fishfinder, FastLOGIC (Arduino) and Matplotlib + Python:
 <img alt="LUCKY fishfinder pin hack" src="/reverse_engineering/images/echo_capture.jpg">
 
-The chart shows a measurement of reflection time (translated to cm using 1482m/s speed of sound in water) and the past 50 measurements. The LUCKY fish finder takes around 2.3 full measurements per second. The brigter the pixel, the stronger the return signal.
+The chart shows a measurement of reflection time (translated to cm using 1482m/s speed of sound in water) and the past 50 measurements. The LUCKY fish finder takes around 2.3 full measurements per second. The brigter the pixel, the stronger the return signal. The plot shows the sandy ground in the first 1/4 and the rest is the reflection of a metal ladder in the water (horizontal).
 
 
 # Video
