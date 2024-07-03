@@ -4,19 +4,20 @@ An ongoing open-source project is about building an open-source sonar for bathym
 ### Currently in development. Not ready for external use!
 
 # Current state
-- partially reverse engineered "LUCKY Fish Finder"
+- partially reverse-engineered "LUCKY Fish Finder"
 - get raw data from echo receiver/amplifier to FastLOGIC/Arduino
 - plot data in a waterfall chart using Matplotlib + Python
 - DIY transducer built and tested (works)
 
 The LUCKY fishfinder with a DIY transducer (or stock) RAW amplifier (echo) data can be read using an Arduino, and data can be displayed using Matplotlib + Python.
 
-Relevant pins on the LUCKY fishfinder:
+Relevant pins on the LUCKY fish finder:
 <img alt="LUCKY fishfinder pin hack" src="/reverse_engineering/images/fishfinder_pins.jpg">
 
 Measured results using LUCKY fishfinder, FastLOGIC (Arduino) and Matplotlib + Python:
 <img alt="LUCKY fishfinder pin hack" src="/reverse_engineering/images/echo_capture.jpg">
 
+The chart shows a measurement of reflection time (translated to cm using 1482m/s speed of sound in water) and the past 50 measurements. The LUCKY fish finder takes around 2.3 full measurements per second. The brigter the pixel, the stronger the return signal.
 
 
 # Video
