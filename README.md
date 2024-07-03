@@ -24,13 +24,18 @@ The chart shows a measurement of reflection time (translated to cm using 1482m/s
 [![LINK TO VIDEO](https://img.youtube.com/vi/UDYWQIizN7A/0.jpg)](https://www.youtube.com/watch?v=UDYWQIizN7A)
 
 # Useful Links
-https://i.sstatic.net/FSXvI.jpg
-https://tomeko.net/projects/dso138/index.php?lang=en
-https://github.com/ardyesp/DLO-138
-https://www.rapp-instruments.de/RemoteSensing/Roves/sidescan/sidescan.htm
+https://i.sstatic.net/FSXvI.jpg 
+ 
+https://tomeko.net/projects/dso138/index.php?lang=en 
+ 
+https://github.com/ardyesp/DLO-138 
+ 
+https://www.rapp-instruments.de/RemoteSensing/Roves/sidescan/sidescan.htm 
 
 # Shopping list
-Transducer: https://de.aliexpress.com/item/1005006777922084.html
-DSO138 Oscilloscope with STM32: https://de.aliexpress.com/item/1005006777922084.html
-Lucky Fishfinder: https://de.aliexpress.com/item/32711659077.html
+ Transducer: https://de.aliexpress.com/item/1005006777922084.html
+ 
+ DSO138 Oscilloscope with STM32: https://de.aliexpress.com/item/1005006777922084.html
+ 
+ Lucky Fishfinder: https://de.aliexpress.com/item/32711659077.html
 
