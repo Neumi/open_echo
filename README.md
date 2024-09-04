@@ -33,7 +33,7 @@ https://github.com/ardyesp/DLO-138
 https://www.rapp-instruments.de/RemoteSensing/Roves/sidescan/sidescan.htm 
 
 # Shopping list
- Transducer: https://de.aliexpress.com/item/1005006777922084.html
+ Transducer: https://de.aliexpress.com/item/1005006007865920.html
  
  DSO138 Oscilloscope with STM32: https://de.aliexpress.com/item/1005006777922084.html
  
