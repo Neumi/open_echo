@@ -26,7 +26,7 @@ sample_resolution = (speed_of_sound * sample_time * 100) / 2  # cm
 # Set up the plot
 plt.ion()
 fig, ax = plt.subplots()
-waterfall = ax.imshow(data, aspect='auto', cmap='viridis', interpolation='nearest', vmin=0, vmax=50)
+waterfall = ax.imshow(data, aspect='auto', cmap='viridis', interpolation='nearest', vmin=0, vmax=20)
 plt.colorbar(waterfall, ax=ax)
 
 # Initialize y-axis ticks and labels
