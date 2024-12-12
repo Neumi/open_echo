@@ -4938,16 +4938,6 @@
 	)
 	(wire
 		(pts
-			(xy 149.86 69.85) (xy 149.86 72.39)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "02af5889-051f-41c8-b94b-d4cdcdc92b9c")
-	)
-	(wire
-		(pts
 			(xy 102.87 72.39) (xy 71.12 72.39)
 		)
 		(stroke
@@ -5148,6 +5138,16 @@
 	)
 	(wire
 		(pts
+			(xy 140.97 69.85) (xy 149.86 69.85)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "4b273423-d775-4772-bd4c-dd7de099bfac")
+	)
+	(wire
+		(pts
 			(xy 229.87 46.99) (xy 229.87 52.07)
 		)
 		(stroke
@@ -5188,16 +5188,6 @@
 	)
 	(wire
 		(pts
-			(xy 149.86 72.39) (xy 151.13 72.39)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "58e6ceec-a9d8-4180-915f-4b1d40bf70e1")
-	)
-	(wire
-		(pts
 			(xy 147.32 67.31) (xy 147.32 72.39)
 		)
 		(stroke
@@ -5208,7 +5198,7 @@
 	)
 	(wire
 		(pts
-			(xy 151.13 67.31) (xy 147.32 67.31)
+			(xy 149.86 67.31) (xy 147.32 67.31)
 		)
 		(stroke
 			(width 0)
@@ -5365,16 +5355,6 @@
 			(type default)
 		)
 		(uuid "8d20e089-613a-44a5-b487-fef6e9024aa5")
-	)
-	(wire
-		(pts
-			(xy 140.97 69.85) (xy 149.86 69.85)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "90803199-61bd-4d7f-a7e5-4fc463a2aee1")
 	)
 	(wire
 		(pts
@@ -5585,16 +5565,6 @@
 			(type default)
 		)
 		(uuid "c1be7909-1cc9-4d31-8f6e-ebe93c637b4c")
-	)
-	(wire
-		(pts
-			(xy 151.13 69.85) (xy 151.13 67.31)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "c218b1d8-4684-4e33-91fd-e00621463e53")
 	)
 	(wire
 		(pts
@@ -6887,7 +6857,7 @@
 	)
 	(symbol
 		(lib_id "Connector:Conn_01x02_Pin")
-		(at 156.21 72.39 180)
+		(at 154.94 69.85 180)
 		(unit 1)
 		(exclude_from_sim yes)
 		(in_bom no)
@@ -6896,7 +6866,7 @@
 		(fields_autoplaced yes)
 		(uuid "0ad0e9ff-bd9f-4a86-bfb3-bee494f2e3fb")
 		(property "Reference" "J2"
-			(at 157.48 69.8499 0)
+			(at 156.21 67.3099 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6905,7 +6875,7 @@
 			)
 		)
 		(property "Value" "TRANSDUCER"
-			(at 157.48 72.3899 0)
+			(at 156.21 69.8499 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6914,7 +6884,7 @@
 			)
 		)
 		(property "Footprint" "TerminalBlock_4Ucon:TerminalBlock_4Ucon_1x02_P3.50mm_Horizontal"
-			(at 156.21 72.39 0)
+			(at 154.94 69.85 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6923,7 +6893,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 156.21 72.39 0)
+			(at 154.94 69.85 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6932,7 +6902,7 @@
 			)
 		)
 		(property "Description" "Generic connector, single row, 01x02, script generated"
-			(at 156.21 72.39 0)
+			(at 154.94 69.85 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9364,7 +9334,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0201_0603Metric"
+		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
 			(at 96.2152 116.84 0)
 			(effects
 				(font
