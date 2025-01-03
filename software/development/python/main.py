@@ -4,14 +4,14 @@ import numpy as np
 import time
 
 # Serial port configuration
-serial_port = '/dev/cu.usbserial-0001'  # Updated to the specified serial port
+serial_port = '/dev/tty.usbserial-130'  # Updated to the specified serial port
 baud_rate = 115200
 
 # Initialize serial connection
 ser = serial.Serial(serial_port, baud_rate)
 
 # Parameters for the waterfall chart
-num_samples = 300  # Number of samples per measurement sequence
+num_samples = 100  # Number of samples per measurement sequence
 max_cols = 50  # Number of columns to display in the waterfall chart
 
 # Data storage
@@ -19,14 +19,14 @@ data = np.zeros((num_samples, max_cols))
 times = np.zeros(max_cols)
 
 # Speed of sound in water and sample resolution
-speed_of_sound = 1482  # meters per second
+speed_of_sound = 330  # meters per second
 sample_time = 112e-6  # 112 microseconds in seconds
 sample_resolution = (speed_of_sound * sample_time * 100) / 2  # cm
 
 # Set up the plot
 plt.ion()
 fig, ax = plt.subplots()
-waterfall = ax.imshow(data, aspect='auto', cmap='viridis', interpolation='nearest', vmin=0, vmax=20)
+waterfall = ax.imshow(data, aspect='auto', cmap='viridis', interpolation='nearest', vmin=0, vmax=512)
 plt.colorbar(waterfall, ax=ax)
 
 # Initialize y-axis ticks and labels
