@@ -1,17 +1,18 @@
+
 import serial
 import matplotlib.pyplot as plt
 import numpy as np
 import time
 
 # Serial port configuration
-serial_port = '/dev/tty.usbserial-130'  # Updated to the specified serial port
+serial_port = '/dev/tty.usbserial-110'  # Updated to the specified serial port
 baud_rate = 115200
 
 # Initialize serial connection
 ser = serial.Serial(serial_port, baud_rate)
 
 # Parameters for the waterfall chart
-num_samples = 100  # Number of samples per measurement sequence
+num_samples = 50 # Number of samples per measurement sequence
 max_cols = 50  # Number of columns to display in the waterfall chart
 
 # Data storage
@@ -19,21 +20,26 @@ data = np.zeros((num_samples, max_cols))
 times = np.zeros(max_cols)
 
 # Speed of sound in water and sample resolution
-speed_of_sound = 330  # meters per second
+speed_of_sound = 1400  # meters per second
 sample_time = 112e-6  # 112 microseconds in seconds
 sample_resolution = (speed_of_sound * sample_time * 100) / 2  # cm
 
 # Set up the plot
 plt.ion()
 fig, ax = plt.subplots()
-waterfall = ax.imshow(data, aspect='auto', cmap='viridis', interpolation='nearest', vmin=0, vmax=512)
+waterfall = ax.imshow(data, aspect='auto', cmap='viridis', interpolation='nearest', vmin=0, vmax=350)
 plt.colorbar(waterfall, ax=ax)
 
 # Initialize y-axis ticks and labels
 ax.invert_yaxis()
-ax.set_yticks(np.arange(num_samples)[::-100])  # Adjust y-ticks
-ax.set_yticklabels([f'{dist:.2f}' for dist in np.arange(num_samples)[::-100] * sample_resolution])
 ax.set_ylabel('Distance (cm)')
+
+tick_step = 10  # Set the step for the y-axis ticks
+ax.set_yticks(np.arange(0, num_samples, tick_step)[::-1])  # Create more ticks
+ax.set_yticklabels([f'{dist:.2f}' for dist in np.arange(0, num_samples, tick_step)[::-1] * sample_resolution])
+
+ax.grid(axis='y', linestyle='--', color='gray', linewidth=0.5)
+
 
 # Initialize x-axis labels
 ax.set_xticks(np.linspace(0, max_cols - 1, num=10))
@@ -88,3 +94,7 @@ while True:
 
 # Close serial connection
 ser.close()
+
+
+
+
