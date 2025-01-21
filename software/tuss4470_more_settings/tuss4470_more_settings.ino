@@ -10,7 +10,7 @@ const int analogIn = A0;
 byte misoBuf[2];  // SPI receive buffer
 byte inByteArr[2];  // SPI transmit buffer
 
-const int numSamples = 100; // sample size (one sample is about 112 microseconds long) (has to be equal to python visualization sample size)
+const int numSamples = 450; // sample size (one sample is about 112 microseconds long) (has to be equal to python visualization sample size)
 int analogValues[numSamples];
 
 volatile int pulseCount = 0;
@@ -95,7 +95,7 @@ byte parity16(unsigned int val) {
 void setup()
 {
 
-  Serial.begin(115200);
+  Serial.begin(1000000);
 
   SPI.begin();
   SPI.setBitOrder(MSBFIRST);
@@ -119,6 +119,16 @@ void setup()
   
   tuss4470Write(0x16, 0xF);  // Enable VDRV (not Hi-Z)
   tuss4470Write(0x1A, 0x08);  // Set burst pulses to 8
+
+
+  // Set up ADC
+  ADCSRA = (1 << ADEN)  |  // Enable ADC
+           (1 << ADPS2);   // Set prescaler to 16 (16 MHz / 16 = 1 MHz ADC clock)
+  ADMUX = (1 << REFS0);    // Reference voltage: AVcc
+                           // Input channel: ADC0 (default)
+  ADCSRB = 0;              // Free-running mode
+  ADCSRA |= (1 << ADATE);  // Enable auto-trigger (free-running)
+  ADCSRA |= (1 << ADSC);   // Start conversion
 }
 
 void loop()
@@ -128,14 +138,19 @@ void loop()
 
   startTransducerBurst();
 
-  // Read analog values
+  // Read analog values from A0
+  //int startTime = micros();
   for (int i = 0; i < numSamples; i++) {
-    analogValues[i] = analogRead(analogIn);
+    while (!(ADCSRA & (1 << ADIF))); // Wait for conversion to complete
+    ADCSRA |= (1 << ADIF);           // Clear the interrupt flag
+    analogValues[i] = ADC;           // Read ADC value
   }
-
+  //int runTime = micros() - startTime;
+  
   // Stop time-of-flight measurement
   tuss4470Write(0x1B, 0x00);
-
+  //Serial.println(runTime);
+  
   // Print sampled values
   Serial.print("sp");
   for (int i = 0; i < numSamples; i++) {
@@ -145,6 +160,7 @@ void loop()
     }
   }
   Serial.println();
+  
 
   delay(100);
 }
