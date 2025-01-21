@@ -2,6 +2,8 @@
 
 The TUSS4470 Arduino Shield is a board to test the TUSS4470 capabilities using the Arduino UNO platform.
 
+The TUSS4470 is an ultrasonic driver and receiver IC that makes is easy to use ultrasonic transducers with Arduino.
+
 This lets you get started quickly and test software on the Arduino to drive the TUSS4470.
 
 It is designed to be easily ordered at JLCPCB or other board houses.
