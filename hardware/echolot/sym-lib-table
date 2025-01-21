@@ -1,5 +1,0 @@
-(sym_lib_table
-  (version 7)
-  (lib (name "TM1637")(type "KiCad")(uri "${KIPRJMOD}/components/TM1637/TM1637.kicad_sym")(options "")(descr ""))
-  (lib (name "CD4060")(type "KiCad")(uri "${KIPRJMOD}/components/CD4060BMT/CD4060BMT.kicad_sym")(options "")(descr ""))
-)
