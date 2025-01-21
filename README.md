@@ -19,7 +19,7 @@ The LUCKY fishfinder with a DIY transducer (or stock) RAW amplifier (echo) data 
 The LUCKY fishfinder hack is pretty much obsolte and replaced by the TUSS4470 board. If you want to play with custom sonar, use this!
 --------
 # TUSS4470 Ultrasonic Transducer Driver Arduino Board
-This board is an Arduino (Uno) compatible board to test the Texas Instruments TUSS4470 Ultrasonic driver IC. The provided example codes let you drive a 40kHz transducer, apply noise filtering, and send the echo via Serial to the Python backend. You can change the code to your needs (i.e. to use other frequencies, sample sizes, speed etc.). The Arduinos clock speed and RAM size limits the sampling speed to a resolution of approx 2cm in air and 8cm under water and to approx. 500 Samples. An Arduino MEGA might solve this issue.
+This [PCB-board](hardware/TUSS4470_shield) is an Arduino (Uno) compatible board to test the Texas Instruments TUSS4470 Ultrasonic driver IC. The provided example [code](software/tuss4470_test/tuss4470_test.ino) lets you drive a 40kHz transducer, apply noise filtering, and send the echo via Serial to the [Python backend](software/development/python/main.py). You can change the code to your needs (i.e. to use other frequencies, sample sizes, speed etc.). The Arduino UNOs clock speed and RAM size limits the sampling speed to a resolution of ca. 2cm in air and 8cm under water and to ca. 500 Samples. An Arduino MEGA should solve this issue.
 
 TUSS4470 Arduino Shield:
 <img alt="PCB overview TUSS4470" src="/hardware/TUSS4470_shield/images/assembly2.jpg">
