@@ -3,7 +3,7 @@ An ongoing open-source project about building a sonar for bathymetry and researc
 
 The TUSS4470 Arduino PCB can be used to test different frequencies and transducer types. The Python script lets you see the echoes in a waterfall chart.
 
-### Currently in development. Almost ready for external use!
+### Currently in development. TUSS4470 development shield ready for external use!
 
 # Current state
 - partially reverse-engineered "LUCKY Fish Finder"
@@ -12,11 +12,16 @@ The TUSS4470 Arduino PCB can be used to test different frequencies and transduce
 - DIY transducer built and tested (works)
 - TUSS4470 board built and tested (works)
 - TUSS4470 Arduino code example done
+- TUSS4470 hardware changed to support transformers to drive higher voltage piezos (like 200kHz for underwater)
+- underwater tests successful! (only tested up to 3m range)
 
-The LUCKY fishfinder with a DIY transducer (or stock) RAW amplifier (echo) data can be read using an Arduino, and data can be displayed using Matplotlib + Python. The new (January 2025) TUSS4470 board is now able to use transducers (40kHz and 200kHz tested), drive them, receive echos, filter the signal and send the RAW echo data to the (same) Python backend.
+The LUCKY fishfinder with a DIY transducer (or stock) RAW amplifier (echo) data can be read using an Arduino, and data can be displayed using Matplotlib + Python. 
+
+The new (January 2025) [TUSS4470 board](TUSS4470_shield_001/) is now able to use transducers (40kHz and 200kHz tested), drive them, receive echos, filter the signal and send the RAW echo data to the (same) Python backend. For good results, use a high input voltage like 25V DC on the XT30 connector.
   
   
-The LUCKY fishfinder hack is pretty much obsolte and replaced by the TUSS4470 board. If you want to play with custom sonar, use this!
+The [LUCKY fishfinder hack](reverse_engineering/) is pretty much obsolte and replaced by the TUSS4470 board. If you want to play with custom sonar, use this!
+
 --------
 # TUSS4470 Ultrasonic Transducer Driver Arduino Board
 This [PCB-board](TUSS4470_shield_001/TUSS4470_shield_hardware) is an Arduino (Uno) compatible board to test the Texas Instruments TUSS4470 Ultrasonic driver IC. The provided example [Arduino UNO code](TUSS4470_shield_001/TUSS4470_arduino/TUSS4470_shield.ino) lets you drive a 40kHz transducer, apply noise filtering, and send the echo via Serial to the [Python backend](TUSS4470_shield_001/live_waterfall_python/live_waterfall.py). You can change the code to your needs (i.e. to use other frequencies, sample sizes, speed etc.). The Arduino UNOs clock speed and RAM size limits the sampling speed to a resolution of ca. 2cm in air and 8cm under water and to ca. 500 Samples. An Arduino MEGA should solve this issue.
@@ -37,39 +42,47 @@ After initial setup, a burst of 8 pulses in drive frequency is sent to the TUSS4
 
 <img alt="PCB overview TUSS4470" src="/TUSS4470_shield_001/TUSS4470_shield_hardware/images/echos.jpg">
 
---------
-# LUCKY Fishfinder Hack
-Relevant pins on the LUCKY fish finder:
-<img alt="LUCKY fishfinder pin hack" src="/reverse_engineering/images/fishfinder_pins.JPG">
-
-Measured results using LUCKY fishfinder, FastLOGIC (Arduino) and Matplotlib + Python:
-<img alt="LUCKY fishfinder pin hack" src="/reverse_engineering/images/echo_capture.jpg">
-
-The chart shows a measurement of reflection time (translated to cm using 1482m/s speed of sound in water) and the past 50 measurements. The LUCKY fish finder takes around 2.3 full measurements per second. The brigter the pixel, the stronger the return signal. The plot shows the sandy ground in the first 1/4 and the rest is the reflection of a metal ladder in the water (horizontal).
 
 
-# Video
-[![LINK TO VIDEO](https://img.youtube.com/vi/UDYWQIizN7A/0.jpg)](https://www.youtube.com/watch?v=UDYWQIizN7A)
+# Videos
+[![LINK TO VIDEO 1](https://img.youtube.com/vi/eJ8jVEQSx_Y/0.jpg)](https://www.youtube.com/watch?v=eJ8jVEQSx_Y)
+
+[![LINK TO VIDEO 2](https://img.youtube.com/vi/Bxh3rWd5RZk/0.jpg)](https://www.youtube.com/watch?v=Bxh3rWd5RZk)
+
+[![LINK TO VIDEO 3](https://img.youtube.com/vi/UDYWQIizN7A/0.jpg)](https://www.youtube.com/watch?v=UDYWQIizN7A)
 
 # Useful Links
-https://i.sstatic.net/FSXvI.jpg 
- 
-https://tomeko.net/projects/dso138/index.php?lang=en 
- 
-https://github.com/ardyesp/DLO-138 
- 
 https://www.rapp-instruments.de/RemoteSensing/Roves/sidescan/sidescan.htm 
 
 https://www.youtube.com/watch?v=ZtUkt8Q4EJE
 
 # Shopping list
- Transducer: https://de.aliexpress.com/item/1005006007865920.html
+ Transducers: 
  
- DSO138 Oscilloscope with STM32: https://de.aliexpress.com/item/1005006777922084.html
+ https://de.aliexpress.com/item/1005006007865920.html
  
- Lucky Fishfinder: https://de.aliexpress.com/item/32711659077.html
+ https://de.aliexpress.com/item/1005007032482539.html
+ 
+ https://de.aliexpress.com/item/1005006299774405.html
+ 
+ https://de.aliexpress.com/item/4000389134890.html
+ 
+ https://de.aliexpress.com/item/1005006546490802.html
+
+ Transformers to step up transducer voltage:
+ 
+ https://de.aliexpress.com/item/1005003733606845.html
+
+ Matching capacitors:
+ 
+ https://de.aliexpress.com/item/1005007159862392.html
+ 
+ Lucky Fishfinder: 
+ 
+ https://de.aliexpress.com/item/32711659077.html
 
 
- # THANK YOU FOR SUPPORT!
+ # Big thanks for your support!
  www.kogger.tech
+
 
