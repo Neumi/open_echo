@@ -40,7 +40,7 @@ After initial setup, a burst of 8 pulses in drive frequency is sent to the TUSS4
 --------
 # LUCKY Fishfinder Hack
 Relevant pins on the LUCKY fish finder:
-<img alt="LUCKY fishfinder pin hack" src="/reverse_engineering/images/fishfinder_pins.jpeg">
+<img alt="LUCKY fishfinder pin hack" src="/reverse_engineering/images/fishfinder_pins.JPG">
 
 Measured results using LUCKY fishfinder, FastLOGIC (Arduino) and Matplotlib + Python:
 <img alt="LUCKY fishfinder pin hack" src="/reverse_engineering/images/echo_capture.jpg">
