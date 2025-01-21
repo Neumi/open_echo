@@ -22,11 +22,11 @@ The LUCKY fishfinder hack is pretty much obsolte and replaced by the TUSS4470 bo
 This [PCB-board](hardware/TUSS4470_shield) is an Arduino (Uno) compatible board to test the Texas Instruments TUSS4470 Ultrasonic driver IC. The provided example [code](software/tuss4470_test/tuss4470_test.ino) lets you drive a 40kHz transducer, apply noise filtering, and send the echo via Serial to the [Python backend](software/development/python/main.py). You can change the code to your needs (i.e. to use other frequencies, sample sizes, speed etc.). The Arduino UNOs clock speed and RAM size limits the sampling speed to a resolution of ca. 2cm in air and 8cm under water and to ca. 500 Samples. An Arduino MEGA should solve this issue.
 
 TUSS4470 Arduino Shield:
-<img alt="PCB overview TUSS4470" src="/hardware/TUSS4470_shield/images/assembly2.jpg">
+<img alt="PCB overview TUSS4470" src="/TUSS4470_shield_001/TUSS4470_shield_hardware/images/assembly2.jpg">
 
-<img alt="PCB overview TUSS4470" src="/hardware/TUSS4470_shield/images/top.jpg">
+<img alt="PCB overview TUSS4470" src="/TUSS4470_shield_001/TUSS4470_shield_hardware/images/top.jpg">
 
-<img alt="PCB overview TUSS4470" src="/hardware/TUSS4470_shield/images/whole_setup.jpg">
+<img alt="PCB overview TUSS4470" src="/TUSS4470_shield_001/TUSS4470_shield_hardware/images/whole_setup.jpg">
 
 
 
@@ -35,12 +35,12 @@ The TUSS4470 works as follows:
 After initial setup, a burst of 8 pulses in drive frequency is sent to the TUSS4470 by the Arduino on PIN9. The TUSS4470 sends this pulse to the transducer then waits. The Transducer sends this pulse out as a short pulse of sound. Echos reflected by obstacles bounce back to the transducer and excite a voltage in it. The TUSS4470 measures that voltage, filters it, amplifies it and sends it to the A0 pin of the Arduino. By reading this amplified voltage, an (or multiple) obstacles can be detected. The Python script plots this data in a waterfall diagram.
 
 
-<img alt="PCB overview TUSS4470" src="/hardware/TUSS4470_shield/images/echos.jpg">
+<img alt="PCB overview TUSS4470" src="/TUSS4470_shield_001/TUSS4470_shield_hardware/images/echos.jpg">
 
 --------
 # LUCKY Fishfinder Hack
 Relevant pins on the LUCKY fish finder:
-<img alt="LUCKY fishfinder pin hack" src="/reverse_engineering/images/fishfinder_pins.jpg">
+<img alt="LUCKY fishfinder pin hack" src="/reverse_engineering/images/fishfinder_pins.jpeg">
 
 Measured results using LUCKY fishfinder, FastLOGIC (Arduino) and Matplotlib + Python:
 <img alt="LUCKY fishfinder pin hack" src="/reverse_engineering/images/echo_capture.jpg">
