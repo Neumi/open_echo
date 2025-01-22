@@ -26,7 +26,7 @@ The [LUCKY fishfinder hack](reverse_engineering/) is pretty much obsolte and rep
 
 --------
 # TUSS4470 Ultrasonic Transducer Driver Arduino Board
-This [PCB-board](TUSS4470_shield_001/TUSS4470_shield_hardware) is an Arduino (Uno) compatible board to test the Texas Instruments TUSS4470 Ultrasonic driver IC. The provided example [Arduino UNO code](TUSS4470_shield_001/TUSS4470_arduino/TUSS4470_shield.ino) lets you drive a 40kHz transducer, apply noise filtering, and send the echo via Serial to the [Python backend](TUSS4470_shield_001/live_waterfall_python/live_waterfall.py). You can change the code to your needs (i.e. to use other frequencies, sample sizes, speed etc.). The Arduino UNOs clock speed and RAM size limits the sampling speed to a resolution of ca. 2cm in air and 8cm under water and to ca. 500 Samples. An Arduino MEGA should solve this issue.
+This [PCB-board](TUSS4470_shield_001/TUSS4470_shield_hardware) is an Arduino (Uno) compatible board to test the Texas Instruments TUSS4470 Ultrasonic driver IC. The provided example [Arduino UNO code](TUSS4470_shield_001/TUSS4470_arduino/TUSS4470_shield.ino) lets you drive a 40kHz transducer, apply noise filtering, and send the echo via Serial to the [Python backend](TUSS4470_shield_001/live_waterfall_python/live_waterfall.py). You can change the code to your needs (i.e. to use other frequencies, sample sizes, speed etc.). The Arduino UNO clock speed and RAM size limit the sampling speed to a resolution of ca. 1-2cm in air and 4cm (ca. 13uS/sample) under water and to ca. 850 Samples. An Arduino MEGA should solve this issue partially.
 
 TUSS4470 Arduino Shield:
 <img alt="PCB overview TUSS4470" src="/TUSS4470_shield_001/TUSS4470_shield_hardware/images/assembly2.jpg">
