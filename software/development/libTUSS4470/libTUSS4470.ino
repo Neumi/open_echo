@@ -1,5 +1,6 @@
 #define PLATFORM_ARDUINO
 #include "tuss4470.h"
+#include "tuss4470_arduino.h"
 #include <SPI.h>
 
 
@@ -23,39 +24,19 @@ int spiTransfer(uint8_t mode, uint8_t *data, uint8_t size) {
 void setup() {
   Serial.begin(115200);
 
-  SPI.begin();
-  SPI.setBitOrder(MSBFIRST);
-  SPI.setClockDivider(SPI_CLOCK_DIV16);
-  SPI.setDataMode(SPI_MODE1);  // CPOL=0, CPHA=1
-
-
-  pinMode(SPI_CS, OUTPUT);
-  digitalWrite(SPI_CS, HIGH);
-
-    // Configure GPIOs
-  pinMode(IO1, OUTPUT);
-  digitalWrite(IO1, HIGH);
-  pinMode(IO2, OUTPUT);
-  pinMode(O3, INPUT);
-  pinMode(O4, INPUT);
-
-  Serial.println("Initialize TUSS lib");
-  tuss4470_t tuss4470;
-  int err = tuss4470_t_init(&spiTransfer, &tuss4470);
+  TUSS4470 tuss;
+  int err = tuss.begin();
   if (err)
   {
-    Serial.println("Failed to init TUSS lib");
+      Serial.println("Error init tuss");
+      return;
   }
-  
-  tuss4470_config_t config;
-  err = tuss4470_read_config(&tuss4470, tuss4470.config);
+  err = tuss.readConfig();
   if (err) {
-    Serial.println("Failed to read config");
-    return;
+    Serial.println("Error reading config");
   }
-
   Serial.println("TUSS4470 Configuration:");
-  uint8_t *cfg_data = (uint8_t *)tuss4470.config;
+  uint8_t *cfg_data = (uint8_t *)tuss.getConfig();
   for (int i = 0; i < sizeof(tuss4470_config_t); ++i) {
     Serial.print("Register 0x");
     Serial.print(tuss4470_register_map[i], HEX);

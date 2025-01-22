@@ -47,10 +47,11 @@ int tuss4470_t_init(tuss4470_spi_transfer_fptr spiTransfer_fptr, tuss4470_t *tus
     if (tuss4470->config == NULL) {
         return 1;
     }
+    tuss4470->ctx = NULL;
     return 0;
 }
 
-int tuu4470_t_free(tuss4470_t *tuss4470) {
+int tuss4470_t_free(tuss4470_t *tuss4470) {
     free(tuss4470->config);
     return 0;
 }
@@ -68,6 +69,17 @@ int tuss4470_read_config(tuss4470_t *tuss4470, tuss4470_config_t *config) {
     return 0;
 }
 
+int tuss4470_write_config(tuss4470_t *tuss4470, tuss4470_config_t *config) {
+    uint8_t *cfg_data = (uint8_t *)config;
+    int err = 0;
+    for (size_t i = 0; i < sizeof(tuss4470_config_t); i++)
+    {
+        err = tuss4470_write_register(tuss4470, (tuss4470_register_map_t) (tuss4470_register_map[i]), cfg_data[i]);
+        if (err) return err;
+    }
+    return 0;
+}
+
 int tuss4470_read_register(tuss4470_t *tuss4470, tuss4470_register_map_t reg, uint8_t *data) {
     if (tuss4470->spiTransfer_fptr == NULL) {
         return 1;
@@ -79,7 +91,7 @@ int tuss4470_read_register(tuss4470_t *tuss4470, tuss4470_register_map_t reg, ui
     tx_data[1] = 0;
     tx_data[0] |= parity(tx_data);
 
-    int err = tuss4470->spiTransfer_fptr(spi_mode, tx_data, 2);
+    int err = tuss4470->spiTransfer_fptr(spi_mode, tx_data, 2, tuss4470->ctx);
     if (err) {
         return err;
     }
@@ -100,7 +112,7 @@ int tuss4470_write_register(tuss4470_t *tuss4470, tuss4470_register_map_t reg, u
     tx_data[0] = (reg & 0x3F) << 1;
     tx_data[1] = data;
     tx_data[0] |= parity(tx_data);
-    int err = tuss4470->spiTransfer_fptr(spi_mode, tx_data, 2);
+    int err = tuss4470->spiTransfer_fptr(spi_mode, tx_data, 2, tuss4470->ctx);
     if (err) {
         return err;
     }
