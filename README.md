@@ -1,9 +1,11 @@
-# open_echo
+# Open Echo SONAR
 An ongoing open-source project about building a sonar for bathymetry and research.
 
 The TUSS4470 Arduino PCB can be used to test different frequencies and transducer types. The Python script lets you see the echoes in a waterfall chart.
 
 ### Currently in development. TUSS4470 development shield ready for external use!
+
+Want to stay updated or participate? Join my [Discord](https://discord.com/invite/rerCyqAcrw)!
 
 # Current state
 - partially reverse-engineered "LUCKY Fish Finder"
