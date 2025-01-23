@@ -47,7 +47,8 @@ DIY transducer assembly with 1:6 transformer and 228kHz transducer for water:
 Echogram of a test with DIY transducer assembly in the baltic sea, Kiel:
 <img alt="PCB overview TUSS4470" src="/documentation/images/baltic_test200khz.jpg">
 
-
+Echogram in saltwater vertical and second half horizontal pointing to an underwater ladder(8x speed):
+<img alt="PCB overview TUSS4470" src="/documentation/images/echogram_animation.gif">
 
 # Videos
 [![LINK TO VIDEO 1](https://img.youtube.com/vi/eJ8jVEQSx_Y/0.jpg)](https://www.youtube.com/watch?v=eJ8jVEQSx_Y)
