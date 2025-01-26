@@ -160,4 +160,17 @@ uint8_t tuss4470_set_config(uint8_t configData, uint8_t mask, uint8_t value) {
     return dataOut;
 }
 
-
+int tuss4470_value_is_in_range(uint8_t mask, uint8_t value) {
+    uint8_t copy_mask = mask;
+    // count number of bits to shift left until bit 0 is set
+    uint8_t shift = 0;
+    while ((copy_mask & 1) == 0) {
+        copy_mask >>= 1;
+        shift++;
+    }
+    uint8_t mask_value = mask >> shift;
+    if (value > mask_value) {
+        return 1;
+    }
+    return 0;
+}

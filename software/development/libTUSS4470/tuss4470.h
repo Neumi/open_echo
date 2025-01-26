@@ -44,6 +44,10 @@ extern "C" {
     uint8_t tuss4470_set_config(uint8_t configData, uint8_t mask, uint8_t value);
     // endregion
 
+    // region utility functions
+    int tuss4470_value_is_in_range(uint8_t mask, uint8_t value);
+    // endregion
+
 
 #ifdef __cplusplus
 }

@@ -13,8 +13,59 @@ class TUSS4470 {
         ~TUSS4470();
 
         int begin();
+        int beginCustomSPI(tuss4470_spi_transfer_fptr spiTransfer_fptr, void *ctx);
         int readConfig();
         int writeConfig();
+
+        // region specific register access
+        int setBPF_HPFFreq(uint8_t freq);
+        int setBPF_Bypass(bool value);
+        int setBPF_FCTrimFrc(bool value);
+
+        int setBPF_QSel(uint8_t qSel);
+        int setBPF_FCTrim(uint8_t fcTrim);
+
+        int setDEV_LogAmpFrc(bool value);
+        int setDEV_LogAmpSlopeAdj(uint8_t value);
+        int setDEV_LogAmpIntAdj(uint8_t value);
+
+        int setLogAmpDisableFirstStage(bool value);
+        int setLogAmpDisableLastStage(bool value);
+        int setVOUTScaling(bool value);
+        int setLNAGain(uint8_t gain);
+
+
+        int setDriverPulseFaultDeglitchTime(uint8_t time);
+        int setLowVoltageIOConfig(uint8_t config);
+
+
+        int setDisableVDRVRegulationInListenMode(bool value);
+        int setVDRVHighImpedance(bool value);
+        int setVDRVCurrentLevel(bool value);
+        int setVDRVVoltageLevel(uint8_t level);
+
+
+        int setEchoInterruptComparatorEnable(bool value);
+        int setEchoInterruptThreshold(uint8_t threshold);
+
+        int setZeroCrossComparatorEnable(bool value);
+        int setZeroCrossEnableEchoInterrupt(bool value);
+        int setZeroComparatorInputSelect(bool value);
+        int setZeroCrossComparatorStageSelect(uint8_t stage);
+        int setZeroCrossComparatorHysteresis(uint8_t hysteresis);
+
+        int setHalfBridgeMode(bool value);
+        int setPreDriverMode(bool value);
+        int setBurstPulseNumber(uint8_t pulseCount);
+
+        int setSleepModeEnable(bool value);
+        int setStandbyModeEnable(bool value);
+        int setVDRVTriggerControl(bool value);
+        int setCommandTriggerControl(bool value);
+
+        // endregion
+
+        
 
         int readRawRegister(tuss4470_register_map_t reg, uint8_t *data);
         int writeRawRegister(tuss4470_register_map_t reg, uint8_t data);
