@@ -269,6 +269,262 @@ int TUSS4470::setCommandTriggerControl(bool value) {
     return tuss4470_write_register(&tuss4470, TOF_CONFIG, tuss4470.config->TOF_CONFIG);
 }
 
+uint8_t TUSS4470::getBPF_HPFFreq() {
+    int err = tuss4470_read_register(&tuss4470, BPF_CONFIG_1, &tuss4470.config->BPF_CONFIG_1);
+    if (err) {
+        return 0;
+    }
+    return getConfig(tuss4470.config->BPF_CONFIG_1, BPF_HPF_FREQ);
+}
+
+bool TUSS4470::getBPF_Bypass() {
+    int err = tuss4470_read_register(&tuss4470, BPF_CONFIG_1, &tuss4470.config->BPF_CONFIG_1);
+    if (err) {
+        return false;
+    }
+    return getConfig(tuss4470.config->BPF_CONFIG_1, BPF_BYPASS);
+}
+
+bool TUSS4470::getBPF_FCTrimFrc() {
+    int err = tuss4470_read_register(&tuss4470, BPF_CONFIG_1, &tuss4470.config->BPF_CONFIG_1);
+    if (err) {
+        return false;
+    }
+    return getConfig(tuss4470.config->BPF_CONFIG_1, BPF_FC_TRIM_FRC);
+}
+
+uint8_t TUSS4470::getBPF_QSel() {
+    int err = tuss4470_read_register(&tuss4470, BPF_CONFIG_2, &tuss4470.config->BPF_CONFIG_2);
+    if (err) {
+        return 0;
+    }
+    return getConfig(tuss4470.config->BPF_CONFIG_2, tuss4470_BPF_Q_SEL);
+}
+
+uint8_t TUSS4470::getBPF_FCTrim() {
+    int err = tuss4470_read_register(&tuss4470, BPF_CONFIG_2, &tuss4470.config->BPF_CONFIG_2);
+    if (err) {
+        return 0;
+    }
+    return getConfig(tuss4470.config->BPF_CONFIG_2, tuss4470_BPF_FC_TRIM);
+}
+
+bool TUSS4470::getDEV_LogAmpFrc() {
+    int err = tuss4470_read_register(&tuss4470, DEV_CTRL_1, &tuss4470.config->DEV_CTRL_1);
+    if (err) {
+        return false;
+    }
+    return getConfig(tuss4470.config->DEV_CTRL_1, tuss4470_LOGAMP_FRC);
+}
+
+uint8_t TUSS4470::getDEV_LogAmpSlopeAdj() {
+    int err = tuss4470_read_register(&tuss4470, DEV_CTRL_1, &tuss4470.config->DEV_CTRL_1);
+    if (err) {
+        return 0;
+    }
+    return getConfig(tuss4470.config->DEV_CTRL_1, tuss4470_LOGAMP_SLOPE_ADJ);
+}
+
+uint8_t TUSS4470::getDEV_LogAmpIntAdj() {
+    int err = tuss4470_read_register(&tuss4470, DEV_CTRL_1, &tuss4470.config->DEV_CTRL_1);
+    if (err) {
+        return 0;
+    }
+    return getConfig(tuss4470.config->DEV_CTRL_1, tuss4470_LOGAMP_INT_ADJ);
+}
+
+bool TUSS4470::getLogAmpDisableFirstStage() {
+    int err = tuss4470_read_register(&tuss4470, DEV_CTRL_2, &tuss4470.config->DEV_CTRL_2);
+    if (err) {
+        return false;
+    }
+    return getConfig(tuss4470.config->DEV_CTRL_2, tuss4470_LOGAMP_DIS_FIRST);
+}
+
+bool TUSS4470::getLogAmpDisableLastStage() {
+    int err = tuss4470_read_register(&tuss4470, DEV_CTRL_2, &tuss4470.config->DEV_CTRL_2);
+    if (err) {
+        return false;
+    }
+    return getConfig(tuss4470.config->DEV_CTRL_2, tuss4470_LOGAMP_DIS_LAST);
+}
+
+bool TUSS4470::getVOUTScaling() {
+    int err = tuss4470_read_register(&tuss4470, DEV_CTRL_2, &tuss4470.config->DEV_CTRL_2);
+    if (err) {
+        return false;
+    }
+    return getConfig(tuss4470.config->DEV_CTRL_2, tuss4470_VOUT_SCALE_SEL);
+}
+
+uint8_t TUSS4470::getLNAGain() {
+    int err = tuss4470_read_register(&tuss4470, DEV_CTRL_3, &tuss4470.config->DEV_CTRL_3);
+    if (err) {
+        return 0;
+    }
+    return getConfig(tuss4470.config->DEV_CTRL_3, tuss4470_LNA_GAIN);
+}
+
+uint8_t TUSS4470::getDriverPulseFaultDeglitchTime() {
+    int err = tuss4470_read_register(&tuss4470, DEV_CTRL_3, &tuss4470.config->DEV_CTRL_3);
+    if (err) {
+        return 0;
+    }
+    return getConfig(tuss4470.config->DEV_CTRL_3, tuss4470_DRV_PLS_FLT_DT);
+}
+
+uint8_t TUSS4470::getLowVoltageIOConfig() {
+    int err = tuss4470_read_register(&tuss4470, DEV_CTRL_3, &tuss4470.config->DEV_CTRL_3);
+    if (err) {
+        return 0;
+    }
+    return getConfig(tuss4470.config->DEV_CTRL_3, tuss4470_IO_MODE);
+}
+
+bool TUSS4470::getDisableVDRVRegulationInListenMode() {
+    int err = tuss4470_read_register(&tuss4470, VDRV_CTRL, &tuss4470.config->VDRV_CTRL);
+    if (err) {
+        return false;
+    }
+    return getConfig(tuss4470.config->VDRV_CTRL, tuss4470_DIS_VDRV_REG_LSTN);
+}
+
+bool TUSS4470::getVDRVHighImpedance() {
+    int err = tuss4470_read_register(&tuss4470, VDRV_CTRL, &tuss4470.config->VDRV_CTRL);
+    if (err) {
+        return false;
+    }
+    return getConfig(tuss4470.config->VDRV_CTRL, tuss4470_VDRV_HI_Z);
+}
+
+bool TUSS4470::getVDRVCurrentLevel() {
+    int err = tuss4470_read_register(&tuss4470, VDRV_CTRL, &tuss4470.config->VDRV_CTRL);
+    if (err) {
+        return false;
+    }
+    return getConfig(tuss4470.config->VDRV_CTRL, tuss4470_VDRV_CURRENT_LEVEL);
+}
+
+uint8_t TUSS4470::getVDRVVoltageLevel() {
+    int err = tuss4470_read_register(&tuss4470, VDRV_CTRL, &tuss4470.config->VDRV_CTRL);
+    if (err) {
+        return 0;
+    }
+    return getConfig(tuss4470.config->VDRV_CTRL, tuss4470_VDRV_VOLTAGE_LEVEL);
+}
+
+bool TUSS4470::getEchoInterruptComparatorEnable() {
+    int err = tuss4470_read_register(&tuss4470, ECHO_INT_CONFIG, &tuss4470.config->ECHO_INT_CONFIG);
+    if (err) {
+        return false;
+    }
+    return getConfig(tuss4470.config->ECHO_INT_CONFIG, tuss4470_ECHO_INT_CMP_EN);
+}
+
+uint8_t TUSS4470::getEchoInterruptThreshold() {
+    int err = tuss4470_read_register(&tuss4470, ECHO_INT_CONFIG, &tuss4470.config->ECHO_INT_CONFIG);
+    if (err) {
+        return 0;
+    }
+    return getConfig(tuss4470.config->ECHO_INT_CONFIG, tuss4470_ECHO_INT_THR_SEL);
+}
+
+bool TUSS4470::getZeroCrossComparatorEnable() {
+    int err = tuss4470_read_register(&tuss4470, ZC_CONFIG, &tuss4470.config->ZC_CONFIG);
+    if (err) {
+        return false;
+    }
+    return getConfig(tuss4470.config->ZC_CONFIG, tuss4470_ZC_CMP_EN);
+}
+
+bool TUSS4470::getZeroCrossEnableEchoInterrupt() {
+    int err = tuss4470_read_register(&tuss4470, ZC_CONFIG, &tuss4470.config->ZC_CONFIG);
+    if (err) {
+        return false;
+    }
+    return getConfig(tuss4470.config->ZC_CONFIG, tuss4470_ZC_EN_ECHO_INT);
+}
+
+bool TUSS4470::getZeroComparatorInputSelect() {
+    int err = tuss4470_read_register(&tuss4470, ZC_CONFIG, &tuss4470.config->ZC_CONFIG);
+    if (err) {
+        return false;
+    }
+    return getConfig(tuss4470.config->ZC_CONFIG, tuss4470_ZC_CMP_IN_SEL);
+}
+
+uint8_t TUSS4470::getZeroCrossComparatorStageSelect() {
+    int err = tuss4470_read_register(&tuss4470, ZC_CONFIG, &tuss4470.config->ZC_CONFIG);
+    if (err) {
+        return 0;
+    }
+    return getConfig(tuss4470.config->ZC_CONFIG, tuss4470_ZC_CMP_STG_SEL);
+}
+
+uint8_t TUSS4470::getZeroCrossComparatorHysteresis() {
+    int err = tuss4470_read_register(&tuss4470, ZC_CONFIG, &tuss4470.config->ZC_CONFIG);
+    if (err) {
+        return 0;
+    }
+    return getConfig(tuss4470.config->ZC_CONFIG, tuss4470_ZC_CMP_HYST);
+}
+
+bool TUSS4470::getHalfBridgeMode() {
+    int err = tuss4470_read_register(&tuss4470, BURST_PULSE, &tuss4470.config->BURST_PULSE);
+    if (err) {
+        return false;
+    }
+    return getConfig(tuss4470.config->BURST_PULSE, tuss4470_HALF_BRG_MODE);
+}
+
+bool TUSS4470::getPreDriverMode() {
+    int err = tuss4470_read_register(&tuss4470, BURST_PULSE, &tuss4470.config->BURST_PULSE);
+    if (err) {
+        return false;
+    }
+    return getConfig(tuss4470.config->BURST_PULSE, tuss4470_PRE_DRIVER_MODE);
+}
+
+uint8_t TUSS4470::getBurstPulseNumber() {
+    int err = tuss4470_read_register(&tuss4470, BURST_PULSE, &tuss4470.config->BURST_PULSE);
+    if (err) {
+        return 0;
+    }
+    return getConfig(tuss4470.config->BURST_PULSE, tuss4470_BURST_PULSE);
+}
+
+bool TUSS4470::getSleepModeEnable() {
+    int err = tuss4470_read_register(&tuss4470, TOF_CONFIG, &tuss4470.config->TOF_CONFIG);
+    if (err) {
+        return false;
+    }
+    return getConfig(tuss4470.config->TOF_CONFIG, tuss4470_SLEEP_MODE_EN);
+}
+
+bool TUSS4470::getStandbyModeEnable() {
+    int err = tuss4470_read_register(&tuss4470, TOF_CONFIG, &tuss4470.config->TOF_CONFIG);
+    if (err) {
+        return false;
+    }
+    return getConfig(tuss4470.config->TOF_CONFIG, tuss4470_STDBY_MODE_EN);
+}
+
+bool TUSS4470::getVDRVTriggerControl() {
+    int err = tuss4470_read_register(&tuss4470, TOF_CONFIG, &tuss4470.config->TOF_CONFIG);
+    if (err) {
+        return false;
+    }
+    return getConfig(tuss4470.config->TOF_CONFIG, tuss4470_VDRV_TRIGGER);
+}
+
+bool TUSS4470::getCommandTriggerControl() {
+    int err = tuss4470_read_register(&tuss4470, TOF_CONFIG, &tuss4470.config->TOF_CONFIG);
+    if (err) {
+        return false;
+    }
+    return getConfig(tuss4470.config->TOF_CONFIG, tuss4470_CMD_TRIGGER);
+}
+
 // endregion
 
 

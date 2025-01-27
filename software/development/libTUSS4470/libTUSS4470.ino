@@ -47,6 +47,14 @@ void setup() {
     return;
   }
   Serial.println(F("Successfully set parameter HPFFreq to 0x1D"));
+
+  // Read the register again to verify the value
+  uint8_t data = tuss.getBPF_HPFFreq();
+  Serial.print(F("Read back HPFFreq: 0x"));
+  Serial.println(data, HEX);
+  if (data != 0x1D) {
+    Serial.println(F("Error: Read back value does not match written value"));
+  }
 }
 
 void loop() {

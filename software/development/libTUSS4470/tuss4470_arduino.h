@@ -63,6 +63,50 @@ class TUSS4470 {
         int setVDRVTriggerControl(bool value);
         int setCommandTriggerControl(bool value);
 
+
+        uint8_t getBPF_HPFFreq();
+        bool getBPF_Bypass();
+        bool getBPF_FCTrimFrc();
+
+        uint8_t getBPF_QSel();
+        uint8_t getBPF_FCTrim();
+
+        bool getDEV_LogAmpFrc();
+        uint8_t getDEV_LogAmpSlopeAdj();
+        uint8_t getDEV_LogAmpIntAdj();
+
+        bool getLogAmpDisableFirstStage();
+        bool getLogAmpDisableLastStage();
+        bool getVOUTScaling();
+        uint8_t getLNAGain();
+
+        uint8_t getDriverPulseFaultDeglitchTime();
+        uint8_t getLowVoltageIOConfig();
+
+        bool getDisableVDRVRegulationInListenMode();
+        bool getVDRVHighImpedance();
+        bool getVDRVCurrentLevel();
+        uint8_t getVDRVVoltageLevel();
+
+        bool getEchoInterruptComparatorEnable();
+        uint8_t getEchoInterruptThreshold();
+
+        bool getZeroCrossComparatorEnable();
+        bool getZeroCrossEnableEchoInterrupt();
+        bool getZeroComparatorInputSelect();
+        uint8_t getZeroCrossComparatorStageSelect();
+        uint8_t getZeroCrossComparatorHysteresis();
+
+        bool getHalfBridgeMode();
+        bool getPreDriverMode();
+        uint8_t getBurstPulseNumber();
+
+        bool getSleepModeEnable();
+        bool getStandbyModeEnable();
+        bool getVDRVTriggerControl();
+        bool getCommandTriggerControl();
+
+
         // endregion
 
         
