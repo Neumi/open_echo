@@ -51,9 +51,11 @@ After initial setup, a burst of 8 pulses in drive frequency is sent to the TUSS4
 DIY transducer assembly with 1:6 transformer and 228kHz transducer for water:
 <img alt="PCB overview TUSS4470" src="/documentation/images/transducer_assembly.JPG">
 
-# Software
+# Python PyQT Software
 There are firmware examples in each project folder. 
-A [Python interface](/TUSS4470_shield_002/live_waterfall_python/live_waterfall_settings.py) lets you control Open Echo boards and view live data and change settings on the boards.
+A [Python PyQT interface](/TUSS4470_shield_002/live_waterfall_python/live_waterfall_settings.py) allows you to control the Open Echo boards, view live data, and adjust board settings.
+
+<img alt="Python Software" src="documentation/images/open_echo_python.png">
 
 Live echogram in water on Python Software (6x speed):
 <img alt="Software running with live echo data" src="documentation/images/echogram_fast.gif">
