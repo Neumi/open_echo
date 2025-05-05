@@ -1,18 +1,21 @@
-# Open Echo universal Sonar
+<img alt="Open Echo Cover" src="documentation/images/open_echo_logo.svg" width="400" height="400">
+
+# Universal open-source sonar development stack 
+
 An ongoing open-source software and hardware project about building a sonar for testing, boating, bathymetry and research.
 Current hardware can drive a variety of commercial and DIY transducers and read RAW and interpreted distance/depth data. A python software interface lets you connect to Open Echo boards and read data and change settings.
 
 <img alt="Open Echo Cover" src="documentation/images/cover.JPG">
 
-### Currently in development. The TUSS4470 development shield is ready for external use already! Change happens fast! The documentation is a bit behind.
+### Currently in development. The TUSS4470 development shield is ready for external use already! Change happens constantly! The documentation is a bit behind.
 
 Want to stay updated or participate? Join my [Discord](https://discord.com/invite/rerCyqAcrw)!
 
 # Current state
-- new All-In-One board with STM32, TUSS4470 and boost converter is currently in testing
-- a new NMEA-capable, universal echo sounder board is in development
+- new All-In-One board with STM32, TUSS4470 and boost converter currently in testing
+- a new NMEA-capable, universal echo sounder board in development
 - partially reverse-engineered "LUCKY Fish Finder"
-- get raw data from echo receiver/amplifier to FastLOGIC/Arduino
+- read raw data from Lucky Fish Finder to Arduino
 - plot data in a waterfall chart using Matplotlib + Python
 - DIY transducer built and tested (works)
 - TUSS4470 board built and tested (works)
