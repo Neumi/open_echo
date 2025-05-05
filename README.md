@@ -1,4 +1,4 @@
-<img alt="Open Echo Cover" src="documentation/images/open_echo_logo.svg" width="400" height="400">
+<img alt="Open Echo Cover" src="documentation/images/open_echo_logo.svg" width="500" height="500" style="display: block; margin: auto;">
 
 # Universal open-source sonar development stack 
 
