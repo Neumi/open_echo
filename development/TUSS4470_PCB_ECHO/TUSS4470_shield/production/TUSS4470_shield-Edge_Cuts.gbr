@@ -1,0 +1,28 @@
+%TF.GenerationSoftware,KiCad,Pcbnew,8.0.6*%
+%TF.CreationDate,2025-02-16T20:57:11+01:00*%
+%TF.ProjectId,TUSS4470_shield,54555353-3434-4373-905f-736869656c64,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Profile,NP*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+G04 Created by KiCad (PCBNEW 8.0.6) date 2025-02-16 20:57:11*
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+%TA.AperFunction,Profile*%
+%ADD10C,0.050000*%
+%TD*%
+G04 APERTURE END LIST*
+D10*
+X125000000Y-95000000D02*
+G75*
+G02*
+X75000000Y-95000000I-25000000J0D01*
+G01*
+X75000000Y-95000000D02*
+G75*
+G02*
+X125000000Y-95000000I25000000J0D01*
+G01*
+M02*
