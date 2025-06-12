@@ -69,9 +69,13 @@ Live echogram in water on Python Software (6x speed):
 [![LINK TO LATEST VIDEO](https://img.youtube.com/vi/R3_NO2F7PsI/maxresdefault.jpg)](https://www.youtube.com/watch?v=R3_NO2F7PsI)
 
 https://www.youtube.com/watch?v=R3_NO2F7PsI
+
 https://www.youtube.com/watch?v=msbLVsY8xhQ
+
 https://www.youtube.com/watch?v=eJ8jVEQSx_Y
+
 https://www.youtube.com/watch?v=Bxh3rWd5RZk
+
 https://www.youtube.com/watch?v=UDYWQIizN7A
 
 # Useful Links
