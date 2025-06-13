@@ -86,15 +86,15 @@ https://www.youtube.com/watch?v=ZtUkt8Q4EJE
 # Shopping list
  Transducers: 
  
- https://de.aliexpress.com/item/1005006007865920.html
+ The best price/performance: https://www.alibaba.com/product-detail/Range-customization-lakes-river-surveys-no_1600829423846.html
+
+ OK for air 200kHz: https://de.aliexpress.com/item/1005006007865920.html
  
- https://de.aliexpress.com/item/1005007032482539.html
+ Very small PZT only: https://de.aliexpress.com/item/1005007032482539.html
  
- https://de.aliexpress.com/item/1005006299774405.html
+ Not fully tested: https://de.aliexpress.com/item/4000389134890.html
  
- https://de.aliexpress.com/item/4000389134890.html
- 
- https://de.aliexpress.com/item/1005006546490802.html
+ Great for air 40kHz: https://de.aliexpress.com/item/1005006546490802.html
 
  Transformers to step up transducer voltage:
  
