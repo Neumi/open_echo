@@ -1,4 +1,4 @@
-# Open Echo TUSS4470 Shield Getting Started Guide
+<img width="1255" alt="schematic_TUSS4470" src="https://github.com/user-attachments/assets/ccbeb30b-bccb-46a6-a09b-3646d2839f1c" /># Open Echo TUSS4470 Shield Getting Started Guide
 
 The TUSS4470 is an ultrasonic driver and receiver IC designed for seamless interaction with ultrasonic transducers. The TUSS4470 Arduino Shield is a development board that enables quick evaluation of the TUSS4470's features using the Arduino UNO platform.
 
@@ -30,20 +30,27 @@ The shield interfaces with the Arduino UNO the following:
 - Four digital GPIOs
 - Analog pin A0
 
-### Capacitor Selection for Transducer Frequency
-To support different ultrasonic transducers and their respective drive frequencies, the board provides preset capacitor options for:
-- 40 kHz
-- 150 kHz
-- 200 kHz
+### Filtering Capacitor Selection for Transducer Frequency
+To support different ultrasonic transducers and their respective drive frequencies, the board provides preset capacitor options for <b/>40, 150, 200 (and 600) kHz</b>.
 
-Use the onboard jumpers to select the appropriate cINN and cFLT values:
+> [!Important]
+> Use the onboard jumpers to select the appropriate cINN and cFLT values.
 
-For 150 kHz, select the "custom" jumper for cINN and the "200kHz" jumper for cFLT.
+### Custom Capacitor Configuration
+Refer to the silkscreen or the schematic for correct jumper positions.
 
-Refer to the silkscreen or schematic for jumper positions.
-If you want to drive other frequencies, desolder the "CUSTOM" capacitors and solder your own, calculated values. 
+If you need to drive transducers at frequencies other than the provided presets and combinations (40 kHz, 150 kHz, 200 (and 600) kHz), you can customize the capacitor values:
+- Desolder the default "CUSTOM" capacitors. (for cINN and cFLT)
+- Solder your own calculated capacitor values onto the "CUSTOM" pads.
 
-These are some example values for other frequencies:
+> [!Tip] Capacitors can be combined in parallel to achieve intermediate values.
+>  For example, to support 150 kHz, both the 200 kHz and CUSTOM capacitors are used in parallel to produce the required total capacitance.
+> In board version 002, "Custom" is pre-selected to match the right capacitances <b/>together</b> with the 200kHz capacitors for 150kHz. 
+
+Below is the electrical connection layout for the capacitors and jumpers:
+<img alt="TUSS4470 schematic" src="/documentation/images/schematic_TUSS4470.png">
+
+These are some more example values for other frequencies:
 | cFLT nF | cINN nF | Frequency kHz  |
 |---------|---------|----------------|
 |  15,91  |  106,10 |            40  |
