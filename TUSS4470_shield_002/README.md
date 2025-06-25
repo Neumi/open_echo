@@ -1,4 +1,4 @@
-<img width="1255" alt="schematic_TUSS4470" src="https://github.com/user-attachments/assets/ccbeb30b-bccb-46a6-a09b-3646d2839f1c" /># Open Echo TUSS4470 Shield Getting Started Guide
+# Open Echo TUSS4470 Shield Getting Started Guide
 
 The TUSS4470 is an ultrasonic driver and receiver IC designed for seamless interaction with ultrasonic transducers. The TUSS4470 Arduino Shield is a development board that enables quick evaluation of the TUSS4470's features using the Arduino UNO platform.
 
@@ -49,20 +49,6 @@ If you need to drive transducers at frequencies other than the provided presets 
 
 Below is the electrical connection layout for the capacitors and jumpers:
 <img alt="TUSS4470 schematic" src="/documentation/images/schematic_TUSS4470.png">
-
-These are some more example values for other frequencies:
-| cFLT nF | cINN nF | Frequency kHz  |
-|---------|---------|----------------|
-|  15,91  |  106,10 |            40  |
-|  6,36   |  42,44  |           100  |
-|  4,24   |  28,29  |           150  |
-|  3,18   |  21,22  |           200  |
-|  2,79   |  18,61  |           228  |
-|  2,12   |  14,14  |           300  |
-|  1,59   |  10,61  |           400  |
-|  1,39   |  9,32   |           455  |
-|  1,27   |  8,48   |           500  |
-|  1,06   |  7,07   |           600  |
 
 ### Power Supply Options
 The board supports two power input options:
