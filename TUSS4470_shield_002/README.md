@@ -37,8 +37,6 @@ To support different ultrasonic transducers and their respective drive frequenci
 > Use the onboard jumpers to select the appropriate cINN and cFLT values.
 
 ### Custom Capacitor Configuration
-Refer to the silkscreen or the schematic for correct jumper positions.
-
 If you need to drive transducers at frequencies other than the provided presets and combinations (40 kHz, 150 kHz, 200 (and 600) kHz), you can customize the capacitor values:
 - Desolder the default "CUSTOM" capacitors. (for cINN and cFLT)
 - Solder your own calculated capacitor values onto the "CUSTOM" pads.
