@@ -44,18 +44,18 @@ Refer to the silkscreen or schematic for jumper positions.
 If you want to drive other frequencies, desolder the "CUSTOM" capacitors and solder your own, calculated values. 
 
 These are some example values for other frequencies:
-| cFLT nF     | cINN nF     | Frequency kHz  |
-|-------------|-------------|----------------|
-| 15,91550775 |  106,103385 |            40  |
-| 6,366203101 | 42,44135401 |           100  |
-| 4,244135401 |   28,294236 |           150  |
-|  3,18310155 |   21,220677 |           200  |
-| 2,792194343 | 18,61462895 |           228  |
-|   2,1220677 |   14,147118 |           300  |
-| 1,591550775 |  10,6103385 |           400  |
-| 1,399165517 | 9,327770111 |           455  |
-|  1,27324062 | 8,488270801 |           500  |
-|  1,06103385 | 7,073559001 |           600  |
+| cFLT nF | cINN nF | Frequency kHz  |
+|---------|---------|----------------|
+|  15,91  |  106,10 |            40  |
+|  6,36   |  42,44  |           100  |
+|  4,24   |  28,29  |           150  |
+|  3,18   |  21,22  |           200  |
+|  2,79   |  18,61  |           228  |
+|  2,12   |  14,14  |           300  |
+|  1,59   |  10,61  |           400  |
+|  1,39   |  9,32   |           455  |
+|  1,27   |  8,48   |           500  |
+|  1,06   |  7,07   |           600  |
 
 ### Power Supply Options
 The board supports two power input options:
@@ -65,7 +65,9 @@ Use this when the transducer operates at 12V max, as the Arduino cannot tolerate
 - XT30 Connector:
 Use this if you require higher voltage (up to 28V max) for more powerful transducers.
 
-Ensure proper polarity and voltage limits when using this input.
+> [!Tip]
+> To get started, use a 12V power supply. Many ultrasonic transducers operate reliably at this voltage.
+> Lower voltages may not adequately excite the transducer, resulting in weak or no echo signals.
 
 > [!Warning]
 > Do not exceed 28V input. Higher voltages can damage the board or components. Ensure proper polarity!
