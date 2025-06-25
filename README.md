@@ -25,6 +25,9 @@ Check the [Getting Started Guide](TUSS4470_shield_002/README.md)
 - TUSS4470 hardware changed to support transformers to drive higher voltage piezos (like 200kHz for underwater)
 - In water tests, successful! (only tested up to 8m range to ground, but at least 25m were possible with Raymarine CPT-S without transformer in a horizontal test)
 
+
+## Progress
+
 The LUCKY fishfinder with a DIY transducer (or stock) RAW amplifier (echo) data can be read using an Arduino, and data can be displayed using Matplotlib + Python. 
 
 The new (January 2025) [TUSS4470 board](TUSS4470_shield_002/) is now able to use transducers (40kHz and 200kHz tested), drive them, receive echoes, filter the signal, and send the RAW echo data to the same Python backend. For good results, use a high input voltage like 25V DC on the XT30 connector.
