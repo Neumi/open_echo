@@ -30,7 +30,7 @@ The shield interfaces with the Arduino UNO the following:
 - Four digital GPIOs
 - Analog pin A0
 
-### Filtering Capacitor Selection for Transducer Frequency
+### cINN and cFLT Filtering Capacitor Selection for Transducer Frequency
 To support different ultrasonic transducers and their respective drive frequencies, the board provides preset capacitor options for <b/>40, 150, 200 (and 600) kHz</b>.
 
 > [!Important]
@@ -43,11 +43,12 @@ If you need to drive transducers at frequencies other than the provided presets 
 - Desolder the default "CUSTOM" capacitors. (for cINN and cFLT)
 - Solder your own calculated capacitor values onto the "CUSTOM" pads.
 
-> [!Tip] Capacitors can be combined in parallel to achieve intermediate values.
->  For example, to support 150 kHz, both the 200 kHz and CUSTOM capacitors are used in parallel to produce the required total capacitance.
+> [!TIP]
+> Capacitors can be combined in parallel to achieve intermediate values.
+> For example, to support 150 kHz, both the 200 kHz and CUSTOM capacitors are used in parallel to produce the required total capacitance.
 > In board version 002, "Custom" is pre-selected to match the right capacitances <b/>together</b> with the 200kHz capacitors for 150kHz. 
 
-Below is the electrical connection layout for the capacitors and jumpers:
+Below is the electrical connection layout for the cINN and cFLT capacitors and jumpers:
 <img alt="TUSS4470 schematic" src="/documentation/images/schematic_TUSS4470.png">
 
 ### Power Supply Options
