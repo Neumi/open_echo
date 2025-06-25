@@ -11,28 +11,30 @@ Current hardware can drive a variety of commercial and DIY transducers and read 
 
 Want to stay updated or participate? Join my [Discord](https://discord.com/invite/rerCyqAcrw)!
 
+Check the [Getting Started Guide](TUSS4470_shield_002/README.md) 
+
 # Current state
 - new All-In-One board with STM32, TUSS4470 and boost converter currently in testing
-- a new NMEA-capable, universal echo sounder board in development
+- A new NMEA-capable, universal echo sounder board in development
 - partially reverse-engineered "LUCKY Fish Finder"
-- read raw data from Lucky Fish Finder to Arduino
-- plot data in a waterfall chart using Matplotlib + Python
+- Read raw data from the Lucky Fish Finder to Arduino
+- Plot data in a waterfall chart using Matplotlib + Python
 - DIY transducer built and tested (works)
 - TUSS4470 board built and tested (works)
 - TUSS4470 Arduino code example done
 - TUSS4470 hardware changed to support transformers to drive higher voltage piezos (like 200kHz for underwater)
-- in water tests successful! (only tested up to 8m range to ground, but at least 25m were possible with Raymarine CPT-S without transformer in a horizontal test)
+- In water tests, successful! (only tested up to 8m range to ground, but at least 25m were possible with Raymarine CPT-S without transformer in a horizontal test)
 
 The LUCKY fishfinder with a DIY transducer (or stock) RAW amplifier (echo) data can be read using an Arduino, and data can be displayed using Matplotlib + Python. 
 
-The new (January 2025) [TUSS4470 board](TUSS4470_shield_002/) is now able to use transducers (40kHz and 200kHz tested), drive them, receive echos, filter the signal and send the RAW echo data to the (same) Python backend. For good results, use a high input voltage like 25V DC on the XT30 connector.
+The new (January 2025) [TUSS4470 board](TUSS4470_shield_002/) is now able to use transducers (40kHz and 200kHz tested), drive them, receive echoes, filter the signal, and send the RAW echo data to the same Python backend. For good results, use a high input voltage like 25V DC on the XT30 connector.
 
 
 This new [All-In-One Board](development/TUSS4470_PCB_ECHO) is currently in testing and works 90%. It runs on an STM32F103C8, TUSS4470 and MT3608 boost converter. The next board will be a universal transducer compatible (like Raymarine CPT-S, P19 etc), driver board with NMEA2000 + NMEA0183 and additional USB RAW output.
 <img alt="All-In-One Board" src="/documentation/images/all-in-one-x1.jpg">
 
 
-The [LUCKY fishfinder hack](reverse_engineering/) is pretty much obsolte and replaced by the TUSS4470 board. If you want to play with custom sonar, use this!
+The [LUCKY fishfinder hack](reverse_engineering/) is pretty much obsolete and has been replaced by the TUSS4470 board. If you want to play with custom sonar, use this!
 
 --------
 # TUSS4470 Ultrasonic Transducer Driver Arduino Board
