@@ -1,0 +1,5 @@
+numpy
+pyserial
+PyQt5
+pyqtgraph
+pyqtdarktheme

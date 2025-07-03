@@ -4,7 +4,7 @@ import serial
 import serial.tools.list_ports
 import struct
 
-from PyQt5.QtWidgets import QHBoxLayout, QGridLayout  # Add this to your imports
+from PyQt5.QtWidgets import QHBoxLayout, QGridLayout
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QComboBox, QPushButton, QLabel, QLineEdit
 from PyQt5.QtCore import QThread, pyqtSignal
 import pyqtgraph as pg
@@ -59,7 +59,7 @@ def read_packet(ser):
         depth, temp_scaled, vDrv_scaled = struct.unpack(">HhH", payload[:6])
         depth = min(depth, MAX_DEPTH)
 
-        print(depth)
+        # print(depth)
 
         samples = struct.unpack(f">{NUM_SAMPLES}H", payload[6:])
 
