@@ -1,5 +1,6 @@
 #include <SPI.h>
 
+// Pin configuration
 const int SPI_CS = 10;
 const int IO1 = 8;
 const int IO2 = 9;
@@ -7,25 +8,62 @@ const int O3 = 3;
 const int O4 = 2;
 const int analogIn = A0;
 
-byte misoBuf[2];  // SPI receive buffer
+// Number of ADC samples to take per measurement cycle
+// Each sample takes approximately 13.2 microseconds
+// This value must match the number of samples expected by the Python visualization tool
+#define NUM_SAMPLES 1800
 
+// Number of initial samples to ignore after sending the transducer pulse
+// These ignored samples represent the "blind zone" where the transducer is still ringing
+#define BLINDZONE_SAMPLE_END 450
+
+// Threshold level for detecting the bottom echo
+// The first echo stronger than this value (after the blind zone) is considered the bottom
+#define THRESHOLD_VALUE 0x19
+
+
+// ---------------------- DRIVE FREQUENCY SETTINGS ----------------------
+// Sets the output frequency of the ultrasonic transducer by configuring Timer1
+// Use the formula: DRIVE_FREQUENCY_TIMER_DIVIDER = (16000000 / (2 * desired_frequency)) - 1
+// Example for 200 kHz: (16,000,000 / (2 * 200,000)) - 1 = 39
+#define DRIVE_FREQUENCY_TIMER_DIVIDER 199 // 40 kHz (e.g., car parking sensor)
+// #define DRIVE_FREQUENCY_TIMER_DIVIDER 160 // 50 kHz
+// #define DRIVE_FREQUENCY_TIMER_DIVIDER 120 // 66 kHz
+// #define DRIVE_FREQUENCY_TIMER_DIVIDER 80  // 100 kHz (e.g., Chrhartz DIY transducer)
+// #define DRIVE_FREQUENCY_TIMER_DIVIDER 52  // 151 kHz (Muebau transducer)
+// #define DRIVE_FREQUENCY_TIMER_DIVIDER 39  // 200 kHz (Raymarine CPT-S transducer)
+// #define DRIVE_FREQUENCY_TIMER_DIVIDER 36  // 216 kHz (mini transducer)
+// #define DRIVE_FREQUENCY_TIMER_DIVIDER 34  // 230 kHz (18mm 200kHz transducer from AliExpress)
+// #define DRIVE_FREQUENCY_TIMER_DIVIDER 22  // 350 kHz
+// #define DRIVE_FREQUENCY_TIMER_DIVIDER 19  // 400 kHz
+// #define DRIVE_FREQUENCY_TIMER_DIVIDER 17  // 455 kHz (e.g., Lowrance Hook 3TS sidescan)
+// #define DRIVE_FREQUENCY_TIMER_DIVIDER 11  // 658 kHz
+
+
+// ---------------------- BANDPASS FILTER SETTINGS ----------------------
+// Sets the digital band-pass filter frequency on the TUSS4470 driver chip
+// This should roughly match the transducer drive frequency
+// For additional register values, see TUSS4470 datasheet, Table 7.1 (pages 17–18)
+#define FILTER_FREQUENCY_REGISTER 0x00 // 40 kHz
+// #define FILTER_FREQUENCY_REGISTER 0x09 // 68 kHz
+// #define FILTER_FREQUENCY_REGISTER 0x10 // 100 kHz
+// #define FILTER_FREQUENCY_REGISTER 0x18 // 151 kHz
+// #define FILTER_FREQUENCY_REGISTER 0x1E // 200 kHz
+
+
+byte misoBuf[2];  // SPI receive buffer
 byte inByteArr[2];  // SPI transmit buffer
 
-#define NUM_SAMPLES 1800 // sample size (one sample is about 13.2 microseconds long) (has to be equal to python visualization sample size)
 byte analogValues[NUM_SAMPLES];
-
 volatile int pulseCount = 0;
-
 volatile int sampleIndex = 0;
 
 float temperature = 0.0f;
 int vDrv = 0;
 
-
 volatile bool detectedDepth = false;  // Condition flag
 volatile int depthDetectSample = 0;
 
-#define BLINDZONE_SAMPLE_END 200
 
 ISR(TIMER1_COMPA_vect)
 {
@@ -42,19 +80,7 @@ void startTransducerBurst()
   TCCR1A = _BV(COM1A0);  // Toggle OC1A (pin 9) on Compare Match
   TCCR1B = _BV(WGM12) | _BV(CS10);  // CTC mode, no prescaler
 
-  OCR1A = 199; // 40kHz (car parking sensor)
-  //OCR1A = 160; // 50kHz
-  //OCR1A = 120; // 66kHz
-  //OCR1A = 80; // 100kHz (chrhartz DIY transducer)
-  //OCR1A = 52; // 151kHz (muebau transducer)
-  //OCR1A = 39; // 200kHz (Raymarine CPT-S 200kHz)
-  //OCR1A = 36; // 216kHz (mini transducer)
-  //OCR1A = 34; // 230kHz (18mm 200kHz Aliexpress transducer)
-  //OCR1A = 22; // 19 cycles at 16 MHz = 350kHz
-  //OCR1A = 19; // 400kHz
-  //OCR1A = 17; // 455kHz (Lowrance Hook 3TS sidescan)
-  //OCR1A = 11; // 658kHz
-
+  OCR1A = DRIVE_FREQUENCY_TIMER_DIVIDER;
 
   TIMSK1 = _BV(OCIE1A);  // Enable Timer1 Compare Match A interrupt
 }
@@ -134,24 +160,15 @@ void setup()
   pinMode(IO1, OUTPUT);
   digitalWrite(IO1, HIGH);
   pinMode(IO2, OUTPUT);
-  //pinMode(O3, INPUT);
-  //pinMode(O4, INPUT);
   pinMode(O4, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(O4), handleInterrupt, RISING);
 
   // Initialize TUSS4470 with specific configurations
   // check TUSS4470 datasheet for more settings!
-  tuss4470Write(0x10, 0x00);  // Set BPF center frequency to 40kHz
-  //tuss4470Write(0x10, 0x09);  // Set BPF center frequency to 68kHz
-  //tuss4470Write(0x10, 0x10);  // Set BPF center frequency to 100kHz
-  //tuss4470Write(0x10, 0x18); // Set BPF center frequency to 151kHz
-  //tuss4470Write(0x10, 0x1E);  // Set BPF center frequency to 200kHz TODO: check why 0x1E and not 0x0F!
-
-
+  tuss4470Write(0x10, FILTER_FREQUENCY_REGISTER);  // Set BPF center frequency
   tuss4470Write(0x16, 0xF);  // Enable VDRV (not Hi-Z)
   tuss4470Write(0x1A, 0x0F);  // Set burst pulses to 16
-
-  tuss4470Write(0x17, 0x19); // enable threshold detection (Pin 5 and 3 need to be connected to work!)
+  tuss4470Write(0x17, THRESHOLD_VALUE); // enable threshold detection on OUT_4
 
   // Set up ADC
   ADCSRA = (1 << ADEN)  |  // Enable ADC
@@ -186,8 +203,7 @@ void loop()
 
   // Stop time-of-flight measurement
   tuss4470Write(0x1B, 0x00);
-
-  // Serial.println(depthDetectSample);
+  
   sendData();
 
   delay(10);

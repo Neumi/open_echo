@@ -15,14 +15,13 @@ import qdarktheme
 #BAUD_RATE = 115200
 BAUD_RATE = 250000
 NUM_SAMPLES = 1800  # Number of frequency/amplitude bins (X-axis)
-# NUM_SAMPLES = 1800  # Number of frequency/amplitude bins (X-axis)
 MAX_ROWS = 300  # Number of time steps (Y-axis)
 # DEFAULT_LEVELS = (0, 1024)  # Expected data range
 
 y_label_distance = 50 # distance between labels in cm
 
-SPEED_OF_SOUND = 1500  # meters per second in water
-# SPEED_OF_SOUND = 330  # meters per second in water
+# SPEED_OF_SOUND = 1500  # meters per second in water
+SPEED_OF_SOUND = 330  # meters per second in water
 SAMPLE_TIME = 13.2e-6  # 13.2 microseconds in seconds Atmega328 sample speed
 # SAMPLE_TIME = 7.682e-6  # 7.682 microseconds in seconds STM32 sample speed
 SAMPLE_RESOLUTION = (SPEED_OF_SOUND * SAMPLE_TIME * 100) / 2  # cm per row (0.99 cm per row)
@@ -31,7 +30,6 @@ DEFAULT_LEVELS = (0, 256)  # Expected data range
 
 PACKET_SIZE = 1 + 6 + 2 * NUM_SAMPLES + 1  # header + payload + checksum
 MAX_DEPTH = NUM_SAMPLES * SAMPLE_RESOLUTION  # Total depth in cm
-
 depth_labels = {int(i / SAMPLE_RESOLUTION): f"{i / 100}" for i in range(0, int(MAX_DEPTH), y_label_distance)}
 
 
@@ -57,7 +55,7 @@ def read_packet(ser):
 
         # Unpack payload
         depth, temp_scaled, vDrv_scaled = struct.unpack(">HhH", payload[:6])
-        depth = min(depth, MAX_DEPTH)
+        depth = min(depth, NUM_SAMPLES)
 
         # print(depth)
 
