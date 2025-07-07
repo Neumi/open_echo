@@ -78,4 +78,4 @@ The recommended setup is illustrated below:
 <img alt="TUSS4470 Board ready to use" src="/documentation/images/TUSS4470_shield002.jpg">
 
 
-<b/>Next Steps: Proceed to [Getting Started with Firmware and Open Echo Interface Software](getting_started_software.md).</b>
+<b/>Next Steps: Proceed to [Getting Started with Arduino Firmware and Open Echo Interface Software](getting_started_software.md).</b>
