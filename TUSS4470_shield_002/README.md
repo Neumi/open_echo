@@ -44,7 +44,7 @@ If you need to drive transducers at frequencies other than the provided presets 
 > [!TIP]
 > Capacitors can be combined in parallel to achieve intermediate values.
 > For example, to support 150 kHz, both the 200 kHz and CUSTOM capacitors are used in parallel to produce the required total capacitance.
-> In board version 002, "Custom" is pre-selected to match the right capacitances <b/>together</b> with the 200kHz capacitors for 150kHz. 
+> On board version 002, "Custom" is pre-selected to match the right capacitances <b/>together</b> with the 200kHz capacitors for 150kHz. 
 
 Below is the electrical connection layout for the cINN and cFLT capacitors and jumpers:
 <img alt="TUSS4470 schematic" src="/documentation/images/schematic_TUSS4470.png">
@@ -72,5 +72,10 @@ Connect your PZT crystal or preassembled ultrasonic transducer to the "Transduce
 
 > [!Important]
 > Proper polarity is crucial to minimize electrical noise and ensure optimal performance.
-> Use coax cable for transducer connections longer than 10cm. Use transducer GND for the shield.
+> For transducer connections exceeding 10 cm in length, use coaxial cable. Connect the cable shield to the transducer ground (GND).
 
+The recommended setup is illustrated below:
+<img alt="TUSS4470 Board ready to use" src="/documentation/images/TUSS4470_shield002.jpg">
+
+
+<b/>Next Steps: Proceed to [Getting Started with Firmware and Open Echo Interface Software](TUSS4470_shield_002/getting_started_software.md).</b>
