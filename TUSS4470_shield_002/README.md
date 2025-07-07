@@ -72,4 +72,5 @@ Connect your PZT crystal or preassembled ultrasonic transducer to the "Transduce
 
 > [!Important]
 > Proper polarity is crucial to minimize electrical noise and ensure optimal performance.
+> Use coax cable for transducer connections longer than 10cm. Use transducer GND for the shield.
 
