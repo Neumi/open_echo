@@ -2,7 +2,7 @@
 # Getting Started with Arduino TUSS4470 Firmware
 
 This repository provides two software components to support the TUSS4470 Arduino Shield:
-- [Arduino Firmware](TUSS4470_arduino/TUSS4470_arduino.ino) - Runs on an Arduino UNO board with the TUSS4470 shield and handles signal generation, echo capture, and communication.
+- [Arduino Firmware](arduino/TUSS4470_arduino/TUSS4470_arduino.ino) - Runs on an Arduino UNO board with the TUSS4470 shield and handles signal generation, echo capture, and communication.
 - [Open Echo Interface](echo_interface.py) - A desktop application that communicates with the Arduino, displays echo data as a real-time waterfall chart, and will soon allow runtime configuration of the system.
 
 
@@ -23,7 +23,7 @@ The Arduino firmware initializes the TUSS4470 device and manages the ultrasonic 
 ## Uploading the Firmware
 1. Open the Arduino IDE.
 2. Select your Arduino UNO board and the correct COM port.
-4. Load the firmware sketch [TUSS4470_arduino.ino](TUSS4470_arduino/TUSS4470_arduino.ino).
+4. Load the firmware sketch [TUSS4470_arduino.ino](arduino/TUSS4470_arduino/TUSS4470_arduino.ino).
 5. Upload the sketch to the Arduino UNO.
 
 
@@ -103,6 +103,6 @@ To reduce noise and isolate the echo signals, a band-pass filter is configured o
 
 ### Summary
 
-To get started, upload the provided Arduino firmware [TUSS4470_arduino.ino](TUSS4470_arduino/TUSS4470_arduino.ino) to an Arduino UNO using the Arduino IDE. The firmware is preconfigured for a 40 kHz transducer (car parking sensor), which is ideal for first-time setup and testing. Once running, the Arduino continuously sends ultrasonic echo data over USB to the Open Echo Interface Python app for real-time visualization. You can customize parameters such as sample size, blind zone, detection threshold, drive frequency, and filter register to suit other transducers or application ranges. Just make sure NUM_SAMPLES matches in both the Arduino firmware and the Python interface. For most users, starting with the default 40 kHz setup provides the simplest and most reliable baseline.
+To get started, upload the provided Arduino firmware [TUSS4470_arduino.ino](arduino/TUSS4470_arduino/TUSS4470_arduino.ino) to an Arduino UNO using the Arduino IDE. The firmware is preconfigured for a 40 kHz transducer (car parking sensor), which is ideal for first-time setup and testing. Once running, the Arduino continuously sends ultrasonic echo data over USB to the Open Echo Interface Python app for real-time visualization. You can customize parameters such as sample size, blind zone, detection threshold, drive frequency, and filter register to suit other transducers or application ranges. Just make sure NUM_SAMPLES matches in both the Arduino firmware and the Python interface. For most users, starting with the default 40 kHz setup provides the simplest and most reliable baseline.
 
 <b/>Next Steps: Proceed to [Getting Started Open Echo Interface Software](getting_started_interface.md).</b>
