@@ -1,6 +1,6 @@
 # Getting Started Open Echo Interface Software
 
-The [**Open Echo Interface**](TUSS4470_shield_002/echo_interface.py) is a cross-platform Python application that interacts with the Arduino + TUSS4470 Shield. 
+The [***Open Echo Interface***](echo_interface.py) is a cross-platform Python application that interacts with the Arduino + TUSS4470 Shield. 
 It displays ultrasonic echo data in real-time using a waterfall chart visualization. 
 The application is intended primarily as a testing and development tool, but is stable enough for continuous use -tested for several days on a Raspberry Pi 4 without issues.
 
@@ -44,7 +44,7 @@ The red horizontal line indicates the currently detected depth, based on the str
 
 ### 4. Change to your own needs
 
-You can change different settings in the first lines of the [**Open Echo Interface**](TUSS4470_shield_002/echo_interface.py) code to customize it to your specific use cases.
+You can change different settings in the first lines of the [**Open Echo Interface**](echo_interface.py) code to customize it to your specific use cases.
 
 ### 📊 Parameter Settings
 
@@ -55,7 +55,7 @@ You can change different settings in the first lines of the [**Open Echo Interfa
 | `MAX_ROWS`        | Sets the number of historical measurements displayed in the chart before it scrolls. |
 | `Y_LABEL_DISTANCE`| Defines the vertical axis label spacing, in centimeters. |
 | `SPEED_OF_SOUND`  | Used to convert sample timing into distance. Set to ~330 for air, ~1450 for water. |
-| `SAMPLE_TIME`     | Sampling interval in microseconds. For the Arduino UNO with [TUSS4470_arduino.ino](TUSS4470_shield_002/TUSS4470_arduino/TUSS4470_arduino.ino), this must be set to **13.2 µs**. |
+| `SAMPLE_TIME`     | Sampling interval in microseconds. For the Arduino UNO with [TUSS4470_arduino.ino](TUSS4470_arduino/TUSS4470_arduino.ino), this must be set to **13.2 µs**. |
 
 
 --- 
