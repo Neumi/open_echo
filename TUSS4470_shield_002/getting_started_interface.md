@@ -55,7 +55,7 @@ You can change different settings in the first lines of the [**Open Echo Interfa
 | `MAX_ROWS`        | Sets the number of historical measurements displayed in the chart before it scrolls. |
 | `Y_LABEL_DISTANCE`| Defines the vertical axis label spacing, in centimeters. |
 | `SPEED_OF_SOUND`  | Used to convert sample timing into distance. Set to ~330 for air, ~1450 for water. |
-| `SAMPLE_TIME`     | Sampling interval in microseconds. For the Arduino UNO with [TUSS4470_arduino.ino](TUSS4470_arduino/TUSS4470_arduino.ino), this must be set to **13.2 µs**. |
+| `SAMPLE_TIME`     | Sampling interval in microseconds. For the Arduino UNO with [TUSS4470_arduino.ino](arduino/TUSS4470_arduino/TUSS4470_arduino.ino), this must be set to **13.2 µs**. |
 
 
 --- 
