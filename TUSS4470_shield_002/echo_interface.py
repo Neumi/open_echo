@@ -4,6 +4,7 @@ import serial
 import serial.tools.list_ports
 import struct
 import time
+import socket
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QComboBox, QPushButton, QLabel, QLineEdit
 from PyQt5.QtCore import QThread, pyqtSignal
 import pyqtgraph as pg
@@ -14,6 +15,9 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPalette, QColor
+from PyQt5.QtWidgets import QVBoxLayout, QLabel, QCheckBox, QLineEdit
+from PyQt5.QtWidgets import QApplication
+
 
 
 # Serial Configuration
@@ -34,7 +38,6 @@ SAMPLE_RESOLUTION = (SPEED_OF_SOUND * SAMPLE_TIME * 100) / 2  # cm per row (0.99
 PACKET_SIZE = 1 + 6 + 2 * NUM_SAMPLES + 1  # header + payload + checksum
 MAX_DEPTH = NUM_SAMPLES * SAMPLE_RESOLUTION  # Total depth in cm
 depth_labels = {int(i / SAMPLE_RESOLUTION): f"{i / 100}" for i in range(0, int(MAX_DEPTH), Y_LABEL_DISTANCE)}
-
 
 def read_packet(ser):
     while True:
@@ -91,6 +94,16 @@ def get_serial_ports():
     """Retrieve a list of available serial ports."""
     return [port.device for port in serial.tools.list_ports.comports()][::-1]
 
+def get_local_ip():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "127.0.0.1"
+
 
 class SerialReader(QThread):
     """Thread for reading serial data asynchronously."""
@@ -125,7 +138,7 @@ class SerialReader(QThread):
 
 
 class SettingsDialog(QWidget):
-    def __init__(self, parent=None, current_gradient='cyclic', current_speed=330):
+    def __init__(self, parent=None, current_gradient='cyclic', current_speed=330, nmea_enabled=False, nmea_port=10110, nmea_address="127.0.0.1"):
         super().__init__(parent)
         self.setWindowTitle("Chart Settings")
         self.setFixedSize(320, 550)
@@ -160,22 +173,66 @@ class SettingsDialog(QWidget):
         self.speed_dropdown.setCurrentIndex(1 if current_speed == 1500 else 0)
         card_layout.addWidget(self.speed_dropdown)
 
-        # --- NMEA Output ---
-        card_layout.addWidget(QLabel("NMEA Output:"))
+        # --- NMEA Output Section ---
+        nmea_section = QVBoxLayout()
+        nmea_section.setSpacing(8)
 
-        self.nmea_enable_checkbox = QPushButton("Enable NMEA Output")
-        self.nmea_enable_checkbox.setCheckable(True)
-        self.nmea_enable_checkbox.setChecked(False)
-        card_layout.addWidget(self.nmea_enable_checkbox)
+        # Section title
+        nmea_label = QLabel("NMEA TCP Output:")
+        nmea_label.setStyleSheet("font-weight: bold;")
+        nmea_section.addWidget(nmea_label)
+
+        # Enable checkbox
+        self.nmea_enable_checkbox = QCheckBox("Enable NMEA Output")
+        self.nmea_enable_checkbox.setStyleSheet("QCheckBox:hover { text-decoration: none; }")
+        nmea_section.addWidget(self.nmea_enable_checkbox)
+
+        # Address display row
+        addr_row = QHBoxLayout()
+        addr_label = QLabel("Address:")
+        addr_label.setMinimumWidth(60)
+
+        self.addr_display = QLabel(nmea_address)
+        self.addr_display.setStyleSheet("color: #cccccc; padding: 2px;")
+        self.addr_display.setTextInteractionFlags(Qt.TextSelectableByMouse)  # Allow text copy
+
+        copy_button = QPushButton("Copy")
+        copy_button.setFixedHeight(22)
+        copy_button.setStyleSheet("font-size: 11px; padding: 2px 6px;")
+        copy_button.clicked.connect(lambda: QApplication.clipboard().setText(nmea_address))
+
+        addr_row.addWidget(addr_label)
+        addr_row.addWidget(self.addr_display)
+        addr_row.addWidget(copy_button)
+        addr_row.addStretch()
+        nmea_section.addLayout(addr_row)
+
+
+        # Port input with label to the left
+        port_row = QHBoxLayout()
+        port_label = QLabel("Port:")
+        port_label.setMinimumWidth(40)
 
         self.port_input = QLineEdit()
         self.port_input.setPlaceholderText("TCP Port (default: 10110)")
-        self.port_input.setText("10110")
-        self.port_input.setEnabled(False)
-        card_layout.addWidget(self.port_input)
+        self.port_input.setText(str(nmea_port))
+        self.port_input.setMaximumWidth(200)
 
-        # Enable/disable port input with checkbox
+        port_row.addWidget(port_label)
+        port_row.addWidget(self.port_input)
+        port_row.addStretch()
+        nmea_section.addLayout(port_row)
+
+        # ✅ Connect AFTER both widgets are created
         self.nmea_enable_checkbox.toggled.connect(self.port_input.setEnabled)
+
+        # ✅ Apply initial state (pass nmea_enabled into the constructor!)
+        self.nmea_enable_checkbox.setChecked(nmea_enabled)
+        self.port_input.setEnabled(nmea_enabled)
+
+        # ✅ Add to card layout
+        card_layout.addLayout(nmea_section)
+
 
         # --- Buttons ---
         button_layout = QHBoxLayout()
@@ -248,6 +305,7 @@ class WaterfallApp(QMainWindow):
         self.nmea_enabled = False
         self.nmea_port = 10110
         self.nmea_socket = None
+        self.nmea_output_enabled = False
 
         self.current_gradient = 'cyclic'  # default color scheme
         self.current_speed = SPEED_OF_SOUND  # default sound speed (330)
@@ -540,10 +598,15 @@ class WaterfallApp(QMainWindow):
         event.accept()
 
     def open_settings(self):
+        device_ip = get_local_ip()
+
         self.settings_dialog = SettingsDialog(
-            self,
+            parent=self,
             current_gradient=self.current_gradient,
-            current_speed=self.current_speed
+            current_speed=self.current_speed,
+            nmea_enabled=self.nmea_output_enabled,
+            nmea_port=self.nmea_port,
+            nmea_address=device_ip
         )
         self.settings_dialog.show()
 
