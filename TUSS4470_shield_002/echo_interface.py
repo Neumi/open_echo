@@ -3,14 +3,11 @@ import numpy as np
 import serial
 import serial.tools.list_ports
 import struct
-
-from PyQt5.QtWidgets import QHBoxLayout, QGridLayout
+import time
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QComboBox, QPushButton, QLabel, QLineEdit
 from PyQt5.QtCore import QThread, pyqtSignal
 import pyqtgraph as pg
 import qdarktheme
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPalette, QColor
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel,
     QComboBox, QPushButton, QWidget
@@ -73,6 +70,22 @@ def read_packet(ser):
 
         return values, depth, temperature, drive_voltage
 
+def generate_dbt_sentence(depth_cm):
+    depth_m = depth_cm / 100.0
+    depth_ft = depth_m * 3.28084
+    depth_fathoms = depth_m * 0.546807
+
+    # Format the DBT sentence without checksum
+    sentence_body = f"DBT,{depth_ft:.1f},f,{depth_m:.1f},M,{depth_fathoms:.1f},F"
+
+    # Compute checksum
+    checksum = 0
+    for char in sentence_body:
+        checksum ^= ord(char)
+
+    nmea_sentence = f"${sentence_body}*{checksum:02X}"
+    return nmea_sentence
+
 
 def get_serial_ports():
     """Retrieve a list of available serial ports."""
@@ -115,7 +128,7 @@ class SettingsDialog(QWidget):
     def __init__(self, parent=None, current_gradient='cyclic', current_speed=330):
         super().__init__(parent)
         self.setWindowTitle("Chart Settings")
-        self.setFixedSize(320, 250)
+        self.setFixedSize(320, 550)
 
         self.main_app = parent
 
@@ -143,9 +156,26 @@ class SettingsDialog(QWidget):
         # --- Speed of Sound ---
         card_layout.addWidget(QLabel("Speed of Sound:"))
         self.speed_dropdown = QComboBox()
-        self.speed_dropdown.addItems(["330 (Air)", "1500 (Water)"])
+        self.speed_dropdown.addItems(["330m/s (Air)", "1500m/s (Water)"])
         self.speed_dropdown.setCurrentIndex(1 if current_speed == 1500 else 0)
         card_layout.addWidget(self.speed_dropdown)
+
+        # --- NMEA Output ---
+        card_layout.addWidget(QLabel("NMEA Output:"))
+
+        self.nmea_enable_checkbox = QPushButton("Enable NMEA Output")
+        self.nmea_enable_checkbox.setCheckable(True)
+        self.nmea_enable_checkbox.setChecked(False)
+        card_layout.addWidget(self.nmea_enable_checkbox)
+
+        self.port_input = QLineEdit()
+        self.port_input.setPlaceholderText("TCP Port (default: 10110)")
+        self.port_input.setText("10110")
+        self.port_input.setEnabled(False)
+        card_layout.addWidget(self.port_input)
+
+        # Enable/disable port input with checkbox
+        self.nmea_enable_checkbox.toggled.connect(self.port_input.setEnabled)
 
         # --- Buttons ---
         button_layout = QHBoxLayout()
@@ -196,13 +226,17 @@ class SettingsDialog(QWidget):
 
         self.setLayout(outer_layout)
 
-
     def apply_settings(self):
         selected_gradient = self.gradient_dropdown.currentText()
         selected_speed = 330 if self.speed_dropdown.currentIndex() == 0 else 1500
+        nmea_enabled = self.nmea_enable_checkbox.isChecked()
+        nmea_port = int(self.port_input.text()) if self.port_input.text().isdigit() else 10110
+
         if self.main_app:
             self.main_app.set_gradient(selected_gradient)
             self.main_app.set_sound_speed(selected_speed)
+            self.main_app.configure_nmea_output(enabled=nmea_enabled, port=nmea_port)
+
         self.close()
 
 
@@ -210,6 +244,10 @@ class WaterfallApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.serial_thread = None  # ✅ Define it early to avoid AttributeError
+
+        self.nmea_enabled = False
+        self.nmea_port = 10110
+        self.nmea_socket = None
 
         self.current_gradient = 'cyclic'  # default color scheme
         self.current_speed = SPEED_OF_SOUND  # default sound speed (330)
@@ -281,9 +319,11 @@ class WaterfallApp(QMainWindow):
         self.serial_dropdown.addItems(get_serial_ports())
         self.serial_dropdown.setMinimumWidth(150)
         serial_row.addWidget(self.serial_dropdown)
+
         self.connect_button = QPushButton("Connect")
-        self.connect_button.clicked.connect(self.connect_serial)
+        self.connect_button.clicked.connect(self.toggle_serial_connection)  # Connects to toggle handler
         serial_row.addWidget(self.connect_button)
+
         controls_layout.addLayout(serial_row)
 
         # Info labels
@@ -325,6 +365,52 @@ class WaterfallApp(QMainWindow):
         controls_container = QWidget()
         controls_container.setLayout(controls_layout)
         main_layout.addWidget(controls_container)
+
+    def configure_nmea_output(self, enabled: bool, port: int):
+        self.nmea_output_enabled = enabled
+        self.nmea_port = port
+
+        # Close previous connections if needed
+        if hasattr(self, 'nmea_client_socket') and self.nmea_client_socket:
+            try:
+                self.nmea_client_socket.close()
+            except:
+                pass
+            self.nmea_client_socket = None
+
+        if hasattr(self, 'nmea_server_socket') and self.nmea_server_socket:
+            try:
+                self.nmea_server_socket.close()
+            except:
+                pass
+            self.nmea_server_socket = None
+
+        if enabled:
+            try:
+                import socket
+                self.nmea_server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.nmea_server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                self.nmea_server_socket.bind(('0.0.0.0', port))
+                self.nmea_server_socket.listen(1)
+                print(f"📡 Waiting for TCP NMEA connection on port {port}...")
+                self.nmea_client_socket, _ = self.nmea_server_socket.accept()
+                print(f"✅ NMEA client connected on port {port}")
+            except Exception as e:
+                print(f"❌ Failed to set up NMEA output: {e}")
+                self.nmea_output_enabled = False
+
+    def generate_dbt_sentence(self, depth_cm):
+        depth_m = depth_cm / 100.0
+        depth_ft = depth_m * 3.28084
+        depth_fathoms = depth_m * 0.546807
+
+        sentence_body = f"DBT,{depth_ft:.1f},f,{depth_m:.1f},M,{depth_fathoms:.1f},F"
+        checksum = 0
+        for char in sentence_body:
+            checksum ^= ord(char)
+
+        return f"${sentence_body}*{checksum:02X}\r\n"
+
 
     def set_gradient(self, gradient_name):
         self.current_gradient = gradient_name
@@ -369,6 +455,27 @@ class WaterfallApp(QMainWindow):
         except Exception as e:
             print(f"❌ Connection failed: {e}")
 
+    def toggle_serial_connection(self):
+        if self.serial_thread and self.serial_thread.isRunning():
+            self.disconnect_serial()
+            self.connect_button.setText("Connect")
+        else:
+            self.connect_serial()
+            if self.serial_thread and self.serial_thread.isRunning():
+                self.connect_button.setText("Disconnect")
+
+    def disconnect_serial(self):
+        if self.serial_thread:
+            try:
+                self.serial_thread.stop()
+                self.serial_thread.wait()  # Ensure thread ends before continuing
+                self.serial_thread = None
+                print("🔌 Disconnected from serial device")
+            except Exception as e:
+                print(f"❌ Disconnection failed: {e}")
+        else:
+            print("⚠️ No active serial connection to disconnect")
+
     def waterfall_plot_callback(self, spectrogram, depth_index, temperature, drive_voltage):
         self.data = np.roll(self.data, -1, axis=0)
         self.data[-1, :] = spectrogram
@@ -382,6 +489,35 @@ class WaterfallApp(QMainWindow):
         self.temperature_label.setText(f"Temperature: {temperature:.1f} °C")
         self.drive_voltage_label.setText(f"vDRV: {drive_voltage:.1f} V")
         self.depth_line.setPos(depth_index)
+
+        if hasattr(self, 'nmea_output_enabled') and self.nmea_output_enabled:
+            now = time.time()
+
+            # Check if it's time to send again
+            if not hasattr(self, '_last_nmea_sent') or (now - self._last_nmea_sent) >= 1.0:
+                print("Sending NMEA data")
+                try:
+                    depth_cm = depth_index * SAMPLE_RESOLUTION
+                    depth_m = depth_cm / 100
+                    depth_ft = depth_m * 3.28084
+                    depth_fathoms = depth_m * 0.546807
+
+                    def calculate_checksum(sentence):
+                        checksum = 0
+                        for char in sentence:
+                            checksum ^= ord(char)
+                        return f"*{checksum:02X}"
+
+                    nmea_sentence = f"DBT,{depth_ft:.1f},f,{depth_m:.1f},M,{depth_fathoms:.1f},F"
+                    full_sentence = f"${nmea_sentence}{calculate_checksum(nmea_sentence)}\r\n"
+
+                    self.nmea_client_socket.sendall(full_sentence.encode('ascii'))
+
+                    # Update timestamp
+                    self._last_nmea_sent = now
+
+                except Exception as e:
+                    print(f"⚠️ NMEA send failed: {e}")
 
     def send_hex_value(self):
         hex_value = self.hex_input.text().strip()
