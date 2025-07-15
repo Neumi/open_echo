@@ -77,5 +77,12 @@ Connect your PZT crystal or preassembled ultrasonic transducer to the "Transduce
 The recommended setup is illustrated below:
 <img alt="TUSS4470 Board ready to use" src="/documentation/images/TUSS4470_shield002.jpg">
 
+> [!Important]
+> Always connect GND/Shield to the TOP pin on the transducer.
+> Using the wrong pin increases powerline noise and significantly weakens the signal.
+
+Below: Comparison of a transducer wired incorrectly (left half) vs. correctly (right half).
+<img alt="Powerline noise on transducer cable shield" src="/documentation/images/powerline_noise.jpg">
+
 
 <b/>Next Steps: Proceed to [Getting Started with Arduino TUSS4470 Firmware](getting_started_TUSS4470_firmware.md).</b>
