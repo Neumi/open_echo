@@ -22,7 +22,7 @@ from PyQt5.QtWidgets import QApplication
 
 # Serial Configuration
 BAUD_RATE = 250000
-NUM_SAMPLES = 1200  # Number of frequency/amplitude bins (X-axis)
+NUM_SAMPLES = 1800  # Number of frequency/amplitude bins (X-axis)
 
 MAX_ROWS = 300  # Number of time steps (Y-axis)
 Y_LABEL_DISTANCE = 50  # distance between labels in cm
@@ -365,6 +365,7 @@ class WaterfallApp(QMainWindow):
         self.colorbar.item.gradient.loadPreset('cyclic')
         # self.colorbar.setMaximumHeight(80)
         self.imageitem.setLevels(DEFAULT_LEVELS)
+
         # main_layout.addWidget(self.colorbar)
 
         # === Controls (Vertical) ===
