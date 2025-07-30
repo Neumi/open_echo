@@ -8,29 +8,32 @@ const int O3 = 3;
 const int O4 = 2;
 const int analogIn = A0;
 
+
+// Feature Flags
 // Number of ADC samples to take per measurement cycle
 // Each sample takes approximately 13.2 microseconds
 // This value must match the number of samples expected by the Python visualization tool
-#define NUM_SAMPLES 1800
+int NUM_SAMPLES = 1800;
 
 // Number of initial samples to ignore after sending the transducer pulse
 // These ignored samples represent the "blind zone" where the transducer is still ringing
-#define BLINDZONE_SAMPLE_END 450
+int BLINDZONE_SAMPLE_END = 450;
 
 // Threshold level for detecting the bottom echo
 // The first echo stronger than this value (after the blind zone) is considered the bottom
-#define THRESHOLD_VALUE 0x19
+int THRESHOLD_VALUE = 0x19;
 
 
 // ---------------------- DRIVE FREQUENCY SETTINGS ----------------------
 // Sets the output frequency of the ultrasonic transducer by configuring Timer1
 // Use the formula: DRIVE_FREQUENCY_TIMER_DIVIDER = (16000000 / (2 * desired_frequency)) - 1
 // Example for 200 kHz: (16,000,000 / (2 * 200,000)) - 1 = 39
-#define DRIVE_FREQUENCY_TIMER_DIVIDER 199 // 40 kHz (e.g., car parking sensor)
+// #define DRIVE_FREQUENCY_TIMER_DIVIDER 199 // 40 kHz (e.g., car parking sensor)
 // #define DRIVE_FREQUENCY_TIMER_DIVIDER 160 // 50 kHz
 // #define DRIVE_FREQUENCY_TIMER_DIVIDER 120 // 66 kHz
 // #define DRIVE_FREQUENCY_TIMER_DIVIDER 80  // 100 kHz (e.g., Chrhartz DIY transducer)
 // #define DRIVE_FREQUENCY_TIMER_DIVIDER 52  // 151 kHz (Muebau transducer)
+#define DRIVE_FREQUENCY_TIMER_DIVIDER 41  // 192 kHz
 // #define DRIVE_FREQUENCY_TIMER_DIVIDER 39  // 200 kHz (Raymarine CPT-S transducer)
 // #define DRIVE_FREQUENCY_TIMER_DIVIDER 36  // 216 kHz (mini transducer)
 // #define DRIVE_FREQUENCY_TIMER_DIVIDER 34  // 230 kHz (18mm 200kHz transducer from AliExpress)
@@ -44,40 +47,33 @@ const int analogIn = A0;
 // Sets the digital band-pass filter frequency on the TUSS4470 driver chip
 // This should roughly match the transducer drive frequency
 // For additional register values, see TUSS4470 datasheet, Table 7.1 (pages 17–18)
-#define FILTER_FREQUENCY_REGISTER 0x00 // 40 kHz
+// #define FILTER_FREQUENCY_REGISTER 0x00 // 40 kHz
 // #define FILTER_FREQUENCY_REGISTER 0x09 // 68 kHz
 // #define FILTER_FREQUENCY_REGISTER 0x10 // 100 kHz
 // #define FILTER_FREQUENCY_REGISTER 0x18 // 151 kHz
-// #define FILTER_FREQUENCY_REGISTER 0x1E // 200 kHz
+#define FILTER_FREQUENCY_REGISTER 0x1E  // 200 kHz
 
-
-byte misoBuf[2];  // SPI receive buffer
+byte misoBuf[2];    // SPI receive buffer
 byte inByteArr[2];  // SPI transmit buffer
-
-byte analogValues[NUM_SAMPLES];
-volatile int pulseCount = 0;
-volatile int sampleIndex = 0;
-
 float temperature = 0.0f;
 int vDrv = 0;
+
+volatile int pulseCount = 0;
+volatile int sampleIndex = 0;
 
 volatile bool detectedDepth = false;  // Condition flag
 volatile int depthDetectSample = 0;
 
-
-ISR(TIMER1_COMPA_vect)
-{
+ISR(TIMER1_COMPA_vect) {
   pulseCount++;
-  if (pulseCount >= 32)
-  {
+  if (pulseCount >= 32) {
     stopTransducer();
     pulseCount = 0;  // Reset counter for next cycle
   }
 }
 
-void startTransducerBurst()
-{
-  TCCR1A = _BV(COM1A0);  // Toggle OC1A (pin 9) on Compare Match
+void startTransducerBurst() {
+  TCCR1A = _BV(COM1A0);             // Toggle OC1A (pin 9) on Compare Match
   TCCR1B = _BV(WGM12) | _BV(CS10);  // CTC mode, no prescaler
 
   OCR1A = DRIVE_FREQUENCY_TIMER_DIVIDER;
@@ -85,8 +81,7 @@ void startTransducerBurst()
   TIMSK1 = _BV(OCIE1A);  // Enable Timer1 Compare Match A interrupt
 }
 
-void stopTransducer()
-{
+void stopTransducer() {
   TCCR1A = 0;
   TCCR1B = 0;  // Stop Timer1 by clearing clock select bits
   TIMSK1 = 0;  // Disable Timer1 interrupt
@@ -94,7 +89,7 @@ void stopTransducer()
 
 byte tuss4470Read(byte addr) {
   inByteArr[0] = 0x80 + ((addr & 0x3F) << 1);  // Set read bit and address
-  inByteArr[1] = 0x00;  // Empty data byte
+  inByteArr[1] = 0x00;                         // Empty data byte
   inByteArr[0] |= tuss4470Parity(inByteArr);
   spiTransfer(inByteArr, sizeof(inByteArr));
 
@@ -143,8 +138,7 @@ void handleInterrupt() {
   }
 }
 
-void setup()
-{
+void setup() {
   Serial.begin(250000);
 
   SPI.begin();
@@ -166,22 +160,26 @@ void setup()
   // Initialize TUSS4470 with specific configurations
   // check TUSS4470 datasheet for more settings!
   tuss4470Write(0x10, FILTER_FREQUENCY_REGISTER);  // Set BPF center frequency
-  tuss4470Write(0x16, 0xF);  // Enable VDRV (not Hi-Z)
-  tuss4470Write(0x1A, 0x0F);  // Set burst pulses to 16
-  tuss4470Write(0x17, THRESHOLD_VALUE); // enable threshold detection on OUT_4
+  tuss4470Write(0x16, 0xF);                        // Enable VDRV (not Hi-Z)
+  tuss4470Write(0x1A, 0x0F);                       // Set burst pulses to 16
+  tuss4470Write(0x17, THRESHOLD_VALUE);            // enable threshold detection on OUT_4
+  tuss4470Write(0x13, 0x01);                       // Set LNA gain (0x00 = 15V/V, 0x01 = 10V/V, 0x02 = 20V/V, 0x03 = 12.5V/V)
 
   // Set up ADC
-  ADCSRA = (1 << ADEN)  |  // Enable ADC
-           (1 << ADPS2);   // Set prescaler to 16 (16 MHz / 16 = 1 MHz ADC clock)
-  ADMUX = (1 << REFS0);    // Reference voltage: AVcc
+  ADCSRA = (1 << ADEN) |  // Enable ADC
+           (1 << ADPS2);  // Set prescaler to 16 (16 MHz / 16 = 1 MHz ADC clock)
+  ADMUX = (1 << REFS0);   // Reference voltage: AVcc
   // Input channel: ADC0 (default)
   ADCSRB = 0;              // Free-running mode
   ADCSRA |= (1 << ADATE);  // Enable auto-trigger (free-running)
   ADCSRA |= (1 << ADSC);   // Start conversion
 }
 
-void loop()
-{
+void loop() {
+  readSettings();
+
+  byte analogValues[NUM_SAMPLES];
+
   // Trigger time-of-flight measurement
   tuss4470Write(0x1B, 0x01);
 
@@ -192,9 +190,11 @@ void loop()
   // Read analog values from A0
   sampleIndex = 0;
   for (sampleIndex = 0; sampleIndex < NUM_SAMPLES; sampleIndex++) {
-    while (!(ADCSRA & (1 << ADIF))); // Wait for conversion to complete
-    ADCSRA |= (1 << ADIF);           // Clear the interrupt flag
-    analogValues[sampleIndex] = ADC >> 2;           // Read ADC value
+    while (!(ADCSRA & (1 << ADIF)))
+      ;                                    // Wait for conversion to complete
+    ADCSRA |= (1 << ADIF);                 // Clear the interrupt flag
+    analogValues[sampleIndex] = ADC >> 2;  // Read ADC value
+    // Check for incoming settings and apply immediately
     if (sampleIndex == BLINDZONE_SAMPLE_END) {
       detectedDepth = false;
     }
@@ -203,14 +203,14 @@ void loop()
 
   // Stop time-of-flight measurement
   tuss4470Write(0x1B, 0x00);
-  
-  sendData();
+
+  sendData(analogValues);
 
   delay(10);
 }
 
 
-void sendData() {
+void sendData(byte analogValues[]) {
   Serial.write(0xAA);  // Start byte
 
   uint8_t checksum = 0;
@@ -249,4 +249,39 @@ void sendData() {
 
   // Send checksum
   Serial.write(checksum);
+}
+
+void readSettings() {
+  // Protocol: [START][DATA ...][CHECKSUM]
+  // START: 0xA5
+  // DATA: 1 byte ENABLE_DYNAMIC_RESOLUTION,
+  //       2 bytes NUM_SAMPLES,
+  //       2 bytes BLINDZONE_SAMPLE_END,
+  //       1 byte MEDIUM (0=WATER, 1=AIR),
+  //       1 byte THRESHOLD_VALUE
+  // CHECKSUM: XOR of all DATA bytes
+  const int DATA_LEN = 5;
+  if (Serial.available() >= 1 + DATA_LEN + 1) {
+    if (Serial.read() == 0xA5) {
+      byte data[DATA_LEN];
+      for (int i = 0; i < DATA_LEN; i++) {
+        data[i] = Serial.read();
+      }
+      byte received_checksum = Serial.read();
+      byte calc_checksum = 0;
+      for (int i = 0; i < DATA_LEN; i++) {
+        calc_checksum ^= data[i];
+      }
+      if (calc_checksum == received_checksum) {
+        NUM_SAMPLES = (data[0] << 8) | data[1];
+        BLINDZONE_SAMPLE_END = (data[2] << 8) | data[3];
+        THRESHOLD_VALUE = data[4];
+        // Clear any remaining bytes in the serial buffer to avoid misalignment
+        while (Serial.available()) Serial.read();
+
+        // Apply new threshold to TUSS4470
+        tuss4470Write(0x17, THRESHOLD_VALUE);
+      }
+    }
+  }
 }
