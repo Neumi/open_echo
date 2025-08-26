@@ -64,7 +64,7 @@ Live echogram in water on Python software (6x speed):
 <img alt="Software running with live echo data" src="documentation/images/echogram_fast.gif">
 
 ## Test results Baltic Sea
-Tested using a built-in 150 kHz SEAFARER transducer, powered at 20 V via an MT3608 boost converter from USB. In the plots, data capture begins at the bottom.
+Tested using a built-in 150 kHz SEAFARER transducer, powered at 15-20 V via an MT3608 boost converter from USB. In the plots, data capture begins at the bottom.
 
 <table>
   <tr>
