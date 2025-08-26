@@ -1,120 +1,100 @@
 <img alt="Open Echo Cover" src="documentation/images/open_echo_logo.svg">
 
-# Universal open-source sonar development stack 
+## Universal Open-Source SONAR Controller and Development Stack
 
-An ongoing open-source software and hardware project about building a sonar for testing, boating, bathymetry and research.
-Current hardware can drive a variety of commercial and DIY transducers and read RAW and interpreted distance/depth data. A python software interface lets you connect to Open Echo boards and read data and change settings.
+An ongoing open-source hardware and software project for building sonar systems for testing, boating, bathymetry, and research.  
+The most commonly used hardware is the [TUSS4470 Arduino Shield](TUSS4470_shield_002/), which stacks on top of an Arduino Uno to drive the TUSS4470 ultrasonic driver.  
+The board can run the [RAW Data Firmware](TUSS4470_shield_002/getting_started_TUSS4470_firmware.md) to operate a wide variety of ultrasonic transducers, covering frequencies from 40 kHz up to 1000 kHz in different media such as air or water.  
 
-<img alt="Open Echo Cover" src="documentation/images/cover.JPG">
+The [NMEA Output Firmware](TUSS4470_shield_002/arduino/NMEA_DBT_OUT/NMEA_DBT_OUT.ino) can read depth data from commercially available in-water ultrasonic transducers (e.g., on boats) and output NMEA0183-compatible data to a computer or a UART-connected device such as a Pixhawk or other controllers.  
 
-### Currently in development. The TUSS4470 development shield is ready for external use already! Change happens constantly! The documentation is a bit behind.
+Open Echo has been tested on multiple ultrasonic transducers and is compatible with all of them—from car parking sensors to Lowrance Tripleshot side-scan transducers.  
 
-Want to stay updated or participate? Join my [Discord](https://discord.com/invite/rerCyqAcrw)!
+The [Python Interface Software](TUSS4470_shield_002/getting_started_interface.md) connects to Open Echo boards running the [RAW Data Firmware](TUSS4470_shield_002/getting_started_TUSS4470_firmware.md). It can display raw echo data, change configurations, output a TCP depth data stream, and more.  
 
-Check the [Getting Started Guide](TUSS4470_shield_002/README.md) 
+Check the [Getting Started Guide](TUSS4470_shield_002/README.md)!  
 
-# Current state
-- new All-In-One board with STM32, TUSS4470 and boost converter currently in testing
-- A new NMEA-capable, universal echo sounder board in development
-- partially reverse-engineered "LUCKY Fish Finder"
-- Read raw data from the Lucky Fish Finder to Arduino
-- Plot data in a waterfall chart using Matplotlib + Python
-- DIY transducer built and tested (works)
-- TUSS4470 board built and tested (works)
-- TUSS4470 Arduino code example done
-- TUSS4470 hardware changed to support transformers to drive higher voltage piezos (like 200kHz for underwater)
-- In water tests, successful! (only tested up to 8m range to ground, but at least 25m were possible with Raymarine CPT-S without transformer in a horizontal test)
+If something is unclear or you find a bug, please open an issue.  
 
-
-## Progress
-
-The LUCKY fishfinder with a DIY transducer (or stock) RAW amplifier (echo) data can be read using an Arduino, and data can be displayed using Matplotlib + Python. 
-
-The new (January 2025) [TUSS4470 board](TUSS4470_shield_002/) is now able to use transducers (40kHz and 200kHz tested), drive them, receive echoes, filter the signal, and send the RAW echo data to the same Python backend. For good results, use a high input voltage like 25V DC on the XT30 connector.
-
-
-This new [All-In-One Board](development/TUSS4470_PCB_ECHO) is currently in testing and works 90%. It runs on an STM32F103C8, TUSS4470 and MT3608 boost converter. The next board will be a universal transducer compatible (like Raymarine CPT-S, P19 etc), driver board with NMEA2000 + NMEA0183 and additional USB RAW output.
-<img alt="All-In-One Board" src="/documentation/images/all-in-one-x1.jpg">
-
-
-The [LUCKY fishfinder hack](reverse_engineering/) is pretty much obsolete and has been replaced by the TUSS4470 board. If you want to play with custom sonar, use this!
-
---------
-# TUSS4470 Ultrasonic Transducer Driver Arduino Board
-This [PCB-board](TUSS4470_shield_002/TUSS4470_shield_hardware) is an Arduino (Uno) compatible board to test the Texas Instruments TUSS4470 Ultrasonic driver IC. The provided example [Arduino UNO code](TUSS4470_shield_002/TUSS4470_arduino/TUSS4470_shield/TUSS4470_shield.ino) lets you drive a 40kHz transducer, apply noise filtering, and send the echo via Serial to the [Python backend](TUSS4470_shield_002/live_waterfall_python/live_waterfall.py). You can change the code to your needs (i.e. to use other frequencies, sample sizes, speed etc.). The Arduino UNO clock speed and RAM size limit the sampling speed to a resolution of ca. 1-2cm in air and 4cm (ca. 13uS/sample) under water and to ca. 850 Samples. An Arduino MEGA should solve this issue partially.
-
-
-
-TUSS4470 Arduino Shield:
-<img alt="PCB overview TUSS4470" src="/TUSS4470_shield_002/TUSS4470_shield_hardware/images/top.jpg">
-
-<img alt="PCB overview TUSS4470" src="/TUSS4470_shield_002/TUSS4470_shield_hardware/images/whole_setup.jpg">
-
-
-
-
-The TUSS4470 works as follows:
-After initial setup, a burst of 8 pulses in drive frequency is sent to the TUSS4470 by the Arduino on PIN9. The TUSS4470 sends this pulse to the transducer then waits. The Transducer sends this pulse out as a short pulse of sound. Echos reflected by obstacles bounce back to the transducer and excite a voltage in it. The TUSS4470 measures that voltage, filters it, amplifies it and sends it to the A0 pin of the Arduino. By reading this amplified voltage, an (or multiple) obstacles can be detected. The Python script plots this data in a waterfall diagram.
-
-DIY transducer assembly with 1:6 transformer and 228kHz transducer for water:
-<img alt="PCB overview TUSS4470" src="/documentation/images/transducer_assembly.JPG">
-
-# Open Echo Interface Software
-There are firmware examples in each project folder. 
-An [**Open Echo Interface Software**](TUSS4470_shield_002/echo_interface.py) allows you to control the Open Echo boards, view live data, and adjust board settings.
+If you need the hardware, you can order it using the [Hardware Files](TUSS4470_shield_002/TUSS4470_shield_hardware/TUSS4470_shield) from a board + SMT house ([JLC recommended](https://jlcpcb.com/?from=Neumi)), or send me a DM on the Discord server.  
 
 <img alt="Open Echo Interface Software" src="/documentation/images/echo_software_screenshot.jpg">
 
-Live echogram in water on Python Software (6x speed):
+[TUSS4470 Arduino Shield](TUSS4470_shield_002/):  
+<img alt="PCB overview TUSS4470" src="/TUSS4470_shield_002/TUSS4470_shield_hardware/images/top.jpg">
+
+### This project is currently in development. The [TUSS4470 Development Shield](TUSS4470_shield_002/) is ready for external use!  
+Development is ongoing—check the documentation and Discord channel for the latest updates.  
+
+Want to stay updated or participate? Join the [Discord](https://discord.com/invite/rerCyqAcrw)!  
+
+Check the [Getting Started Guide](TUSS4470_shield_002/README.md).  
+
+--------
+## Current State
+- Universal TUSS4470-based Arduino shield for testing ultrasonic transducers  
+- Python interface software for raw data visualization, configuration, and TCP data output  
+- Tested depth range of at least 50 m in water  
+- NMEA0183 compatible (DBT data output to other devices)  
+- New all-in-one boards with STM32, TUSS4470, and boost converter currently in development  
+
+--------
+## Progress
+
+The new (May 2025) [TUSS4470 Arduino Shield](TUSS4470_shield_002/) supports transducers from 40 kHz to 1000 kHz. It can drive them, receive echoes, filter signals, and send raw echo data to the Python backend.  
+Driver voltage can be supplied from Arduino VIN or via the external XT30 connector. With an MT3608 boost converter, USB can be used as a power supply and boosted to the desired drive voltage (manual soldering required).  
+
+The [TUSS4470 Arduino Shield](TUSS4470_shield_002/) is and will remain the main development board for this project. It is an excellent platform for testing and development.  
+It can drive a wide range of transducers at different voltages, but it is limited by RAM size and sampling speed. You can capture 1800 samples at 12 microseconds per sample (~18 m range in water) with 8-bit resolution. For longer ranges, you can add a delay to capture echoes from more distant objects.  
+This makes it a perfect board for learning, testing, and prototyping. Most software development is done using this board.  
+
+For special use cases, additional boards are under development.  
+Some use STM32 + TUSS4470, some include additional data outputs, some have a boost transformer stage between the TUSS4470 and the transducer, and others are purely experimental.  
+Check the [development](development) folder.  
+
+<img alt="All-In-One Board" src="/documentation/images/all-in-one-x1.jpg">
+
+--------
+## Open Echo Interface Software
+
+Firmware examples are available in each project folder.  
+The [**Open Echo Interface Software**](TUSS4470_shield_002/echo_interface.py) allows you to control Open Echo boards, view live data, and adjust board settings.  
+
+Live echogram in water on Python software (6x speed):  
 <img alt="Software running with live echo data" src="documentation/images/echogram_fast.gif">
 
-# Videos
-
+## Videos
 
 [![LINK TO LATEST VIDEO](https://img.youtube.com/vi/R3_NO2F7PsI/maxresdefault.jpg)](https://www.youtube.com/watch?v=R3_NO2F7PsI)
 
-https://www.youtube.com/watch?v=R3_NO2F7PsI
-  
-https://www.youtube.com/watch?v=msbLVsY8xhQ
-  
-https://www.youtube.com/watch?v=eJ8jVEQSx_Y
-  
-https://www.youtube.com/watch?v=Bxh3rWd5RZk
-  
-https://www.youtube.com/watch?v=UDYWQIizN7A
-  
-# Useful Links
-https://www.rapp-instruments.de/RemoteSensing/Roves/sidescan/sidescan.htm 
+https://www.youtube.com/watch?v=R3_NO2F7PsI  
+https://www.youtube.com/watch?v=msbLVsY8xhQ  
+https://www.youtube.com/watch?v=eJ8jVEQSx_Y  
+https://www.youtube.com/watch?v=Bxh3rWd5RZk  
+https://www.youtube.com/watch?v=UDYWQIizN7A  
 
-https://www.youtube.com/watch?v=ZtUkt8Q4EJE
+## Useful Links
+https://www.rapp-instruments.de/RemoteSensing/Roves/sidescan/sidescan.htm  
+https://www.youtube.com/watch?v=ZtUkt8Q4EJE  
 
-# Shopping list
- Transducers: 
- 
- The best price/performance: https://www.alibaba.com/product-detail/Range-customization-lakes-river-surveys-no_1600829423846.html
+## Shopping List
 
- OK for air 200kHz: https://de.aliexpress.com/item/1005006007865920.html
- 
- Very small PZT only: https://de.aliexpress.com/item/1005007032482539.html
- 
- Not fully tested: https://de.aliexpress.com/item/4000389134890.html
- 
- Great for air 40kHz: https://de.aliexpress.com/item/1005006546490802.html
+**Transducers:**  
+- Best price/performance: https://www.alibaba.com/product-detail/Range-customization-lakes-river-surveys-no_1600829423846.html  
+- OK for air, 200 kHz: https://de.aliexpress.com/item/1005006007865920.html  
+- Very small PZT only: https://de.aliexpress.com/item/1005007032482539.html  
+- Not fully tested: https://de.aliexpress.com/item/4000389134890.html  
+- Great for air, also works in water, 40 kHz: https://de.aliexpress.com/item/1005006546490802.html
+- Cheap and works great in Air for 20cm, water not tested: https://de.aliexpress.com/item/32818381566.html
 
- Transformers to step up transducer voltage:
- 
- https://de.aliexpress.com/item/1005003733606845.html
+**Transformers (to step up transducer voltage):**  
+https://de.aliexpress.com/item/1005003733606845.html  
 
- Matching capacitors:
- 
- https://de.aliexpress.com/item/1005007159862392.html
- 
- Lucky Fishfinder: 
- 
- https://de.aliexpress.com/item/32711659077.html
+**Matching capacitors:**  
+https://de.aliexpress.com/item/1005007159862392.html  
 
+**Lucky Fishfinder:**  
+https://de.aliexpress.com/item/32711659077.html  
 
- # Big thanks for your support!
- www.kogger.tech
-
-
+## Big Thanks for Your Support!
+www.kogger.tech
