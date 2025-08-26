@@ -63,6 +63,41 @@ The [**Open Echo Interface Software**](TUSS4470_shield_002/echo_interface.py) al
 Live echogram in water on Python software (6x speed):  
 <img alt="Software running with live echo data" src="documentation/images/echogram_fast.gif">
 
+## Test results Baltic Sea
+Tested using a built-in 150 kHz SEAFARER transducer, powered at 20 V via an MT3608 boost converter from USB. In the plots, data capture begins at the bottom.
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="documentation/images/baltic_sea_tests/38m_range.png" alt="38m Range" width="300"/><br/>
+      <sub><b>38 m range test</b></sub>
+    </td>
+    <td align="center">
+      <img src="documentation/images/baltic_sea_tests/kiel_channel.png" alt="Kiel Channel" width="300"/><br/>
+      <sub><b>Kiel Channel sand and mud</b></sub>
+    </td>
+    <td align="center">
+      <img src="documentation/images/baltic_sea_tests/stollergrund.png" alt="Stollergrund" width="300"/><br/>
+      <sub><b>Slope near Stollergrund</b></sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="documentation/images/baltic_sea_tests/stones_sand.png" alt="Stones and Sand" width="300"/><br/>
+      <sub><b>Stones and sandy seabed</b></sub>
+    </td>
+    <td align="center">
+      <img src="documentation/images/baltic_sea_tests/fish.png" alt="Fish" width="300"/><br/>
+      <sub><b>Fish detection</b></sub>
+    </td>
+    <td align="center">
+      <img src="documentation/images/baltic_sea_tests/multi_reflections_seaweed.png" alt="Multiple Reflections" width="300"/><br/>
+      <sub><b>Multiple reflections and seaweed</b></sub>
+    </td>
+  </tr>
+  
+</table>
+
 ## Videos
 
 [![LINK TO LATEST VIDEO](https://img.youtube.com/vi/R3_NO2F7PsI/maxresdefault.jpg)](https://www.youtube.com/watch?v=R3_NO2F7PsI)
