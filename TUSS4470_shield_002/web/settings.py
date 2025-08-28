@@ -23,8 +23,8 @@ class Settings(BaseModel):
     serial_port: str = "init"
     baud_rate: int = 250000
     num_samples: int = 1800
-    blindzone_sample_end: int = 450
-    threshold_value: int = 20
+    blindzone_sample_end: int = 150
+    threshold_value: int = 25
     colormap: str = "viridis"
     transducer_depth: float = Field(default=0.0, ge=0)
     draft: float = Field(default=0.0, ge=0)
