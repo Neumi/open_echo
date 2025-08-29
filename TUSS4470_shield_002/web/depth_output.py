@@ -174,7 +174,7 @@ class SignalKOutput(OutputMethod):
         try:
             # Format as SignalK delta message for depth
             depth_m = self._current_value
-            values = [{"path": "self.environment.depth.belowTransducer", "value": depth_m}]
+            values = [{"path": "environment.depth.belowTransducer", "value": depth_m}]
 
             # Add water depth and depth below keel if settings are present
             transducer_depth = getattr(self.settings, "transducer_depth", None)
@@ -187,14 +187,14 @@ class SignalKOutput(OutputMethod):
             if transducer_depth:
                 values.append(
                     {
-                        "path": "self.environment.depth.belowSurface",
+                        "path": "environment.depth.belowSurface",
                         "value": depth_m + transducer_depth,
                     }
                 )
                 if draft:
                     values.append(
                         {
-                            "path": "self.environment.depth.belowKeel",
+                            "path": "environment.depth.belowKeel",
                             "value": depth_m + transducer_depth - draft,
                         }
                     )
