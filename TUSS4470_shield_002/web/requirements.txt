@@ -3,7 +3,13 @@
 annotated-types==0.7.0
     # via pydantic
 anyio==4.10.0
-    # via starlette
+    # via
+    #   httpx
+    #   starlette
+certifi==2025.8.3
+    # via
+    #   httpcore
+    #   httpx
 click==8.2.1
     # via uvicorn
 colorama==0.4.6 ; sys_platform == 'win32'
@@ -11,9 +17,17 @@ colorama==0.4.6 ; sys_platform == 'win32'
 fastapi==0.116.1
     # via open-echo-web
 h11==0.16.0
-    # via uvicorn
+    # via
+    #   httpcore
+    #   uvicorn
+httpcore==1.0.9
+    # via httpx
+httpx==0.28.1
+    # via open-echo-web
 idna==3.10
-    # via anyio
+    # via
+    #   anyio
+    #   httpx
 jinja2==3.1.6
     # via open-echo-web
 markupsafe==3.0.2

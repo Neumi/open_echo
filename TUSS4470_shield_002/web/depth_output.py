@@ -257,7 +257,7 @@ class NMEA0183Output(OutputMethod):
                 return f"*{checksum:02X}"
 
             # DBT: Depth Below Transducer
-            dbt_sentence = f"DBT,{depth_ft:.1f},f,{depth_m:.1f},M,{depth_fathoms:.1f},F"
+            dbt_sentence = f"SDDBT,{depth_ft:.1f},f,{depth_m:.1f},M,{depth_fathoms:.1f},F"
             dbt_full = f"${dbt_sentence}{calculate_checksum(dbt_sentence)}\r\n"
 
             self._writer.write(dbt_full.encode())
@@ -275,7 +275,7 @@ class NMEA0183Output(OutputMethod):
 
             # DPT: Depth + offset (below surface)
             dpt_depth = depth_m + nmea_offset
-            dpt_sentence = f"DPT,{dpt_depth:.1f},{nmea_offset:.1f}"
+            dpt_sentence = f"SDDPT,{dpt_depth:.1f},{nmea_offset:.1f}"
             dpt_full = f"${dpt_sentence}{calculate_checksum(dpt_sentence)}\r\n"
 
             self._writer.write(dpt_full.encode("ascii"))
