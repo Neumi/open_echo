@@ -37,6 +37,7 @@ class Settings(BaseModel):
     nmea_address: str = "localhost:10110"
     nmea_offset: NMEAOffset | None = None
     override_detected_depth: bool = False
+    signalk_token: str | None = None
 
     @field_validator("colormap")
     def validate_colormap(cls, v):
@@ -62,3 +63,14 @@ class Settings(BaseModel):
         if self.nmea_enable:
             methods.append("nmea0183")
         return methods
+
+    def save(self, filename=".settings.json"):
+        with open(filename, "w", encoding="utf-8") as f:
+            f.write(self.model_dump_json(indent=2))
+
+    @classmethod
+    def load(cls, filename=".settings.json"):
+        with open(filename, "r", encoding="utf-8") as f:
+            data = f.read()
+        
+        return cls.model_validate_json(data)

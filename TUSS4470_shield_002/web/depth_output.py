@@ -93,7 +93,6 @@ class SignalKOutput(OutputMethod):
     def __init__(self, settings: Settings):
         super().__init__(settings)
         self._ws = None
-        self._token = None
         self._access_request_ongoing = False
 
         self.settings = settings
@@ -114,7 +113,7 @@ class SignalKOutput(OutputMethod):
             while self._access_request_ongoing:
                 await asyncio.sleep(0.1)
 
-        if self._token is None:
+        if self.settings.signalk_token is None:
             self._access_request_ongoing = True
             uri = getattr(self.settings, "signalk_address", None)
             if not uri:
@@ -151,10 +150,11 @@ class SignalKOutput(OutputMethod):
                 if access_request_response["permission"] != "APPROVED":
                     raise ValueError(f"SignalK access request not approved: {access_request_response['permission']}")
 
-                self._token = access_request_response.get("token")
+                self.settings.signalk_token = access_request_response.get("token")
+                self.settings.save()
             self._access_request_ongoing = False
 
-        return self._token
+        return self.settings.signalk_token
 
         
 

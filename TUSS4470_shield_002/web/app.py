@@ -39,15 +39,35 @@ echo_reader = EchoReader(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    try:
+        await update_settings(Settings.load())
+    except Exception as e:
+        log.error(f"Failed to load settings: {e}")
+
     with output_manager, echo_reader:
         yield
 
 
 app = FastAPI(lifespan=lifespan)
-templates = Jinja2Templates(directory="templates")
 app.state.settings = Settings()
+templates = Jinja2Templates(directory="templates")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+async def update_settings(new_settings: Settings):
+    settings = Settings.model_validate(
+        {
+            **app.state.settings.model_dump(exclude_none=True, exclude_unset=True, exclude_defaults=True),
+            **new_settings.model_dump(exclude_none=True, exclude_unset=True, exclude_defaults=True),
+        }
+    )
+
+    echo_reader.update_settings(settings)
+    await output_manager.update_settings(settings)
+    app.state.settings = settings
+
+    app.state.settings.save()
+
 
 
 @app.websocket("/ws")
@@ -86,7 +106,5 @@ async def config(request: Request):
 
 @app.post("/config")
 async def config_post(request: Request, new_settings: Settings = Form(...)):
-    echo_reader.update_settings(new_settings)
-    await output_manager.update_settings(new_settings)
-    app.state.settings = new_settings
+    await update_settings(new_settings)
     return RedirectResponse("/", status_code=303)
