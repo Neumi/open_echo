@@ -39,7 +39,7 @@ echo_reader = EchoReader(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    with echo_reader:
+    with output_manager, echo_reader:
         yield
 
 

@@ -1,8 +1,10 @@
 from abc import ABC, abstractmethod
 import asyncio
 import logging
+from httpx import AsyncClient
 import websockets
-from typing import Any, Optional
+import json
+from typing import Any
 
 from settings import NMEAOffset, Settings
 
@@ -25,7 +27,7 @@ class OutputManager:
         self.settings = new_settings
 
         for output_class in self._output_classes:
-            output_class.stop()
+            await output_class.stop()
 
         new_output_classes = [
             output_methods[method]
@@ -41,7 +43,8 @@ class OutputManager:
     async def output(self):
         """Override this in subclasses to define output behavior."""
         for output_class in self._output_classes:
-            await output_class.output()
+            if output_class._current_value is not None:
+                await output_class.output()
 
     async def _run(self):
         while True:
@@ -67,12 +70,12 @@ class OutputMethod(ABC):
         self._current_value = None
 
     @abstractmethod
-    def start(self):
+    async def start(self):
         """Start the output method."""
         pass
 
     @abstractmethod
-    def stop(self):
+    async def stop(self):
         """Stop the output method."""
         pass
 
@@ -90,16 +93,70 @@ class SignalKOutput(OutputMethod):
     def __init__(self, settings: Settings):
         super().__init__(settings)
         self._ws = None
-        self._ws_task: Optional[asyncio.Task] = None
+        self._token = None
+        self._access_request_ongoing = False
 
         self.settings = settings
 
     async def start(self):
-        # Use signalk_address from settings, which should be a full ws://host:port URI
+        # Use signalk_address from settings, which should be a full host:port URI
         uri = getattr(self.settings, "signalk_address", None)
         if not uri:
             raise ValueError("SignalK websocket address not set in settings")
-        self._ws = await websockets.connect(uri)
+
+        uri = uri[:-1] if uri.endswith("/") else uri
+
+        ws_uri = f"ws://{uri}/signalk/v1/stream?subscribe=none&token={await self.get_token()}"
+        self._ws = await websockets.connect(ws_uri)
+
+    async def get_token(self):
+        if self._access_request_ongoing:
+            while self._access_request_ongoing:
+                await asyncio.sleep(0.1)
+
+        if self._token is None:
+            self._access_request_ongoing = True
+            uri = getattr(self.settings, "signalk_address", None)
+            if not uri:
+                raise ValueError("SignalK websocket address not set in settings")
+
+            uri = uri[:-1] if uri.endswith("/") else uri
+
+            access_request_uri = f"http://{uri}/signalk/v1/access/requests"
+
+            async with AsyncClient() as client:
+                access_request = await client.post(access_request_uri, json={
+                    "clientId": "f6b20288-5ecf-4daa-9a13-1594bc145abe",
+                    "description": "OpenEcho Depth Sounder"
+                })
+                access_request.raise_for_status()
+
+                poll_path = access_request.json().get("href")
+                if not poll_path:
+                    raise ValueError("Failed to get poll URI from access request")
+            
+                poll_uri = f"http://{uri}{poll_path}"
+
+                # Poll until approved (this is a simple implementation; consider adding timeout/retry)
+                state = access_request.json().get("state")
+                while state == "PENDING":
+                    poll_response = await client.get(poll_uri)
+                    state = poll_response.json().get("state")
+                    await asyncio.sleep(1)
+                
+                if state != "COMPLETED":
+                    raise ValueError(f"Unknown access request state: {state}")
+
+                access_request_response = poll_response.json().get("accessRequest")
+                if access_request_response["permission"] != "APPROVED":
+                    raise ValueError(f"SignalK access request not approved: {access_request_response['permission']}")
+
+                self._token = access_request_response.get("token")
+            self._access_request_ongoing = False
+
+        return self._token
+
+        
 
     async def stop(self):
         if self._ws:
@@ -107,54 +164,47 @@ class SignalKOutput(OutputMethod):
             self._ws = None
 
     async def output(self):
-        if self._ws is None or self._ws.closed:
+        if self._ws is None:
             try:
+                log.info("Reconnecting to SignalK server...")
                 await self.start()
             except Exception as e:
-                print(f"SignalK connection error: {e}")
+                log.error(f"SignalK connection error: {e}")
                 return
         try:
             # Format as SignalK delta message for depth
             depth_m = self._current_value
-            values = [{"path": "environment.depth.belowTransducer", "value": depth_m}]
+            values = [{"path": "self.environment.depth.belowTransducer", "value": depth_m}]
 
             # Add water depth and depth below keel if settings are present
             transducer_depth = getattr(self.settings, "transducer_depth", None)
             draft = getattr(self.settings, "draft", None)
-            try:
-                transducer_depth = float(transducer_depth)
-            except (TypeError, ValueError):
-                transducer_depth = None
-            try:
-                draft = float(draft)
-            except (TypeError, ValueError):
-                draft = None
 
             # SignalK paths:
             # - environment.depth.belowTransducer
             # - environment.depth.belowSurface (actual water depth)
             # - environment.depth.belowKeel (depth under keel)
-            if transducer_depth > 0.0:
+            if transducer_depth:
                 values.append(
                     {
-                        "path": "environment.depth.belowSurface",
+                        "path": "self.environment.depth.belowSurface",
                         "value": depth_m + transducer_depth,
                     }
                 )
-                if draft > 0.0:
+                if draft:
                     values.append(
                         {
-                            "path": "environment.depth.belowKeel",
+                            "path": "self.environment.depth.belowKeel",
                             "value": depth_m + transducer_depth - draft,
                         }
                     )
 
             delta = {"updates": [{"values": values}]}
-            import json
 
+            log.debug("Send signalk delta: %s", delta)
             await self._ws.send(json.dumps(delta))
         except Exception as e:
-            print(f"SignalK send error: {e}")
+            log.error(f"SignalK send error: {e}")
             # Attempt reconnect next time
             if self._ws:
                 await self.stop()
@@ -168,7 +218,7 @@ class NMEA0183Output(OutputMethod):
         self.settings = settings
 
     async def start(self):
-        address = getattr(self.settings, "nmea0183_address", None)
+        address = getattr(self.settings, "nmea_address", None)
         if not address:
             raise ValueError("NMEA0183 TCP address not set in settings")
         # address should be in the form 'host:port'
@@ -228,7 +278,7 @@ class NMEA0183Output(OutputMethod):
             dpt_sentence = f"DPT,{dpt_depth:.1f},{nmea_offset:.1f}"
             dpt_full = f"${dpt_sentence}{calculate_checksum(dpt_sentence)}\r\n"
 
-            self._writer.write(dpt_full.encode())
+            self._writer.write(dpt_full.encode("ascii"))
 
             await self._writer.drain()
         except Exception as e:

@@ -32,9 +32,9 @@ class Settings(BaseModel):
     medium: Medium = Medium.WATER
     dynamic_resolution: bool = False
     signalk_enable: bool = False
-    signalk_address: str = "ws://localhost:3000"
+    signalk_address: str = "localhost:3000"
     nmea_enable: bool = False
-    nmea_address: str = "http://localhost:10110"
+    nmea_address: str = "localhost:10110"
     nmea_offset: NMEAOffset | None = None
     override_detected_depth: bool = False
 
