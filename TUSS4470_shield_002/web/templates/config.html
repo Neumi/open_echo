@@ -130,16 +130,16 @@
                 <input name="signalk_address" type="text" placeholder="ws://host:port" value="{{ settings.signalk_address|default('ws://localhost:3000/signalk/v1/stream') }}" style="margin-left:12px; width:60%;">
             </label>
             <label style="display:flex; align-items:center;">
-                <input type="checkbox" name="nmea0183_enable" style="width:auto; margin-right:8px;" {% if settings.nmea0183_enable %}checked{% endif %}>
+                <input type="checkbox" name="nmea_enable" style="width:auto; margin-right:8px;" {% if settings.nmea_enable %}checked{% endif %}>
                 NMEA0183 (TCP) Output
-                <input name="nmea0183_address" type="text" placeholder="host:port" value="{{ settings.nmea0183_address|default('localhost:10110') }}" style="margin-left:12px; width:60%;">
+                <input name="nmea_address" type="text" placeholder="host:port" value="{{ settings.nmea_address|default('localhost:10110') }}" style="margin-left:12px; width:60%;">
             </label>
             <label style="margin-left:28px; margin-top:8px;">
                 DPT Sentence Type
                 <div style="font-size:12px; color:#aaa; margin-bottom:2px;">
                     <em>DBT and DPT are always sent. DPT offsets require setting transducer depth and draft.</em>
                 </div>
-                <select name="nmea0183_offset" style="margin-top:4px;">
+                <select name="nmea_offset" style="margin-top:4px;">
                     <option value="to_transducer" {% if settings.nmea0183_depth_type == 'transducer' %}selected{% endif %}>To Transducer</option>
                     <option value="to_surface" {% if settings.nmea0183_depth_type == 'surface' %}selected{% endif %}>To Surface</option>
                     <option value="to_keel" {% if settings.nmea0183_depth_type == 'keel' %}selected{% endif %}>To Keel</option>
