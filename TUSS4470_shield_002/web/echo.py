@@ -132,15 +132,15 @@ class EchoReader:
             log.warning(f"Could not send settings to Arduino: {e}")
 
     def detect_depth_index(self, values: np.ndarray[float]) -> int:
-        # Apply gaussian smoothing then peak detection to find depth.
-        values[: self.settings.blindzone_sample_end] = 0  # Zero out blind zone
+        values_smooth = gaussian_filter1d(values[self.settings.blindzone_sample_end:], sigma=2)  # try 2–4
+        derivative = np.gradient(values_smooth)
+        rising_edges = np.array(derivative > self.settings.depth_detection_threshold).nonzero()[0]
+        if len(rising_edges):
+            ground = rising_edges[0] + self.settings.blindzone_sample_end
+        else:
+            ground = -1
 
-        values_smooth = gaussian_filter1d(values, sigma=3)  # try 2–4
-        peaks, props = find_peaks(values_smooth, prominence=0.8, distance=30)
-
-        if peaks:
-            return peaks[0]  # Return the first strong peak
-        return -1  # No peak found
+        return ground
 
     async def aread_echo(self, reader: asyncio.StreamReader):
         result = await self.read_packet(reader)

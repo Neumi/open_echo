@@ -99,6 +99,10 @@
                     <input type="checkbox" id="override_detected_depth" name="override_detected_depth" style="width:auto; margin-right:8px;" {% if settings.override_detected_depth %}checked{% endif %}>
                     Override Depth Detection
                 </label>
+                <label>
+                    Depth Detection Threshold
+                    <input name="depth_detection_threshold" type="number" step="any" min="0" required value="{{ settings.depth_detection_threshold }}">
+                </label>
             </details>
         </details>
         <details style="margin-bottom:16px;">
