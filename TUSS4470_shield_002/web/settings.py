@@ -38,6 +38,7 @@ class Settings(BaseModel):
     nmea_offset: NMEAOffset | None = None
     override_detected_depth: bool = False
     signalk_token: str | None = None
+    depth_detection_threshold: float = Field(default=2.0, ge=0)
 
     @field_validator("colormap")
     def validate_colormap(cls, v):

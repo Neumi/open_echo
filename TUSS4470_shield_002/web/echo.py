@@ -26,6 +26,7 @@ class EchoReader:
         self.data_callback = data_callback
         self.depth_callback = depth_callback
         self._task: asyncio.Task | None = None
+        self.last_depth_index = 0
 
     def update_settings(self, new_settings: Settings):
         log.info("EchoReader updating settings...")
@@ -132,15 +133,16 @@ class EchoReader:
             log.warning(f"Could not send settings to Arduino: {e}")
 
     def detect_depth_index(self, values: np.ndarray[float]) -> int:
-        # Apply gaussian smoothing then peak detection to find depth.
-        values[: self.settings.blindzone_sample_end] = 0  # Zero out blind zone
+        values_smooth = gaussian_filter1d(values[self.settings.blindzone_sample_end:], sigma=1)  # try 2–4
+        derivative = np.gradient(values_smooth)
+        log.info(f"Derivative max: {np.max(derivative)}, min: {np.min(derivative)}")
+        rising_edges = np.array(derivative > self.settings.depth_detection_threshold).nonzero()[0]
+        if len(rising_edges):
+            ground = rising_edges[0] + self.settings.blindzone_sample_end
+        else:
+            ground = -1
 
-        values_smooth = gaussian_filter1d(values, sigma=3)  # try 2–4
-        peaks, props = find_peaks(values_smooth, prominence=0.8, distance=30)
-
-        if peaks:
-            return peaks[0]  # Return the first strong peak
-        return -1  # No peak found
+        return ground
 
     async def aread_echo(self, reader: asyncio.StreamReader):
         result = await self.read_packet(reader)
@@ -149,6 +151,10 @@ class EchoReader:
 
             if self.settings.override_detected_depth:
                 depth_index = self.detect_depth_index(values)
+                if depth_index == -1:
+                    depth_index = self.last_depth_index
+                else:
+                    self.last_depth_index = depth_index
 
             resolution = self.settings.resolution
             depth = depth_index * (resolution / 100)  # Convert to meters
