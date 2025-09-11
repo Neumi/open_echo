@@ -151,7 +151,9 @@ void setup()
   tuss4470Write(0x17, THRESHOLD_VALUE); // enable threshold detection on OUT_4
 
   // Set up timer for transducer burst
-  burstTimer.begin(TIMER_MODE_PERIODIC, GPT_TIMER, 0, DRIVE_FREQUENCY * 2, 0.0f, burstCallback);
+  uint8_t timerType = GPT_TIMER;                 // get_available_timer needs a modifiable lvalue reference
+  uint8_t channel = FspTimer::get_available_timer(timerType); // returns -1 if none available
+  burstTimer.begin(TIMER_MODE_PERIODIC, timerType, channel, DRIVE_FREQUENCY * 2, 0.0f, burstCallback);
   burstTimer.setup_overflow_irq();
   burstTimer.open();
 
