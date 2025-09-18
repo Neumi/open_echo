@@ -1,11 +1,5 @@
 #include <SPI.h>
-
-#define ARDUINO_R4 false
-
-#if ARDUINO_R4
-  #include <Arduino.h>
-  #include <FspTimer.h>
-#endif
+#include "FspTimer.h"
 
 // Pin configuration
 const int SPI_CS = 10;
@@ -15,11 +9,9 @@ const int O3 = 3;
 const int O4 = 2;
 const int analogIn = A0;
 
-
 // Number of ADC samples to take per measurement cycle
 // Each sample takes approximately 13.2 microseconds
 // This value must match the number of samples expected by the Python visualization tool
-// Max 1800 on R3, ~10000 on R4
 #define NUM_SAMPLES 1800
 
 // Number of initial samples to ignore after sending the transducer pulse
@@ -30,39 +22,33 @@ const int analogIn = A0;
 // The first echo stronger than this value (after the blind zone) is considered the bottom
 #define THRESHOLD_VALUE 0x19
 
-
 // ---------------------- DRIVE FREQUENCY SETTINGS ----------------------
-// Sets the output frequency of the ultrasonic transducer
-// Uses DRIVE_FREQUENCY directly for R4, uses divider for R3
-#define DRIVE_FREQUENCY 40000
-const int DRIVE_FREQUENCY_TIMER_DIVIDER = (16000000 / (2 * DRIVE_FREQUENCY)) - 1;
+// Sets the output frequency of the ultrasonic transducer by configuring FspTimer
+#define DRIVE_FREQUENCY 150000
 
 // ---------------------- BANDPASS FILTER SETTINGS ----------------------
 // Sets the digital band-pass filter frequency on the TUSS4470 driver chip
 // This should roughly match the transducer drive frequency
 // For additional register values, see TUSS4470 datasheet, Table 7.1 (pages 17–18)
-#define FILTER_FREQUENCY_REGISTER 0x00 // 40 kHz
+// #define FILTER_FREQUENCY_REGISTER 0x00 // 40 kHz
 // #define FILTER_FREQUENCY_REGISTER 0x09 // 68 kHz
 // #define FILTER_FREQUENCY_REGISTER 0x10 // 100 kHz
-// #define FILTER_FREQUENCY_REGISTER 0x18 // 151 kHz
+#define FILTER_FREQUENCY_REGISTER 0x18 // 151 kHz
 // #define FILTER_FREQUENCY_REGISTER 0x1E // 200 kHz
 
-#if ARDUINO_R4
-  // ---------------------- ADC SETUP FOR ARDUINO R4 ----------------------
-  // Defines addresses and convenience functions for RA4M1 ADC
-  // Base addresses for ADC (from RA4M1 hardware manual)
-  // Taken from https://github.com/TriodeGirl/Arduino-UNO-R4-code-DAC-ADC-Ints-Fast_Pins/blob/main/Arduino_UNO_R4_Interrupts_ADC_and_DAC_1.ino
-  #define MSTP_BASE   0x40040000u
-  #define MSTPCRD    (*(volatile uint32_t *)(MSTP_BASE + 0x7008u))
+// ---------------------- ADC SETUP ----------------------
+// Defines addresses and convenience functions for RA4M1 ADC
+// Base addresses for ADC (from RA4M1 hardware manual)
+// Taken from https://github.com/TriodeGirl/Arduino-UNO-R4-code-DAC-ADC-Ints-Fast_Pins/blob/main/Arduino_UNO_R4_Interrupts_ADC_and_DAC_1.ino
+#define MSTP_BASE   0x40040000u
+#define MSTPCRD    (*(volatile uint32_t *)(MSTP_BASE + 0x7008u))
 
-  #define ADC_BASE    0x40050000u
-  #define ADCSR      (*(volatile uint16_t *)(ADC_BASE + 0xC000u))
-  #define ADANSA0    (*(volatile uint16_t *)(ADC_BASE + 0xC004u))
-  #define ADCER      (*(volatile uint16_t *)(ADC_BASE + 0xC00Eu))
-  #define ADSTRGR    (*(volatile uint16_t *)(ADC_BASE + 0xC010u)) // Not currently used, could be used to trigger ADC from timer. If combined with DMA, could be even faster.
-  #define ADDR09     (*(volatile uint16_t *)(ADC_BASE + 0xC020u + 18)) // channel AN09 (A0 pin)
-#endif
-
+#define ADC_BASE    0x40050000u
+#define ADCSR      (*(volatile uint16_t *)(ADC_BASE + 0xC000u))
+#define ADANSA0    (*(volatile uint16_t *)(ADC_BASE + 0xC004u))
+#define ADCER      (*(volatile uint16_t *)(ADC_BASE + 0xC00Eu))
+#define ADSTRGR    (*(volatile uint16_t *)(ADC_BASE + 0xC010u)) // Not currently used, could be used to trigger ADC from timer. If combined with DMA, could be even faster.
+#define ADDR09     (*(volatile uint16_t *)(ADC_BASE + 0xC020u + 18)) // channel AN09 (A0 pin)
 
 byte misoBuf[2];  // SPI receive buffer
 byte inByteArr[2];  // SPI transmit buffer
@@ -77,47 +63,16 @@ int vDrv = 0;
 volatile bool detectedDepth = false;  // Condition flag
 volatile int depthDetectSample = 0;
 
-#if ARDUINO_R4
-  // --- Burst Control Timer ---
-  FspTimer burstTimer;
+// --- Burst Control Timer ---
+FspTimer burstTimer;
 
-  void burstCallback(timer_callback_args_t *) {
-    digitalWrite(IO2, !digitalRead(IO2));
-    pulseCount++;
-    if (pulseCount >= 32) {
-      burstTimer.stop();
-    }
+void burstCallback(timer_callback_args_t *) {
+  digitalWrite(IO2, !digitalRead(IO2));
+  pulseCount++;
+  if (pulseCount >= 32) {
+    burstTimer.stop();
   }
-#else
-
-  ISR(TIMER1_COMPA_vect)
-  {
-    pulseCount++;
-    if (pulseCount >= 32)
-    {
-      stopTransducer();
-      pulseCount = 0;  // Reset counter for next cycle
-    }
-  }
-
-  void startTransducerBurst()
-  {
-    TCCR1A = _BV(COM1A0);  // Toggle OC1A (pin 9) on Compare Match
-    TCCR1B = _BV(WGM12) | _BV(CS10);  // CTC mode, no prescaler
-
-    OCR1A = DRIVE_FREQUENCY_TIMER_DIVIDER;
-
-    TIMSK1 = _BV(OCIE1A);  // Enable Timer1 Compare Match A interrupt
-  }
-
-  void stopTransducer()
-  {
-    TCCR1A = 0;
-    TCCR1B = 0;  // Stop Timer1 by clearing clock select bits
-    TIMSK1 = 0;  // Disable Timer1 interrupt
-  }
-
-#endif
+}
 
 byte tuss4470Read(byte addr) {
   inByteArr[0] = 0x80 + ((addr & 0x3F) << 1);  // Set read bit and address
@@ -175,13 +130,8 @@ void setup()
   Serial.begin(250000);
 
   SPI.begin();
-  #if ARDUINO_R4
-    SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE1)); 
-  #else
-    SPI.setBitOrder(MSBFIRST);
-    SPI.setClockDivider(SPI_CLOCK_DIV16);
-    SPI.setDataMode(SPI_MODE1);  // CPOL=0, CPHA=1
-  #endif
+  SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE1)); 
+
 
   pinMode(SPI_CS, OUTPUT);
   digitalWrite(SPI_CS, HIGH);
@@ -200,29 +150,18 @@ void setup()
   tuss4470Write(0x1A, 0x0F);  // Set burst pulses to 16
   tuss4470Write(0x17, THRESHOLD_VALUE); // enable threshold detection on OUT_4
 
-  #if ARDUINO_R4
-    // Set up timer for transducer burst
-    uint8_t timerType = GPT_TIMER;                 // get_available_timer needs a modifiable lvalue reference
-    uint8_t channel = FspTimer::get_available_timer(timerType); // returns -1 if none available
-    burstTimer.begin(TIMER_MODE_PERIODIC, timerType, channel, DRIVE_FREQUENCY * 2, 0.0f, burstCallback);
-    burstTimer.setup_overflow_irq();
-    burstTimer.open();
+  // Set up timer for transducer burst
+  uint8_t timerType = GPT_TIMER;                 // get_available_timer needs a modifiable lvalue reference
+  uint8_t channel = FspTimer::get_available_timer(timerType); // returns -1 if none available
+  burstTimer.begin(TIMER_MODE_PERIODIC, timerType, channel, DRIVE_FREQUENCY * 2, 0.0f, burstCallback);
+  burstTimer.setup_overflow_irq();
+  burstTimer.open();
 
-    // Set up ADC
-    MSTPCRD &= ~(1u << 16);// Enable module
-    ADANSA0 = (1u << 9); // Select channel AN09 only
-    ADCER = 0x0000;// 12-bit, right align (ADCER default is fine; set explicitly = 0)
-    ADCSR &= ~(1u << 5); // Software trigger mode (TRGE=0), single scan (ADCS=00)
-  #else
-    // Set up ADC
-    ADCSRA = (1 << ADEN)  |  // Enable ADC
-            (1 << ADPS2);   // Set prescaler to 16 (16 MHz / 16 = 1 MHz ADC clock)
-    ADMUX = (1 << REFS0);    // Reference voltage: AVcc
-    // Input channel: ADC0 (default)
-    ADCSRB = 0;              // Free-running mode
-    ADCSRA |= (1 << ADATE);  // Enable auto-trigger (free-running)
-    ADCSRA |= (1 << ADSC);   // Start conversion
-  #endif
+  // Set up ADC
+  MSTPCRD &= ~(1u << 16);// Enable module
+  ADANSA0 = (1u << 9); // Select channel AN09 only
+  ADCER = 0x0000;// 12-bit, right align (ADCER default is fine; set explicitly = 0)
+  ADCSR &= ~(1u << 5); // Software trigger mode (TRGE=0), single scan (ADCS=00)
 }
 
 void loop()
@@ -230,27 +169,16 @@ void loop()
   // Trigger time-of-flight measurement
   tuss4470Write(0x1B, 0x01);
 
-  #if ARDUINO_R4
-    burstTimer.start();
-  #else
-    startTransducerBurst();
-  #endif
+  burstTimer.start();
 
   //int startTime = micros();
 
   // Read analog values from A0
+  sampleIndex = 0;
   for (sampleIndex = 0; sampleIndex < NUM_SAMPLES; sampleIndex++) {
-    #if ARDUINO_R4
-      ADCSR |= (1u << 15);        // Set ADST (start)
-      while (ADCSR & (1u << 15));  // Wait while ADST remains 1
-      analogValues[sampleIndex] = ADDR09 >> 4; // Read ADC value, 12 bit >> 8 bit
-
-      delayMicroseconds(11.5);
-    #else
-      while (!(ADCSRA & (1 << ADIF))); // Wait for conversion to complete
-      ADCSRA |= (1 << ADIF);           // Clear the interrupt flag
-      analogValues[sampleIndex] = ADC >> 2;           // Read ADC value
-    #endif
+    ADCSR |= (1u << 15);        // Set ADST (start)
+    while (ADCSR & (1u << 15));  // Wait while ADST remains 1
+    analogValues[sampleIndex] = ADDR09 >> 4; // Read ADC value, 12 bit >> 8 bit
 
     if (sampleIndex == BLINDZONE_SAMPLE_END) {
       detectedDepth = false;
