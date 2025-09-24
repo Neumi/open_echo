@@ -35,7 +35,7 @@ SAMPLE_TIME = 13.2e-6  # 13.2 microseconds in seconds Atmega328 sample speed
 DEFAULT_LEVELS = (0, 256)  # Expected data range
 
 SAMPLE_RESOLUTION = (SPEED_OF_SOUND * SAMPLE_TIME * 100) / 2  # cm per row (0.99 cm per row)
-PACKET_SIZE = 1 + 6 + 2 * NUM_SAMPLES + 1  # header + payload + checksum
+PACKET_SIZE = 1 + 6 + NUM_SAMPLES + 1  # header + payload + checksum
 MAX_DEPTH = NUM_SAMPLES * SAMPLE_RESOLUTION  # Total depth in cm
 depth_labels = {int(i / SAMPLE_RESOLUTION): f"{i / 100}" for i in range(0, int(MAX_DEPTH), Y_LABEL_DISTANCE)}
 
@@ -45,10 +45,10 @@ def read_packet(ser):
         if header != b'\xAA':
             continue  # Wait for the start byte
 
-        payload = ser.read(6 + 2 * NUM_SAMPLES)
+        payload = ser.read(6 + NUM_SAMPLES)
         checksum = ser.read(1)
 
-        if len(payload) != 6 + 2 * NUM_SAMPLES or len(checksum) != 1:
+        if len(payload) != 6 + NUM_SAMPLES or len(checksum) != 1:
             continue  # Incomplete packet
 
         # Verify checksum
@@ -56,7 +56,7 @@ def read_packet(ser):
         for byte in payload:
             calc_checksum ^= byte
         if calc_checksum != checksum[0]:
-            print("⚠️ Checksum mismatch")
+            print("⚠️ Checksum mismatch: {} != {}".format(calc_checksum, checksum[0]))
             continue
 
         # Unpack payload
@@ -65,7 +65,7 @@ def read_packet(ser):
 
         # print(depth)
 
-        samples = struct.unpack(f">{NUM_SAMPLES}H", payload[6:])
+        samples = struct.unpack(f">{NUM_SAMPLES}B", payload[6:])
 
         temperature = temp_scaled / 100.0
         drive_voltage = vDrv_scaled / 100.0

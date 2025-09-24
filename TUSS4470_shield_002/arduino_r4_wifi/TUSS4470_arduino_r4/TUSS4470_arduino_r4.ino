@@ -1,5 +1,12 @@
 #include <SPI.h>
 #include "FspTimer.h"
+#include <WiFiS3.h>
+#include "wifi_server.h"
+#include <ctype.h>
+#include <string.h>
+#include <stdlib.h>
+#include "settings.h"
+#include "routes.h"
 
 // Pin configuration
 const int SPI_CS = 10;
@@ -8,33 +15,6 @@ const int IO2 = 9;
 const int O3 = 3;
 const int O4 = 2;
 const int analogIn = A0;
-
-// Number of ADC samples to take per measurement cycle
-// Each sample takes approximately 13.2 microseconds
-// This value must match the number of samples expected by the Python visualization tool
-#define NUM_SAMPLES 1800
-
-// Number of initial samples to ignore after sending the transducer pulse
-// These ignored samples represent the "blind zone" where the transducer is still ringing
-#define BLINDZONE_SAMPLE_END 450
-
-// Threshold level for detecting the bottom echo
-// The first echo stronger than this value (after the blind zone) is considered the bottom
-#define THRESHOLD_VALUE 0x19
-
-// ---------------------- DRIVE FREQUENCY SETTINGS ----------------------
-// Sets the output frequency of the ultrasonic transducer by configuring FspTimer
-#define DRIVE_FREQUENCY 150000
-
-// ---------------------- BANDPASS FILTER SETTINGS ----------------------
-// Sets the digital band-pass filter frequency on the TUSS4470 driver chip
-// This should roughly match the transducer drive frequency
-// For additional register values, see TUSS4470 datasheet, Table 7.1 (pages 17–18)
-// #define FILTER_FREQUENCY_REGISTER 0x00 // 40 kHz
-// #define FILTER_FREQUENCY_REGISTER 0x09 // 68 kHz
-// #define FILTER_FREQUENCY_REGISTER 0x10 // 100 kHz
-#define FILTER_FREQUENCY_REGISTER 0x18 // 151 kHz
-// #define FILTER_FREQUENCY_REGISTER 0x1E // 200 kHz
 
 // ---------------------- ADC SETUP ----------------------
 // Defines addresses and convenience functions for RA4M1 ADC
@@ -53,7 +33,20 @@ const int analogIn = A0;
 byte misoBuf[2];  // SPI receive buffer
 byte inByteArr[2];  // SPI transmit buffer
 
-byte analogValues[NUM_SAMPLES];
+struct __attribute__((packed)) Frame {
+  uint8_t  start = 0xAA;
+  uint16_t  depth;            
+  int16_t  temp_scaled;     
+  uint16_t vDrv_scaled;     
+  uint8_t  samples[NUM_SAMPLES];
+  uint8_t  checksum;         
+};
+
+static Frame frame;  // Data frame to send over WebSocket
+static uint8_t samplesXor = 0;   // Accumulate XOR while sampling
+
+volatile long lastRunTime = 0;
+
 volatile int pulseCount = 0;
 volatile int sampleIndex = 0;
 
@@ -162,77 +155,97 @@ void setup()
   ADANSA0 = (1u << 9); // Select channel AN09 only
   ADCER = 0x0000;// 12-bit, right align (ADCER default is fine; set explicitly = 0)
   ADCSR &= ~(1u << 5); // Software trigger mode (TRGE=0), single scan (ADCS=00)
+
+  // Configure routes
+  registerRoutes();
+
+  // Start WiFi + server + websocket via module
+  wifiSetup(WIFI_SSID, WIFI_PASS);
+}
+
+void sendData() {
+  // Header fields
+  frame.depth = (uint16_t)depthDetectSample;
+  frame.temp_scaled = (int16_t)(temperature * 100.0f);
+  frame.vDrv_scaled = (uint16_t)(vDrv * 100);
+
+  // Compute checksum (XOR of depth bytes, temp bytes, vDrv bytes, all samples)
+  uint8_t cs = 0;
+  // depth
+  cs ^= (uint8_t)(frame.depth & 0xFF);
+  cs ^= (uint8_t)(frame.depth >> 8);
+  // temp
+  cs ^= (uint8_t)(frame.temp_scaled & 0xFF);
+  cs ^= (uint8_t)(frame.temp_scaled >> 8);
+  // vDrv
+  cs ^= (uint8_t)(frame.vDrv_scaled & 0xFF);
+  cs ^= (uint8_t)(frame.vDrv_scaled >> 8);
+  // samples (already accumulated)
+  cs ^= samplesXor;
+  frame.checksum = cs;
+
+  // Total length (packed, known)
+  const size_t len = 1 + 2 + 2 + 2 + NUM_SAMPLES + 1;
+
+  Serial.write(reinterpret_cast<uint8_t*>(&frame), len);
+  wsBroadcastBIN(reinterpret_cast<uint8_t*>(&frame), len);
 }
 
 void loop()
 {
-  // Trigger time-of-flight measurement
-  tuss4470Write(0x1B, 0x01);
+  wifiLoop();
 
-  burstTimer.start();
+  unsigned long currentTime = millis();
+  if ((currentTime - lastRunTime) >= 250) { // Measure roughly 4x per second
+    lastRunTime = currentTime;
+    Serial.print("Run time: "); Serial.println(lastRunTime);
 
-  //int startTime = micros();
+    // Trigger time-of-flight measurement
+    tuss4470Write(0x1B, 0x01);
 
-  // Read analog values from A0
-  sampleIndex = 0;
-  for (sampleIndex = 0; sampleIndex < NUM_SAMPLES; sampleIndex++) {
-    ADCSR |= (1u << 15);        // Set ADST (start)
-    while (ADCSR & (1u << 15));  // Wait while ADST remains 1
-    analogValues[sampleIndex] = ADDR09 >> 4; // Read ADC value, 12 bit >> 8 bit
+    burstTimer.start();
 
-    if (sampleIndex == BLINDZONE_SAMPLE_END) {
-      detectedDepth = false;
+    //int startTime = micros();
+
+    // Read analog values from A0
+    sampleIndex = 0;
+    samplesXor = 0;
+    for (sampleIndex = 0; sampleIndex < NUM_SAMPLES; sampleIndex++) {
+      ADCSR |= (1u << 15);        // Set ADST (start)
+      while (ADCSR & (1u << 15));  // Wait while ADST remains 1
+      uint8_t v = ADDR09 >> 4; // Read ADC value, 12 bit >> 8 bit
+      frame.samples[sampleIndex] = v; 
+      samplesXor ^= v; // Accumulate XOR for checksum
+
+      if (sampleIndex == BLINDZONE_SAMPLE_END) {
+        detectedDepth = false;
+      }
+
+      delayMicroseconds(11.5);
     }
+    //int runTime = micros() - startTime;
+
+    // Stop time-of-flight measurement
+    tuss4470Write(0x1B, 0x00);
+    
+    // Software gradient-based override
+    if (USE_GRADIENT_OVERRIDE) {
+      int overrideSample = -1;
+      uint8_t prev = frame.samples[BLINDZONE_SAMPLE_END];
+      for (int i = BLINDZONE_SAMPLE_END + 1; i < NUM_SAMPLES; i++) {
+        uint8_t cur = frame.samples[i];
+        uint8_t diff = cur - prev;
+        if (diff >= GRADIENT_THRESHOLD) {
+          overrideSample = i;
+          break;
+        }
+        prev = cur;
+      }
+      if (overrideSample >= 0) {
+        depthDetectSample = overrideSample;
+      }
+    }
+    
+    sendData();
   }
-  //int runTime = micros() - startTime;
-
-  // Stop time-of-flight measurement
-  tuss4470Write(0x1B, 0x00);
-  
-  sendData();
-
-  delay(10);
-}
-
-
-void sendData() {
-  Serial.write(0xAA);  // Start byte
-
-  uint8_t checksum = 0;
-
-  // Depth
-  uint8_t depthHigh = depthDetectSample >> 8;
-  uint8_t depthLow  = depthDetectSample & 0xFF;
-  Serial.write(depthHigh);
-  Serial.write(depthLow);
-  checksum ^= depthHigh ^ depthLow;
-
-  // Temperature × 100
-  int16_t temp_scaled = temperature * 100;
-  uint8_t tempHigh = temp_scaled >> 8;
-  uint8_t tempLow  = temp_scaled & 0xFF;
-  Serial.write(tempHigh);
-  Serial.write(tempLow);
-  checksum ^= tempHigh ^ tempLow;
-
-  // Drive Voltage × 100
-  uint16_t vDrv_scaled = vDrv * 100;
-  uint8_t vDrvHigh = vDrv_scaled >> 8;
-  uint8_t vDrvLow  = vDrv_scaled & 0xFF;
-  Serial.write(vDrvHigh);
-  Serial.write(vDrvLow);
-  checksum ^= vDrvHigh ^ vDrvLow;
-
-  // Analog samples directly from analogValues[]
-  // TODO: Optimize by sending raw bytes instead of splitting into high/low bytes
-  for (int i = 0; i < NUM_SAMPLES; i++) {
-    uint8_t highByte = analogValues[i] >> 8;
-    uint8_t lowByte  = analogValues[i] & 0xFF;
-    Serial.write(highByte);
-    Serial.write(lowByte);
-    checksum ^= highByte ^ lowByte;
-  }
-
-  // Send checksum
-  Serial.write(checksum);
 }
