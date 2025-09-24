@@ -5,11 +5,10 @@ It displays ultrasonic echo data in real-time using a waterfall chart visualizat
 The application is intended primarily as a testing and development tool, but is stable enough for continuous use -tested for several days on a Raspberry Pi 4 without issues.
 
 ### Key Features
-- Connects to Open Echo hardware over serial
+- Connects to Open Echo hardware over serial or UDP
 - Displays real-time and historical data in a waterfall chart
 - Auto-gain to adjust the waterfall chart colors
 - Shows detected depth, and (if supported) temperature and drive voltage (`vDRV`)
-- Supports bidirectional communication for debugging and testing
 
 > **Note**  
 > This interface is primarily intended for development and testing. It's proven stable, but not yet a polished end-user application.
