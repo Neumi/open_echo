@@ -1,7 +1,12 @@
+#include "settings.h"
 #include <SPI.h>
 #include "hardware/adc.h"
 #include "hardware/pio.h"
 #include "hardware/clocks.h"
+
+#if WIFI_ENABLED
+  #include "wifi_server.h"
+#endif
 
 // -------------------- PIN DEFINITIONS --------------------
 const int SPI_CS = 17;    // Chip select for TUSS4470
@@ -10,12 +15,18 @@ const int IO2 = 2;        // Burst output pin (transducer drive)
 const int O4 = 20;        // TUSS4470 OUT4 threshold detect input
 const int analogIn = 26;  // ADC0 (GPIO26)
 
-// -------------------- SAMPLING SETTINGS --------------------
-#define NUM_SAMPLES 5000
-#define BLINDZONE_SAMPLE_END 450
-#define THRESHOLD_VALUE 0x19
+struct __attribute__((packed)) Frame {
+  uint8_t  start = 0xAA;
+  uint16_t  depth_index;            
+  int16_t  temp_scaled;     
+  uint16_t vDrv_scaled;     
+  uint8_t  samples[NUM_SAMPLES];
+  uint8_t  checksum;         
+};
 
-uint16_t samples[NUM_SAMPLES];
+static Frame frame;  // Data frame to send over WebSocket
+static uint8_t samplesXor = 0;   // Accumulate XOR while sampling
+
 volatile bool detectedDepth = false;
 volatile int depthDetectSample = 0;
 volatile int sampleIndex = 0;
@@ -119,43 +130,110 @@ void tuss4470Write(byte addr, byte data) {
 }
 
 void sendData() {
-  Serial.write(0xAA);
+  // Header fields
+  frame.depth_index = depthDetectSample;
 
-  uint8_t checksum = 0;
+  frame.temp_scaled = (int16_t)(temperature * 100.0f);
+  frame.vDrv_scaled = (uint16_t)(vDrv * 100);
 
-  uint8_t depthHigh = depthDetectSample >> 8;
-  uint8_t depthLow = depthDetectSample & 0xFF;
-  Serial.write(depthHigh);
-  Serial.write(depthLow);
-  checksum ^= depthHigh ^ depthLow;
+  // Compute checksum (XOR of depth bytes, temp bytes, vDrv bytes, all samples)
+  uint8_t cs = 0;
+  // depth
+  cs ^= (uint8_t)(frame.depth_index & 0xFF);
+  cs ^= (uint8_t)(frame.depth_index >> 8);
+  // temp
+  cs ^= (uint8_t)(frame.temp_scaled & 0xFF);
+  cs ^= (uint8_t)(frame.temp_scaled >> 8);
+  // vDrv
+  cs ^= (uint8_t)(frame.vDrv_scaled & 0xFF);
+  cs ^= (uint8_t)(frame.vDrv_scaled >> 8);
+  // samples (already accumulated)
+  cs ^= samplesXor;
+  frame.checksum = cs;
 
-  int16_t temp_scaled = temperature * 100;
-  uint8_t tempHigh = temp_scaled >> 8;
-  uint8_t tempLow = temp_scaled & 0xFF;
-  Serial.write(tempHigh);
-  Serial.write(tempLow);
-  checksum ^= tempHigh ^ tempLow;
+  // Total length (packed, known)
+  const size_t len = 1 + 2 + 2 + 2 + NUM_SAMPLES + 1;
 
-  uint16_t vDrv_scaled = vDrv * 100;
-  uint8_t vDrvHigh = vDrv_scaled >> 8;
-  uint8_t vDrvLow = vDrv_scaled & 0xFF;
-  Serial.write(vDrvHigh);
-  Serial.write(vDrvLow);
-  checksum ^= vDrvHigh ^ vDrvLow;
+  Serial.write(reinterpret_cast<uint8_t*>(&frame), len);
 
-  for (int i = 0; i < NUM_SAMPLES; i++) {
-    uint8_t highByte = samples[i] >> 8;
-    uint8_t lowByte = samples[i] & 0xFF;
-    Serial.write(highByte);
-    Serial.write(lowByte);
-    checksum ^= highByte ^ lowByte;
+  #if WIFI_ENABLED && ENABLE_UDP_ECHO
+    udpBroadcastBIN(reinterpret_cast<uint8_t*>(&frame), len, UDP_ECHO_PORT);
+  #endif
+}
+
+
+void sendNmeaDBT() {
+  // Calculate depth in meters
+  float time_of_flight = depthDetectSample * 13.2e-6f;
+  float depth_m = (time_of_flight * 1450.0f) / 2.0f;
+
+  float depth_ft = depth_m * 3.28084f;
+  float depth_fa = depth_m / 1.8288f;
+
+  // Convert floats to strings
+  char str_ft[10], str_m[10], str_fa[10];
+  dtostrf(depth_ft, 4, 1, str_ft);
+  dtostrf(depth_m, 4, 1, str_m);
+  dtostrf(depth_fa, 4, 1, str_fa);
+
+  // Trim leading spaces (manually)
+  char* ptr_ft = str_ft;
+  char* ptr_m = str_m;
+  char* ptr_fa = str_fa;
+  while (*ptr_ft == ' ') ptr_ft++;
+  while (*ptr_m == ' ') ptr_m++;
+  while (*ptr_fa == ' ') ptr_fa++;
+
+  // Build the NMEA DBT sentence
+  char dbt_sentence[80];
+  snprintf(dbt_sentence, sizeof(dbt_sentence),
+           "$SDDBT,%s,f,%s,M,%s,F", ptr_ft, ptr_m, ptr_fa);
+
+  // Calculate checksum (XOR of chars between $ and *)
+  uint8_t dbt_checksum = 0;
+  for (int i = 1; dbt_sentence[i] != '\0'; i++) {
+    dbt_checksum ^= dbt_sentence[i];
   }
 
-  Serial.write(checksum);
+  // Final output with checksum
+  char fullDBTSentence[90];
+  snprintf(fullDBTSentence, sizeof(fullDBTSentence), "%s*%02X\r\n", dbt_sentence, dbt_checksum);
+
+  Serial2.print(fullDBTSentence);
+  #if WIFI_ENABLED && ENABLE_UDP_NMEA
+    udpBroadcastNMEA(fullDBTSentence, strlen(fullDBTSentence), UDP_NMEA_PORT);
+  #endif
+
+  // Build the NMEA DPT sentence
+  char str_offset[10];
+  dtostrf(DEPTH_OFFSET, 4, 1, str_offset);
+  char* ptr_offset = str_offset;
+  while (*ptr_offset == ' ') ptr_offset++;
+
+  // We are (possibly optimistically) reporting max depth of 100m
+  char dpt_sentence[80];
+  snprintf(dpt_sentence, sizeof(dpt_sentence),
+           "$SDDPT,%s,%s,100", ptr_m, ptr_offset);
+
+  // Calculate checksum (XOR of chars between $ and *)
+  uint8_t dpt_checksum = 0;
+  for (int i = 1; dpt_sentence[i] != '\0'; i++) {
+    dpt_checksum ^= dpt_sentence[i];
+  }
+
+  // Final output with checksum
+  char fullDPTSentence[90];
+  snprintf(fullDPTSentence, sizeof(fullDPTSentence), "%s*%02X\r\n", dpt_sentence, dpt_checksum);
+
+  Serial2.print(fullDPTSentence);
+  #if WIFI_ENABLED && ENABLE_UDP_NMEA
+    udpBroadcastNMEA(fullDPTSentence, strlen(fullDPTSentence), UDP_NMEA_PORT);
+  #endif
 }
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(250000);
+  Serial2.begin(NMEA_BAUD_RATE);
   delay(100);
 
   SPI.begin();
@@ -170,7 +248,7 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(O4), handleInterrupt, RISING);
 
   // --- Initialize TUSS4470 ---
-  tuss4470Write(0x10, 0x00);             // BPF 40kHz
+  tuss4470Write(0x10, FILTER_FREQUENCY_REGISTER);             // BPF 40kHz
   tuss4470Write(0x16, 0x0F);             // Enable VDRV
   tuss4470Write(0x1A, 0x0F);             // 16 pulses
   tuss4470Write(0x17, THRESHOLD_VALUE);  // Threshold detect OUT4
@@ -179,23 +257,31 @@ void setup() {
   adc_init();
   adc_gpio_init(analogIn);
   adc_select_input(0);
+
+  // --- WiFi init ---
+  #if WIFI_ENABLED
+    wifiSetup(WIFI_SSID, WIFI_PASS);
+  #endif
 }
 
 // -------------------- LOOP --------------------
 void loop() {
   tuss4470Write(0x1B, 0x01);         // Start time-of-flight
-  generateBurst(IO2, 40000.0f, 16);  // 40kHz, 16 cycles
-  // generateBurst(IO2, 1000000.0f, 16);  // 1000kHz, 16 cycles needs to be fixed!! #TODO
+  generateBurst(IO2, DRIVE_FREQUENCY, 16);  // 40kHz, 16 cycles
 
   unsigned long startTime = micros();
 
+  samplesXor = 0;
   for (sampleIndex = 0; sampleIndex < NUM_SAMPLES; sampleIndex++) {
     adc_select_input(0);
     adc_run(true);
     adc_hw->cs |= ADC_CS_START_ONCE_BITS;
     while (adc_hw->cs & ADC_CS_START_ONCE_BITS)
       ;
-    samples[sampleIndex] = adc_hw->result;
+    
+    uint8_t value = adc_hw->result >> 4;  // Scale 12-bit to 8-bit
+    frame.samples[sampleIndex] = value;
+    samplesXor ^= value;
     delayMicroseconds(5);  // 6 uS total sampling per sample
     //delayMicroseconds(11); //    delayMicroseconds(12); // 13 uS total sampling per sample
 
@@ -206,8 +292,24 @@ void loop() {
   tuss4470Write(0x1B, 0x00);  // Stop time-of-flight
 
   unsigned long elapsedTime = micros() - startTime;
-
   // Serial.println(elapsedTime);
+
+  // Software depth override
+  #if USE_DEPTH_OVERRIDE 
+    int overrideSample = 0;
+    uint8_t max = 0;
+    for (int i = BLINDZONE_SAMPLE_END; i < NUM_SAMPLES; i++) {
+      if (frame.samples[i] > max) {
+        max = frame.samples[i];
+        overrideSample = i;
+      }
+    }
+    if (overrideSample > 0) {
+      depthDetectSample = overrideSample;
+    }
+  #endif
+
+  sendNmeaDBT();
   sendData();
 
   delay(10);

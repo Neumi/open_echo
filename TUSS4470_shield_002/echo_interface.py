@@ -5,13 +5,21 @@ import serial.tools.list_ports
 import struct
 import time
 import socket
-from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QComboBox, QPushButton, QLabel, QLineEdit
+from PyQt5.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QVBoxLayout,
+    QWidget,
+    QComboBox,
+    QPushButton,
+    QLabel,
+    QLineEdit,
+)
 from PyQt5.QtCore import QThread, pyqtSignal
 import pyqtgraph as pg
 import qdarktheme
 from PyQt5.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel,
-    QComboBox, QPushButton, QWidget
+    QHBoxLayout,
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPalette, QColor
@@ -20,7 +28,7 @@ from PyQt5.QtWidgets import QApplication
 
 # Serial Configuration
 BAUD_RATE = 250000
-NUM_SAMPLES = 1800  # Number of frequency/amplitude bins (X-axis)
+NUM_SAMPLES = 12000 # (X-axis)
 
 MAX_ROWS = 300  # Number of time steps (Y-axis)
 Y_LABEL_DISTANCE = 50  # distance between labels in cm
@@ -41,7 +49,7 @@ SAMPLE_TIME = 6.0e-6  # 6 microseconds on RP2040 max sample speed with 5 microse
 DEFAULT_LEVELS = (0, 256)  # Expected data range
 
 SAMPLE_RESOLUTION = (SPEED_OF_SOUND * SAMPLE_TIME * 100) / 2  # cm per row (0.99 cm per row)
-PACKET_SIZE = 1 + 6 + 2 * NUM_SAMPLES + 1  # header + payload + checksum
+PACKET_SIZE = 1 + 6 + NUM_SAMPLES + 1  # header + payload + checksum
 MAX_DEPTH = NUM_SAMPLES * SAMPLE_RESOLUTION  # Total depth in cm
 depth_labels = {int(i / SAMPLE_RESOLUTION): f"{i / 100}" for i in range(0, int(MAX_DEPTH), Y_LABEL_DISTANCE)}
 
@@ -49,13 +57,13 @@ depth_labels = {int(i / SAMPLE_RESOLUTION): f"{i / 100}" for i in range(0, int(M
 def read_packet(ser):
     while True:
         header = ser.read(1)
-        if header != b'\xAA':
+        if header != b"\xaa":
             continue  # Wait for the start byte
 
-        payload = ser.read(6 + 2 * NUM_SAMPLES)
+        payload = ser.read(6 + NUM_SAMPLES)
         checksum = ser.read(1)
 
-        if len(payload) != 6 + 2 * NUM_SAMPLES or len(checksum) != 1:
+        if len(payload) != 6 + NUM_SAMPLES or len(checksum) != 1:
             continue  # Incomplete packet
 
         # Verify checksum
@@ -63,20 +71,18 @@ def read_packet(ser):
         for byte in payload:
             calc_checksum ^= byte
         if calc_checksum != checksum[0]:
-            print("⚠️ Checksum mismatch")
+            print("⚠️ Checksum mismatch: {} != {}".format(calc_checksum, checksum[0]))
             continue
 
-        # Unpack payload
-        depth, temp_scaled, vDrv_scaled = struct.unpack(">HhH", payload[:6])
+        # Unpack payload (firmware sends little-endian raw struct bytes)
+        depth, temp_scaled, vDrv_scaled = struct.unpack("<HhH", payload[:6])
         depth = min(depth, NUM_SAMPLES)
 
-        # print(depth)
-
-        samples = struct.unpack(f">{NUM_SAMPLES}H", payload[6:])
+        sample_bytes = payload[6:6+NUM_SAMPLES]
+        values = np.frombuffer(sample_bytes, dtype=np.uint8, count=NUM_SAMPLES)
 
         temperature = temp_scaled / 100.0
         drive_voltage = vDrv_scaled / 100.0
-        values = np.array(samples)
 
         return values, depth, temperature, drive_voltage
 
@@ -116,7 +122,10 @@ def get_local_ip():
 
 class SerialReader(QThread):
     """Thread for reading serial data asynchronously."""
-    data_received = pyqtSignal(np.ndarray, float, float, float)  # Emit NumPy array and depth value
+
+    data_received = pyqtSignal(
+        np.ndarray, float, float, float
+    )  # Emit NumPy array and depth value
 
     def __init__(self, port, baud_rate):
         super().__init__()
@@ -133,15 +142,124 @@ class SerialReader(QThread):
                     result = read_packet(ser)
                     if result:
                         values, depth, temperature, drive_voltage = result
-                        # print(f"Depth: {depth}, Temp: {temperature}°C, Vdrv: {drive_voltage}V")
+                        print(f"Depth: {depth}, Temp: {temperature}°C, Vdrv: {drive_voltage}V")
                         # print(len(values))
 
-                        self.data_received.emit(values, depth, temperature, drive_voltage)
+                        self.data_received.emit(
+                            values, depth, temperature, drive_voltage
+                        )
         except serial.SerialException as e:
             print(f"❌ Serial Error: {e}")
 
     def stop(self):
         self.running = False
+        self.quit()
+        self.wait()
+
+
+class UdpReader(QThread):
+    """Thread for reading sonar packets over UDP.
+
+    Expected packet format (single datagram per packet or stream inside datagram):
+    0xAA | 6 bytes header payload (depth:uint16_be, temp:int16_be (scaled x100), vDrv:uint16_be (scaled x100)) | NUM_SAMPLES bytes | checksum (xor of payload bytes)
+    """
+    data_received = pyqtSignal(np.ndarray, float, float, float)
+
+    def __init__(self, host: str, port: int, timeout: float = 1.0):
+        super().__init__()
+        self.host = host
+        self.port = port
+        self.timeout = timeout
+        self.running = True
+        self._sock = None
+
+    def run(self):
+        try:
+            import socket as _socket
+            self._sock = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)
+            self._sock.settimeout(self.timeout)
+            self._sock.bind((self.host, self.port))
+            print(f"📡 UDP listener bound to {self.host}:{self.port}")
+            RECV_SIZE = PACKET_SIZE  # we only need at least a packet, can be tuned
+            packet_buf = bytearray()
+            packets_ok = 0
+            checksum_errors = 0
+
+            while self.running:
+                try:
+                    datagram, _addr = self._sock.recvfrom(RECV_SIZE)
+                except _socket.timeout:
+                    continue
+
+                # Iterate each byte to simulate single-byte reads
+                for byte in datagram:
+                    if not packet_buf:
+                        # Waiting for start byte
+                        if byte == 0xAA:
+                            packet_buf.append(byte)
+                        else:
+                            continue
+                    else:
+                        packet_buf.append(byte)
+
+                    # Once we have a full packet length, process it
+                    if len(packet_buf) == PACKET_SIZE:
+                        # Structure: [0xAA][payload...][checksum]
+                        payload = packet_buf[1:1 + 6 + NUM_SAMPLES]
+                        checksum = packet_buf[-1]
+                        calc = 0
+                        for b in payload:
+                            calc ^= b
+                        if calc == checksum:
+                            try:
+                                depth, temp_scaled, vDrv_scaled = struct.unpack("<HhH", payload[:6])
+                                depth = min(depth, NUM_SAMPLES)
+                                sample_bytes = payload[6:6+NUM_SAMPLES]
+                                if len(sample_bytes) != NUM_SAMPLES:
+                                    # Corrupt packet length inside payload
+                                    checksum_errors += 1
+                                else:
+                                    values = np.frombuffer(sample_bytes, dtype=np.uint8, count=NUM_SAMPLES)
+                                    temperature = temp_scaled / 100.0
+                                    drive_voltage = vDrv_scaled / 100.0
+                                    self.data_received.emit(values, depth, temperature, drive_voltage)
+                                    packets_ok += 1
+                                    # Skip the old emit below by continuing
+                                    continue
+                            except struct.error:
+                                # Parsing error; treat as checksum failure for stats
+                                checksum_errors += 1
+                        else:
+                            checksum_errors += 1
+
+                        # Reset for next packet. If the last byte (checksum) is also a header (0xAA), start new packet immediately.
+                        last_byte = packet_buf[-1]
+                        packet_buf.clear()
+                        if last_byte == 0xAA:
+                            packet_buf.append(last_byte)
+
+                # Optional: could log stats every N packets
+                # if (packets_ok + checksum_errors) and (packets_ok + checksum_errors) % 200 == 0:
+                #     print(f"UDP stats: ok={packets_ok} bad={checksum_errors}")
+        except Exception as e:
+            print(f"❌ UDP Reader error: {e}")
+        finally:
+            if self._sock:
+                try:
+                    self._sock.close()
+                except Exception:
+                    pass
+
+    def stop(self):
+        self.running = False
+        if self._sock:
+            try:
+                # Trigger unblock of recvfrom by sending an empty datagram to self
+                import socket as _socket
+                with _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM) as s:
+                    s.sendto(b"\x00", (self.host, self.port))
+            except Exception:
+                pass
         self.quit()
         self.wait()
 
@@ -168,11 +286,22 @@ class SettingsDialog(QWidget):
         # --- Color Map ---
         card_layout.addWidget(QLabel("Color Map:"))
         self.gradient_dropdown = QComboBox()
-        self.gradient_dropdown.addItems([
-            'viridis', 'plasma', 'inferno', 'magma',
-            'thermal', 'flame', 'yellowy', 'bipolar',
-            'spectrum', 'cyclic', 'greyclip', 'grey'
-        ])
+        self.gradient_dropdown.addItems(
+            [
+                "viridis",
+                "plasma",
+                "inferno",
+                "magma",
+                "thermal",
+                "flame",
+                "yellowy",
+                "bipolar",
+                "spectrum",
+                "cyclic",
+                "greyclip",
+                "grey",
+            ]
+        )
         self.gradient_dropdown.setCurrentText(current_gradient)
         card_layout.addWidget(self.gradient_dropdown)
 
@@ -194,7 +323,9 @@ class SettingsDialog(QWidget):
 
         # Enable checkbox
         self.nmea_enable_checkbox = QCheckBox("Enable NMEA Output")
-        self.nmea_enable_checkbox.setStyleSheet("QCheckBox:hover { text-decoration: none; }")
+        self.nmea_enable_checkbox.setStyleSheet(
+            "QCheckBox:hover { text-decoration: none; }"
+        )
         nmea_section.addWidget(self.nmea_enable_checkbox)
 
         # Address display row
@@ -204,12 +335,16 @@ class SettingsDialog(QWidget):
 
         self.addr_display = QLabel(nmea_address)
         self.addr_display.setStyleSheet("color: #cccccc; padding: 2px;")
-        self.addr_display.setTextInteractionFlags(Qt.TextSelectableByMouse)  # Allow text copy
+        self.addr_display.setTextInteractionFlags(
+            Qt.TextSelectableByMouse
+        )  # Allow text copy
 
         copy_button = QPushButton("Copy")
         copy_button.setFixedHeight(22)
         copy_button.setStyleSheet("font-size: 11px; padding: 2px 6px;")
-        copy_button.clicked.connect(lambda: QApplication.clipboard().setText(nmea_address))
+        copy_button.clicked.connect(
+            lambda: QApplication.clipboard().setText(nmea_address)
+        )
 
         addr_row.addWidget(addr_label)
         addr_row.addWidget(self.addr_display)
@@ -303,7 +438,9 @@ class SettingsDialog(QWidget):
         selected_gradient = self.gradient_dropdown.currentText()
         selected_speed = 343 if self.speed_dropdown.currentIndex() == 0 else 1440
         nmea_enabled = self.nmea_enable_checkbox.isChecked()
-        nmea_port = int(self.port_input.text()) if self.port_input.text().isdigit() else 10110
+        nmea_port = (
+            int(self.port_input.text()) if self.port_input.text().isdigit() else 10110
+        )
 
         if self.main_app:
             self.main_app.set_gradient(selected_gradient)
@@ -411,7 +548,7 @@ class WaterfallApp(QMainWindow):
 
         # === Waterfall Plot ===
         self.waterfall = pg.PlotWidget()
-        self.imageitem = pg.ImageItem(axisOrder='row-major')
+        self.imageitem = pg.ImageItem(axisOrder="row-major")
         self.waterfall.addItem(self.imageitem)
         self.waterfall.setMouseEnabled(x=False, y=False)
         self.waterfall.setMinimumHeight(400)  # Slightly more vertical space
@@ -421,7 +558,7 @@ class WaterfallApp(QMainWindow):
 
         inverted_depth_labels = list(depth_labels.items())[::-1]
         self.waterfall.getAxis("left").setTicks([inverted_depth_labels])
-        self.depth_line = pg.InfiniteLine(angle=0, pen=pg.mkPen('r', width=2))
+        self.depth_line = pg.InfiniteLine(angle=0, pen=pg.mkPen("r", width=2))
         self.waterfall.addItem(self.depth_line)
 
         # Mirror Y-axis ticks to the right side
@@ -432,13 +569,17 @@ class WaterfallApp(QMainWindow):
         # dd horizontal lines
         for i in range(0, int(MAX_DEPTH), Y_LABEL_DISTANCE):
             row_index = int(i / SAMPLE_RESOLUTION)
-            hline = pg.InfiniteLine(pos=row_index, angle=0, pen=pg.mkPen(color='w', style=pg.QtCore.Qt.DotLine))
+            hline = pg.InfiniteLine(
+                pos=row_index,
+                angle=0,
+                pen=pg.mkPen(color="w", style=pg.QtCore.Qt.DotLine),
+            )
             self.waterfall.addItem(hline)
 
         # === Colorbar BELOW the plot to save width ===
         self.colorbar = pg.HistogramLUTWidget()
         self.colorbar.setImageItem(self.imageitem)
-        self.colorbar.item.gradient.loadPreset('cyclic')
+        self.colorbar.item.gradient.loadPreset("cyclic")
         # self.colorbar.setMaximumHeight(80)
         self.imageitem.setLevels(DEFAULT_LEVELS)
 
@@ -480,12 +621,17 @@ class WaterfallApp(QMainWindow):
 
         serial_row.addWidget(QLabel("Port:"))
         self.serial_dropdown = QComboBox()
-        self.serial_dropdown.addItems(get_serial_ports())
+        ports = get_serial_ports()
+        # Prepend a default UDP option (edit port as needed by typing replacement)
+        ports.insert(0, "udp:31338")
+        self.serial_dropdown.addItems(ports)
         self.serial_dropdown.setMinimumWidth(150)
         serial_row.addWidget(self.serial_dropdown)
 
         self.connect_button = QPushButton("Connect")
-        self.connect_button.clicked.connect(self.toggle_serial_connection)  # Connects to toggle handler
+        self.connect_button.clicked.connect(
+            self.toggle_serial_connection
+        )  # Connects to toggle handler
         serial_row.addWidget(self.connect_button)
 
         controls_layout.addLayout(serial_row)
@@ -568,26 +714,31 @@ class WaterfallApp(QMainWindow):
         self.nmea_port = port
 
         # Close previous connections if needed
-        if hasattr(self, 'nmea_client_socket') and self.nmea_client_socket:
+        if hasattr(self, "nmea_client_socket") and self.nmea_client_socket:
             try:
                 self.nmea_client_socket.close()
-            except:
+            except Exception:
                 pass
             self.nmea_client_socket = None
 
-        if hasattr(self, 'nmea_server_socket') and self.nmea_server_socket:
+        if hasattr(self, "nmea_server_socket") and self.nmea_server_socket:
             try:
                 self.nmea_server_socket.close()
-            except:
+            except Exception:
                 pass
             self.nmea_server_socket = None
 
         if enabled:
             try:
                 import socket
-                self.nmea_server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                self.nmea_server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                self.nmea_server_socket.bind(('0.0.0.0', port))
+
+                self.nmea_server_socket = socket.socket(
+                    socket.AF_INET, socket.SOCK_STREAM
+                )
+                self.nmea_server_socket.setsockopt(
+                    socket.SOL_SOCKET, socket.SO_REUSEADDR, 1
+                )
+                self.nmea_server_socket.bind(("0.0.0.0", port))
                 self.nmea_server_socket.listen(1)
                 print(f"📡 Waiting for TCP NMEA connection on port {port}...")
                 self.nmea_client_socket, _ = self.nmea_server_socket.accept()
@@ -618,8 +769,12 @@ class WaterfallApp(QMainWindow):
         SPEED_OF_SOUND = speed
         self.current_speed = speed
         SAMPLE_RESOLUTION = (SPEED_OF_SOUND * SAMPLE_TIME * 100) / 2
+        print(SAMPLE_RESOLUTION)
         MAX_DEPTH = NUM_SAMPLES * SAMPLE_RESOLUTION
-        depth_labels = {int(i / SAMPLE_RESOLUTION): f"{i / 100}" for i in range(0, int(MAX_DEPTH), Y_LABEL_DISTANCE)}
+        depth_labels = {
+            int(i / SAMPLE_RESOLUTION): f"{i / 100}"
+            for i in range(0, int(MAX_DEPTH), Y_LABEL_DISTANCE)
+        }
 
         # Re-apply Y-axis ticks
         inverted_depth_labels = list(depth_labels.items())[::-1]
@@ -628,10 +783,10 @@ class WaterfallApp(QMainWindow):
 
     def keyPressEvent(self, event):
         print("key pressed")
-        if event.key() == ord('Q'):
+        if event.key() == ord("Q"):
             print("🛑 Quit triggered from keyboard.")
             self.close()
-        elif event.key() == ord('C'):
+        elif event.key() == ord("C"):
             print("🔌 Connect triggered from keyboard.")
             self.connect_button.click()
         else:
@@ -644,7 +799,21 @@ class WaterfallApp(QMainWindow):
 
         selected_port = self.serial_dropdown.currentText()
         try:
-            self.serial_thread = SerialReader(selected_port, BAUD_RATE)
+            if selected_port.startswith("udp:"):
+                # Format udp:<port> or udp:<host>:<port>
+                udp_spec = selected_port[4:]
+                if udp_spec.count(":") == 1:
+                    host, port_str = udp_spec.split(":")
+                else:
+                    host = "0.0.0.0"
+                    port_str = udp_spec
+                port = int(port_str)
+                self.serial_thread = UdpReader(host, port)
+                print(f"🚀 Using UDP reader on {host}:{port}")
+            else:
+                self.serial_thread = SerialReader(selected_port, BAUD_RATE)
+                print(f"🚀 Using Serial reader on {selected_port}")
+
             self.serial_thread.data_received.connect(self.waterfall_plot_callback)
             self.serial_thread.start()
             print(f"✅ Connected to {selected_port}")
@@ -672,7 +841,9 @@ class WaterfallApp(QMainWindow):
         else:
             print("⚠️ No active serial connection to disconnect")
 
-    def waterfall_plot_callback(self, spectrogram, depth_index, temperature, drive_voltage):
+    def waterfall_plot_callback(
+        self, spectrogram, depth_index, temperature, drive_voltage
+    ):
         self.data = np.roll(self.data, -1, axis=0)
         self.data[-1, :] = spectrogram
         self.imageitem.setImage(self.data.T, autoLevels=False)
@@ -695,7 +866,10 @@ class WaterfallApp(QMainWindow):
             now = time.time()
 
             # Check if it's time to send again
-            if not hasattr(self, '_last_nmea_sent') or (now - self._last_nmea_sent) >= 1.0:
+            if (
+                not hasattr(self, "_last_nmea_sent")
+                or (now - self._last_nmea_sent) >= 1.0
+            ):
                 print("Sending NMEA data")
                 try:
                     depth_cm = depth_index * SAMPLE_RESOLUTION
@@ -709,10 +883,14 @@ class WaterfallApp(QMainWindow):
                             checksum ^= ord(char)
                         return f"*{checksum:02X}"
 
-                    nmea_sentence = f"DBT,{depth_ft:.1f},f,{depth_m:.1f},M,{depth_fathoms:.1f},F"
-                    full_sentence = f"${nmea_sentence}{calculate_checksum(nmea_sentence)}\r\n"
+                    nmea_sentence = (
+                        f"DBT,{depth_ft:.1f},f,{depth_m:.1f},M,{depth_fathoms:.1f},F"
+                    )
+                    full_sentence = (
+                        f"${nmea_sentence}{calculate_checksum(nmea_sentence)}\r\n"
+                    )
 
-                    self.nmea_client_socket.sendall(full_sentence.encode('ascii'))
+                    self.nmea_client_socket.sendall(full_sentence.encode("ascii"))
 
                     # Update timestamp
                     self._last_nmea_sent = now
@@ -727,7 +905,9 @@ class WaterfallApp(QMainWindow):
         if hex_value.startswith("0x") and len(hex_value) > 2:
             try:
                 if self.serial_thread and self.serial_thread.isRunning():
-                    with serial.Serial(self.serial_dropdown.currentText(), BAUD_RATE) as ser:
+                    with serial.Serial(
+                        self.serial_dropdown.currentText(), BAUD_RATE
+                    ) as ser:
                         ser.write(hex_value.encode())
                         print(f"Sent: {hex_value}")
             except ValueError:
@@ -752,7 +932,7 @@ class WaterfallApp(QMainWindow):
             current_speed=self.current_speed,
             nmea_enabled=self.nmea_output_enabled,
             nmea_port=self.nmea_port,
-            nmea_address=device_ip
+            nmea_address=device_ip,
         )
         self.settings_dialog.show()
 
@@ -770,7 +950,7 @@ def get_current_gradient(self):
     try:
         return self.colorbar.item.gradient.currentPreset
     except Exception:
-        return 'cyclic'  # Fallback
+        return "cyclic"  # Fallback
 
 
 if __name__ == "__main__":
