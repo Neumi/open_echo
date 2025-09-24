@@ -23,12 +23,13 @@ The Arduino firmware initializes the TUSS4470 device and manages the ultrasonic 
 ## Uploading the Firmware
 1. Open the Arduino IDE.
 2. Select your Arduino UNO board and the correct COM port.
+3. Set the configuration as described below.
 4. Load the firmware sketch [TUSS4470_arduino.ino](arduino/TUSS4470_arduino/TUSS4470_arduino.ino).
 5. Upload the sketch to the Arduino UNO.
 
 
 ## ⚙️ Configuration Parameters
-Below are the key parameters used to control the ultrasonic transducer behavior, echo processing, and filtering. `NUM_SAMPLES` must be kept in sync with the [Open Echo Interface](echo_interface.py). Due to RAM limitations on the Arduino UNO, it can't exceed ~1800 samples.
+Below are the key parameters used to control the ultrasonic transducer behavior, echo processing, filtering and outputs. `NUM_SAMPLES` must be kept in sync with the [Open Echo Interface](echo_interface.py). Due to RAM limitations on the Arduino UNO R3, it can't exceed ~1800 samples. The Arduino UNO R4 can reach ~12000 samples.
 
 ### 📊 Settings
 
@@ -93,6 +94,10 @@ To reduce noise and isolate the echo signals, a band-pass filter is configured o
 
 
 > 📖 For full configuration details, see the [TUSS4470 Datasheet – Table 7.1](https://www.ti.com/lit/ds/symlink/tuss4470.pdf).
+
+### UDP Outputs (Arduino R4 Wifi Only)
+
+If using the Arduino R4 Wifi, there is the option to output echoes and/or NMEA via UDP. Echo's output over UDP can be received by the python interface. NMEA depth output over UDP can be received by e.g. SignalK.
 
 ### Summary
 

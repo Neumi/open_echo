@@ -1,0 +1,146 @@
+html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 100%;
+}
+.canvas {
+    display: block;
+    position: fixed;
+    left: 0;
+    top: 0;
+    image-rendering: pixelated;
+    height: 100vh;
+    width: 100vw;
+}
+.overlay {
+    z-index: 1;
+    pointer-events: none;
+}
+#y-axis-labels {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    width: 80px;
+    z-index: 2;
+    pointer-events: none;
+}
+#y-axis-labels-inner {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80px;
+    height: 100vh;
+}
+#y-ticks {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 48px;
+    height: 100vh;
+}
+.y-tick {
+    position: absolute;
+    left: 0;
+    width: 48px;
+    text-align: right;
+    font: 14px sans-serif;
+    background-color: rgba(255,255,255,0.7);
+    color: #333;
+    padding: 2px 4px;
+    border-top: 2px solid black;
+    pointer-events: none;
+}
+.x-tick {
+    font: 12px sans-serif;
+    background-color: rgba(255,255,255,0.7);
+    text-align: center;
+    border-right: 2px solid black;
+    padding: 5px 2px 0 2px;
+}
+#y-axis-labels .vertical-label {
+    position: absolute;
+    left: 48px;
+    top: 16px;
+    width: 32px;
+    font: 16px sans-serif;
+    writing-mode: vertical-lr;
+    transform: rotate(180deg);
+    background: rgba(255,255,255,0.7);
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+#y-range-selector {
+    position: absolute;
+    left: 48px;
+    top: 100px;
+    pointer-events: auto;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+}
+#y-range-selector-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-left: 2px;
+}
+#y-range-label {
+    font: 14px sans-serif;
+    min-width: 48px;
+    text-align: center;
+}
+#y-range-selector .zoom-btn {
+    font: 16px sans-serif;
+    width: 28px;
+    height: 24px;
+}
+#measured-depth-label {
+    position: fixed;
+    left: 80px;
+    top: 16px;
+    font: bold 32px sans-serif;
+    color: #222;
+    background: rgba(255,255,255,0.7);
+    padding: 4px 12px;
+    border-radius: 8px;
+    z-index: 2;
+    pointer-events: none;
+}
+#cursor-depth-label {
+    font: 16px sans-serif;
+    color: #444;
+    margin-top: 4px;
+    background: rgba(255,255,255,0.5);
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+#x-axis-labels {
+    position: fixed;
+    left: 60px;
+    bottom: 0;
+    width: calc(100vw - 60px);
+    height: 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    z-index: 2;
+    pointer-events: none;
+}
+#x-ticks {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 4px;
+}
+#x-axis-labels .seconds-label {
+    font: 16px sans-serif;
+    margin-bottom: 8px;
+    background: rgba(255,255,255,0.7);
+    padding: 2px 8px;
+    border-radius: 4px;
+}

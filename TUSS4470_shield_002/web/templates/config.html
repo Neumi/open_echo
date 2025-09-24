@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open Echo Configuration</title>
+    <style>
+        body {
+            background: #222;
+            color: #eee;
+            font-family: sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .config-card {
+            background: #333;
+            border-radius: 12px;
+            padding: 32px 24px;
+            box-shadow: 0 2px 16px #0008;
+            min-width: 320px;
+        }
+        label {
+            display: block;
+            margin-bottom: 12px;
+        }
+        input, select {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid #555;
+            background: #222;
+            color: #eee;
+            margin-top: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            background: #4caf50;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 18px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 18px;
+        }
+        button:hover {
+            background: #388e3c;
+        }
+        h2 {
+            margin-top: 0;
+            margin-bottom: 18px;
+            font-weight: 400;
+        }
+    </style>
+</head>
+<body>
+    <form class="config-card" method="post">
+        <h2>Open Echo Configuration</h2>
+        <details open style="margin-bottom:16px;">
+            <summary style="font-size:18px; font-weight:500; margin-bottom:12px; cursor:pointer;">Echo Sounder</summary>
+            <label>
+                Connection Type
+                <select name="connection_type" id="connection_type" required>
+                    <option value="SERIAL" {% if settings.connection_type.name == 'SERIAL' %}selected{% endif %}>Serial</option>
+                    <option value="UDP" {% if settings.connection_type.name == 'UDP' %}selected{% endif %}>UDP</option>
+                </select>
+            </label>
+            <div id="serial_fields">
+                <label>
+                    Serial Port
+                    <select name="serial_port" id="serial_port_select" required>
+                        {% for port in ports %}
+                            <option value="{{ port }}" {% if settings.serial_port == port %}selected{% endif %}>{{ port }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+            </div>
+            <label id="udp_port_field" style="display:none;">
+                UDP Port
+                <input name="udp_port" type="number" min="1" max="65535" placeholder="e.g. 9999" value="{{ settings.udp_port|default('9999') }}">
+            </label>
+            <label>
+                Medium
+                <select name="medium" required>
+                    <option value="water" {% if settings.medium == 'water' %}selected{% endif %}>Water</option>
+                    <option value="air" {% if settings.medium == 'air' %}selected{% endif %}>Air</option>
+                </select>
+            </label>
+            <details style="margin-bottom:8px;">
+                <summary style="font-size:16px; font-weight:500; margin-bottom:8px; cursor:pointer;">Advanced</summary>
+                <label>
+                    Baud Rate
+                    <input name="baud_rate" type="number" min="1200" step="1" required placeholder="e.g. 115200" value="{{ settings.baud_rate|default('115200') }}">
+                </label>
+                <label>
+                    Number of Samples
+                    <input name="num_samples" type="number" min="1" step="1" required placeholder="e.g. 512" value="{{ settings.num_samples|default('512') }}">
+                </label>
+            </details>
+        </details>
+        <details style="margin-bottom:16px;">
+            <summary style="font-size:18px; font-weight:500; margin-bottom:12px; cursor:pointer;">Display</summary>
+            <label>
+                Colormap
+                <select name="colormap">
+                    <option value="viridis" {% if settings.colormap == 'viridis' %}selected{% endif %}>Viridis</option>
+                    <option value="plasma" {% if settings.colormap == 'plasma' %}selected{% endif %}>Plasma</option>
+                    <option value="inferno" {% if settings.colormap == 'inferno' %}selected{% endif %}>Inferno</option>
+                    <option value="magma" {% if settings.colormap == 'magma' %}selected{% endif %}>Magma</option>
+                    <option value="terrain" {% if settings.colormap == 'terrain' %}selected{% endif %}>Terrain</option>
+                </select>
+            </label>
+            <label>
+                Transducer Depth (m)
+                <input name="transducer_depth" type="number" step="any" min="0" required placeholder="e.g. 0.5" value="{{ settings.transducer_depth|default('') }}">
+            </label>
+            <label>
+                Draft (m)
+                <input name="draft" type="number" step="any" min="0" required placeholder="e.g. 1.2" value="{{ settings.draft|default('') }}">
+            </label>
+        </details>
+        <details style="margin-bottom:18px;">
+            <summary style="font-size:18px; font-weight:500; margin-bottom:12px; cursor:pointer;">Depth Output</summary>
+            <label style="display:flex; align-items:center; margin-bottom:8px;">
+                <input type="checkbox" name="signalk_enable" style="width:auto; margin-right:8px;" {% if settings.signalk_enable %}checked{% endif %}>
+                SignalK Output
+                <input name="signalk_address" type="text" placeholder="ws://host:port" value="{{ settings.signalk_address|default('ws://localhost:3000/signalk/v1/stream') }}" style="margin-left:12px; width:60%;">
+            </label>
+            <label style="display:flex; align-items:center;">
+                <input type="checkbox" name="nmea_enable" style="width:auto; margin-right:8px;" {% if settings.nmea_enable %}checked{% endif %}>
+                NMEA0183 (TCP) Output
+                <input name="nmea_address" type="text" placeholder="host:port" value="{{ settings.nmea_address|default('localhost:10110') }}" style="margin-left:12px; width:60%;">
+            </label>
+            <label style="margin-left:28px; margin-top:8px;">
+                DPT Sentence Type
+                <div style="font-size:12px; color:#aaa; margin-bottom:2px;">
+                    <em>DBT and DPT are always sent. DPT offsets require setting transducer depth and draft.</em>
+                </div>
+                <select name="nmea_offset" style="margin-top:4px;">
+                    <option value="to_transducer" {% if settings.nmea0183_offset == 'to_transducer' %}selected{% endif %}>To Transducer</option>
+                    <option value="to_surface" {% if settings.nmea0183_offset == 'to_surface' %}selected{% endif %}>To Surface</option>
+                    <option value="to_keel" {% if settings.nmea0183_offset == 'to_keel' %}selected{% endif %}>To Keel</option>
+                </select>
+            </label>
+        </details>
+        <button type="submit">Save</button>
+    </form>
+    <script>
+    (function(){
+        const connectionSelect = document.getElementById('connection_type');
+        const serialFields = document.getElementById('serial_fields');
+        const udpField = document.getElementById('udp_port_field');
+        const serialSelect = document.getElementById('serial_port_select');
+
+        function updateFields(){
+            if(connectionSelect.value === 'SERIAL'){
+                serialFields.style.display = 'block';
+                udpField.style.display = 'none';
+                serialSelect.setAttribute('required','required');
+            } else {
+                serialFields.style.display = 'none';
+                udpField.style.display = 'block';
+                serialSelect.removeAttribute('required');
+            }
+        }
+        connectionSelect.addEventListener('change', updateFields);
+        updateFields(); // initialize
+    })();
+    </script>
+</body>
+</html>
