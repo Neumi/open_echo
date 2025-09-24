@@ -46,35 +46,28 @@ Below are the key parameters used to control the ultrasonic transducer behavior,
 
 ### 📡 Transducer Drive Frequency
 
-The ultrasonic burst frequency is set by configuring **Timer1**. Use the formula:
-
-`OCR1A = (16,000,000 / (2 × Frequency_Hz)) - 1`
-
-**Example:**  
-For **40 kHz**:  
-`(16,000,000 / (2 × 40,000)) - 1 = 199`
+The ultrasonic burst frequency is set by configuring **DRIVE_FREQUENCY**.
+Enter the resonant frequency in Hz of your transducer. The TUSS4470 supports drive frequencies between 40 and 1000 kHz.
 
 **Example Configuration:**
-
+For **40 kHz**:  
 ```cpp
-#define DRIVE_FREQUENCY_TIMER_DIVIDER 199 // 40 kHz (car parking sensor)
+#define DRIVE_FREQUENCY 40000
 ```
+
 #### 🔧 Alternative Frequencies
 
-| Frequency | Divider | Notes                                     |
-|-----------|---------|-------------------------------------------|
-| 40 kHz    | 199     | Car parking sensor                        |
-| 50 kHz    | 160     |                                           |
-| 66 kHz    | 120     |                                           |
-| 100 kHz   | 80      | Chrhartz DIY transducer                   |
-| 151 kHz   | 52      | Muebau transducer                         |
-| 200 kHz   | 39      | Raymarine CPT-S                           |
-| 216 kHz   | 36      | Mini transducer                           |
-| 230 kHz   | 34      | 18mm transducer from AliExpress           |
-| 350 kHz   | 22      |                                           |
-| 400 kHz   | 19      |                                           |
-| 455 kHz   | 17      | Lowrance Hook 3TS sidescan                |
-| 658 kHz   | 11      |                                           |
+| Frequency | Notes                                     |
+|-----------|-------------------------------------------|
+| 40 kHz    | Car parking sensor                        |
+| 50 kHz    | Raymarine CPT-S secondary frequency       |
+| 100 kHz   | Chrhartz DIY transducer                   |
+| 151 kHz   | Muebau transducer                         |
+| 200 kHz   | Raymarine CPT-S                           |
+| 216 kHz   | Mini transducer                           |
+| 230 kHz   | 18mm transducer from AliExpress           |
+| 455 kHz   | Lowrance Hook 3TS sidescan                |
+| 1000 kHz  | Water flow sensor transducer              |
 
 ---
 
