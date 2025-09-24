@@ -296,13 +296,10 @@ void sendData() {
   checksum ^= vDrvHigh ^ vDrvLow;
 
   // Analog samples directly from analogValues[]
-  // TODO: Optimize by sending raw bytes instead of splitting into high/low bytes
   for (int i = 0; i < NUM_SAMPLES; i++) {
-    uint8_t highByte = analogValues[i] >> 8;
-    uint8_t lowByte  = analogValues[i] & 0xFF;
-    Serial.write(highByte);
-    Serial.write(lowByte);
-    checksum ^= highByte ^ lowByte;
+    uint8_t sample = analogValues[i];
+    Serial.write(sample);
+    checksum ^= sample;
   }
 
   // Send checksum
