@@ -121,7 +121,7 @@ https://www.youtube.com/watch?v=ZtUkt8Q4EJE
 - Very small PZT only: https://de.aliexpress.com/item/1005007032482539.html  
 - Not fully tested: https://de.aliexpress.com/item/4000389134890.html  
 - Great for air, also works in water, 40 kHz: https://de.aliexpress.com/item/1005006546490802.html
-- Cheap and works great in Air for 20cm, water not tested: https://de.aliexpress.com/item/32818381566.html
+- Cheap and works in Air for 20cm, in water for at least 8m: https://de.aliexpress.com/item/32818381566.html
 
 **Transformers (to step up transducer voltage):**  
 https://de.aliexpress.com/item/1005003733606845.html  
