@@ -15,8 +15,10 @@ Use the Python software to see the echoes.
 ### Ordering
 The shield can be easily ordered via [JLCPCB](https://jlcpcb.com/?from=Neumi) or other PCB fabrication services.
 
+<img alt="TUSS4470 schematic" src="/documentation/images/starter_kit.jpg">
+
 > [!Note]
-> I just got a few new boards, feel free to DM me on [Discord](https://discord.com/invite/rerCyqAcrw) if you're interested. Or send an email to: openechoes@gmail.com One assmebled board is 50€ + shipping. (10/2025)
+> I just got a few new boards, I sell as starter kits. Feel free to DM me on [Discord](https://discord.com/invite/rerCyqAcrw) if you're interested. Or send an email to: openechoes@gmail.com One assmebled board is 50€ + shipping. (10/2025)
 
 
 <img alt="PCB overview TUSS4470" src="/documentation/images/shield_pinout.png">
@@ -58,9 +60,17 @@ Use this when the transducer operates at 12V max, as the Arduino cannot tolerate
 - XT30 Connector:
 Use this if you require higher voltage (up to 28V max) for more powerful transducers.
 
+- MT3608 Boost Converter:
+You can add an MT3608 boost converter to your board to generate a higher vDRV from the USB 5V supply. This solution is reliable and works well in many applications, such as powering marine transducers.
+Simply take the MT3608 module (included in the starter kits), secure it to the shield with double-sided tape, and connect the three wires as shown:
+<img alt="TUSS4470 schematic" src="/documentation/images/TUSS4470_MT3608.jpg">
+
 > [!Tip]
 > To get started, use a 12V power supply. Many ultrasonic transducers operate reliably at this voltage.
+> 
 > Lower voltages may not adequately excite the transducer, resulting in weak or no echo signals.
+> 
+> The MT3608 should not be turned much further than 22V, as it becomes unstable.
 
 > [!Warning]
 > Do not exceed 28V input. Higher voltages can damage the board or components. Ensure proper polarity!
