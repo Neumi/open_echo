@@ -16,7 +16,8 @@ Use the Python software to see the echoes.
 The shield can be easily ordered via [JLCPCB](https://jlcpcb.com/?from=Neumi) or other PCB fabrication services.
 
 > [!Note]
-> I still have a few boards available, feel free to DM me on [Discord](https://discord.com/invite/rerCyqAcrw) if you're interested.
+> I just got a few new boards, feel free to DM me on [Discord](https://discord.com/invite/rerCyqAcrw) if you're interested. Or send an email to: openechoes@gmail.com One assmebled board is 50€ + shipping. (10/2025)
+
 
 <img alt="PCB overview TUSS4470" src="/documentation/images/shield_pinout.png">
 
