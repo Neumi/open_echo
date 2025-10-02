@@ -101,7 +101,7 @@ Tested using a built-in 150 kHz SEAFARER transducer, powered at 15-20 V via an M
 
 ## Videos
 
-[![LINK TO LATEST VIDEO](https://img.youtube.com/vi/R3_NO2F7PsI/maxresdefault.jpg)](https://www.youtube.com/watch?v=R3_NO2F7PsI)
+[![LINK TO LATEST VIDEO](https://img.youtube.com/vi/XF7rNGt6UYA/maxresdefault.jpg)](https://www.youtube.com/watch?v=XF7rNGt6UYA)
 
 https://www.youtube.com/watch?v=R3_NO2F7PsI  
 https://www.youtube.com/watch?v=msbLVsY8xhQ  
