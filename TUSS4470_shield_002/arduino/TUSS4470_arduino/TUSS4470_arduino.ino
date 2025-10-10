@@ -175,18 +175,15 @@ void loop()
   // Stop time-of-flight measurement
   tuss4470Write(0x1B, 0x00);
   
-  // Software gradient-based override
-  #if USE_GRADIENT_OVERRIDE
+  // Software depth override
+  #if USE_DEPTH_OVERRIDE
   int overrideSample = 0;
-  uint8_t prev = frame.samples[BLINDZONE_SAMPLE_END];
-  for (int i = BLINDZONE_SAMPLE_END + 1; i < NUM_SAMPLES; i++) {
-    uint8_t cur = frame.samples[i];
-    uint8_t diff = cur - prev;
-    if (diff >= GRADIENT_THRESHOLD) {
+  uint8_t max = 0;
+  for (int i = BLINDZONE_SAMPLE_END; i < NUM_SAMPLES; i++) {
+    if (frame.samples[i] > max) {
+      max = frame.samples[i];
       overrideSample = i;
-      break;
     }
-    prev = cur;
   }
   if (overrideSample > 0) {
     depthDetectSample = overrideSample;

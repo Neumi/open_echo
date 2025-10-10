@@ -27,11 +27,9 @@ const int DRIVE_FREQUENCY_TIMER_DIVIDER = (16000000 / (2 * DRIVE_FREQUENCY)) - 1
 // Threshold level for detecting the bottom echo
 // The first echo stronger than this value (after the blind zone) is considered the bottom
 #define THRESHOLD_VALUE 0x19
-  
-// ---------------------- GRADIENT DEPTH OVERRIDE ----------------------
+
+// ---------------------- DEPTH OVERRIDE ----------------------
 // If enabled, software will scan the captured analogValues[] after each
-// acquisition and choose the first sample index after the blind zone
-// whose positive gradient (value[i] - value[i-1]) exceeds GRADIENT_THRESHOLD.
-// If no such gradient is found, the hardware threshold detection result is kept.
-#define USE_GRADIENT_OVERRIDE 1
-#define GRADIENT_THRESHOLD 150 // Difference on 0-255 scaled samples
+// acquisition and choose the max sample after the blind zone to be 
+// the bottom echo, instead of the first sample above the threshold.
+#define USE_DEPTH_OVERRIDE 1

@@ -14,24 +14,22 @@
 
 // Number of ADC samples to take per measurement cycle
 // This value must match the number of samples expected by the Python visualization tool
-#define NUM_SAMPLES 12000
+#define NUM_SAMPLES 10000
 
 // Number of initial samples to ignore after sending the transducer pulse
 // These ignored samples represent the "blind zone" where the transducer is still ringing
-#define BLINDZONE_SAMPLE_END 450
+#define BLINDZONE_SAMPLE_END 900
 
 // Threshold level for detecting the bottom echo
 // The first echo stronger than this value (after the blind zone) is considered the bottom
 #define THRESHOLD_VALUE 0x19
 
   
-// ---------------------- GRADIENT DEPTH OVERRIDE ----------------------
+// ---------------------- DEPTH OVERRIDE ----------------------
 // If enabled, software will scan the captured analogValues[] after each
-// acquisition and choose the first sample index after the blind zone
-// whose positive gradient (value[i] - value[i-1]) exceeds GRADIENT_THRESHOLD.
-// If no such gradient is found, the hardware threshold detection result is kept.
-#define USE_GRADIENT_OVERRIDE 0
-#define GRADIENT_THRESHOLD 150 // Difference on 0-255 scaled samples
+// acquisition and choose the max sample after the blind zone to be 
+// the bottom echo, instead of the first sample above the threshold.
+#define USE_DEPTH_OVERRIDE 1
 
 
 // ---------------------- NMEA SETTINGS ----------------------
@@ -47,12 +45,12 @@
 
 #if WIFI_ENABLED
   // If not found, will fall back to Access Point mode with SSID "OpenEcho" and password "openecho"
-  static const char WIFI_SSID[] = "Your SSID";
-  static const char WIFI_PASS[] = "Your Password";
+  static const char WIFI_SSID[] = "Access Granted";
+  static const char WIFI_PASS[] = "FuckYeahGetIn";
 
   // ---------------------- UDP BROADCAST SETTINGS ----------------------
   // Enable/disable UDP broadcast of the binary frame (same payload as Serial / WebSocket)
-  #define ENABLE_UDP_ECHO 1
+  #define ENABLE_UDP_ECHO 0
   #define UDP_ECHO_PORT 31338
 
   #define ENABLE_UDP_NMEA 1
