@@ -31,13 +31,24 @@ Want to stay updated or participate? Join the [Discord](https://discord.com/invi
 
 Check the [Getting Started Guide](TUSS4470_shield_002/README.md).  
 
+## Vision
+An accessible Open Source SONAR stack for development, research and real use:
+- Open Source SONAR technology for differernt use cases
+- support for a variety of commercial or DIY transducers in water and air
+- relatively simple hardware that can be ordered from a board house
+- easy entry for less experienced users
+- community for exchange and development
+- development of more advanced SONAR applications
+
 --------
 ## Current State
 - Universal TUSS4470-based Arduino shield for testing ultrasonic transducers  
 - Python interface software for raw data visualization, configuration, and TCP data output  
 - Tested depth range of at least 50 m in water  
 - NMEA0183 compatible (DBT data output to other devices)  
-- New all-in-one boards with STM32, TUSS4470, and boost converter currently in development  
+- New all-in-one boards with STM32, TUSS4470, and boost converter currently in development
+- picoW implementation in development (already successfull)
+- UDP network RAW data transfer from picoW to Python interface running
 
 --------
 ## Progress
