@@ -143,10 +143,10 @@ https://de.aliexpress.com/item/1005007159862392.html
 **Lucky Fishfinder:**  
 https://de.aliexpress.com/item/32711659077.html  
 
-## Big Thanks for Your Support!
+# Big Thanks for Your Support!
 www.kogger.tech
 
-# and to the awesome project contributors!
+## to the awesome project contributors:
 Check this Cheap Yellow Display implementation out: https://github.com/matztam/open_echo_cyd_display
   
 And all the great stuff JohnCHarrington contributed: https://github.com/JohnCHarrington/open_echo
