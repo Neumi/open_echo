@@ -18,8 +18,6 @@ from PyQt5.QtGui import QPalette, QColor
 from PyQt5.QtWidgets import QVBoxLayout, QLabel, QCheckBox, QLineEdit
 from PyQt5.QtWidgets import QApplication
 
-
-
 # Serial Configuration
 BAUD_RATE = 250000
 NUM_SAMPLES = 1800  # Number of frequency/amplitude bins (X-axis)
@@ -27,10 +25,18 @@ NUM_SAMPLES = 1800  # Number of frequency/amplitude bins (X-axis)
 MAX_ROWS = 300  # Number of time steps (Y-axis)
 Y_LABEL_DISTANCE = 50  # distance between labels in cm
 
-# SPEED_OF_SOUND = 1500  # meters per second in water
-SPEED_OF_SOUND = 330  # meters per second in water
-SAMPLE_TIME = 13.2e-6  # 13.2 microseconds in seconds Atmega328 sample speed
-# SAMPLE_TIME = 7.682e-6  # 7.682 microseconds in seconds STM32 sample speed
+SPEED_OF_SOUND = 1440  # default sound speed meters/second in water
+# SPEED_OF_SOUND = 343  # default sound speed meters/second in water
+
+# SAMPLE_TIME = 52.226e-6  # 13.2 microseconds on Atmega328 max sample speed plus 50 microseconds delay in sampling loop
+# SAMPLE_TIME = 47.0e-6
+# SAMPLE_TIME = 41.666e-6 # 13.2 microseconds on Atmega328 max sample speed plus 40 microseconds delay in sampling loop
+# SAMPLE_TIME = 22.22e-6  # 13.2 microseconds on Atmega328 max sample speed plus 20 microseconds delay in sampling loop
+# SAMPLE_TIME = 13.0e-6     # 13.2 microseconds on Atmega328 max sample speed without additional delay
+# SAMPLE_TIME = 11.0e-6     # 13.2 microseconds on RP2040 max sample speed with 10 microseconds additional delay per sample
+# SAMPLE_TIME = 7.682e-6  # 7.682 microseconds on STM32F103 max sample speed
+SAMPLE_TIME = 6.0e-6  # 6 microseconds on RP2040 max sample speed with 5 microseconds additional delay per sample
+# SAMPLE_TIME = 1.290e-6     # 13.2 microseconds on RP2040 max sample speed without additional delay
 
 DEFAULT_LEVELS = (0, 256)  # Expected data range
 
@@ -38,6 +44,7 @@ SAMPLE_RESOLUTION = (SPEED_OF_SOUND * SAMPLE_TIME * 100) / 2  # cm per row (0.99
 PACKET_SIZE = 1 + 6 + 2 * NUM_SAMPLES + 1  # header + payload + checksum
 MAX_DEPTH = NUM_SAMPLES * SAMPLE_RESOLUTION  # Total depth in cm
 depth_labels = {int(i / SAMPLE_RESOLUTION): f"{i / 100}" for i in range(0, int(MAX_DEPTH), Y_LABEL_DISTANCE)}
+
 
 def read_packet(ser):
     while True:
@@ -73,6 +80,7 @@ def read_packet(ser):
 
         return values, depth, temperature, drive_voltage
 
+
 def generate_dbt_sentence(depth_cm):
     depth_m = depth_cm / 100.0
     depth_ft = depth_m * 3.28084
@@ -93,6 +101,7 @@ def generate_dbt_sentence(depth_cm):
 def get_serial_ports():
     """Retrieve a list of available serial ports."""
     return [port.device for port in serial.tools.list_ports.comports()][::-1]
+
 
 def get_local_ip():
     try:
@@ -138,7 +147,8 @@ class SerialReader(QThread):
 
 
 class SettingsDialog(QWidget):
-    def __init__(self, parent=None, current_gradient='cyclic', current_speed=330, nmea_enabled=False, nmea_port=10110, nmea_address="127.0.0.1"):
+    def __init__(self, parent=None, current_gradient='cyclic', current_speed=343, nmea_enabled=False, nmea_port=10110,
+                 nmea_address="127.0.0.1"):
         super().__init__(parent)
         self.setWindowTitle("Chart Settings")
         self.setFixedSize(320, 550)
@@ -169,8 +179,8 @@ class SettingsDialog(QWidget):
         # --- Speed of Sound ---
         card_layout.addWidget(QLabel("Speed of Sound:"))
         self.speed_dropdown = QComboBox()
-        self.speed_dropdown.addItems(["330m/s (Air)", "1500m/s (Water)"])
-        self.speed_dropdown.setCurrentIndex(1 if current_speed == 1500 else 0)
+        self.speed_dropdown.addItems(["343m/s (Air)", "1440m/s (Water)"])
+        self.speed_dropdown.setCurrentIndex(1 if current_speed == 1440 else 0)
         card_layout.addWidget(self.speed_dropdown)
 
         # --- NMEA Output Section ---
@@ -207,9 +217,16 @@ class SettingsDialog(QWidget):
         addr_row.addStretch()
         nmea_section.addLayout(addr_row)
 
-
         # Port input with label to the left
         port_row = QHBoxLayout()
+
+        # --- Large Depth Display Option ---
+        self.large_depth_checkbox = QCheckBox("Show Depth Display")
+        self.large_depth_checkbox.setChecked(
+            getattr(parent, "large_depth_visible", True)
+        )
+        card_layout.addWidget(self.large_depth_checkbox)
+
         port_label = QLabel("Port:")
         port_label.setMinimumWidth(40)
 
@@ -232,7 +249,6 @@ class SettingsDialog(QWidget):
 
         # ✅ Add to card layout
         card_layout.addLayout(nmea_section)
-
 
         # --- Buttons ---
         button_layout = QHBoxLayout()
@@ -285,7 +301,7 @@ class SettingsDialog(QWidget):
 
     def apply_settings(self):
         selected_gradient = self.gradient_dropdown.currentText()
-        selected_speed = 330 if self.speed_dropdown.currentIndex() == 0 else 1500
+        selected_speed = 343 if self.speed_dropdown.currentIndex() == 0 else 1440
         nmea_enabled = self.nmea_enable_checkbox.isChecked()
         nmea_port = int(self.port_input.text()) if self.port_input.text().isdigit() else 10110
 
@@ -293,8 +309,67 @@ class SettingsDialog(QWidget):
             self.main_app.set_gradient(selected_gradient)
             self.main_app.set_sound_speed(selected_speed)
             self.main_app.configure_nmea_output(enabled=nmea_enabled, port=nmea_port)
+            self.main_app.set_large_depth_display(self.large_depth_checkbox.isChecked())
 
         self.close()
+
+
+class UDPReader(QThread):
+    """Thread for receiving UDP packets asynchronously."""
+    data_received = pyqtSignal(np.ndarray, float, float, float)
+
+    def __init__(self, port=5005):
+        super().__init__()
+        self.port = port
+        self.running = True
+
+    def run(self):
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.bind(("", self.port))
+            print(f"📡 Listening for UDP packets on port {self.port}")
+            sock.settimeout(2.0)
+            while self.running:
+                try:
+                    data, addr = sock.recvfrom(8192 * 8)  # Allow large packets
+                    if len(data) < 8:
+                        continue
+
+                    # Parse same structure as serial
+                    if data[0] != 0xAA:
+                        continue
+
+                    payload = data[1:-1]
+                    checksum = data[-1]
+                    calc_checksum = 0
+                    for b in payload:
+                        calc_checksum ^= b
+                    if calc_checksum != checksum:
+                        print("⚠️ UDP checksum mismatch")
+                        continue
+
+                    depth, temp_scaled, vDrv_scaled = struct.unpack(">HhH", payload[:6])
+                    depth = min(depth, NUM_SAMPLES)
+                    samples = struct.unpack(f">{NUM_SAMPLES}H", payload[6:])
+                    print(samples)
+
+                    temperature = temp_scaled / 100.0
+                    drive_voltage = vDrv_scaled / 100.0
+                    values = np.array(samples)
+
+                    self.data_received.emit(values, depth, temperature, drive_voltage)
+                except socket.timeout:
+                    continue
+                except Exception as e:
+                    print(f"⚠️ UDP read error: {e}")
+                    continue
+        except Exception as e:
+            print(f"❌ Failed to start UDP listener: {e}")
+
+    def stop(self):
+        self.running = False
+        self.quit()
+        self.wait()
 
 
 class WaterfallApp(QMainWindow):
@@ -308,7 +383,7 @@ class WaterfallApp(QMainWindow):
         self.nmea_output_enabled = False
 
         self.current_gradient = 'cyclic'  # default color scheme
-        self.current_speed = SPEED_OF_SOUND  # default sound speed (330)
+        self.current_speed = SPEED_OF_SOUND  # default sound speed (343)
 
         self.setWindowTitle("Open Echo Interface")
         self.setGeometry(0, 0, 480, 800)  # Portrait mode for Raspberry Pi screen
@@ -327,7 +402,6 @@ class WaterfallApp(QMainWindow):
         self.setPalette(palette)
         self.setAutoFillBackground(True)
 
-
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QVBoxLayout()
@@ -341,6 +415,8 @@ class WaterfallApp(QMainWindow):
         self.waterfall.addItem(self.imageitem)
         self.waterfall.setMouseEnabled(x=False, y=False)
         self.waterfall.setMinimumHeight(400)  # Slightly more vertical space
+        self.waterfall.invertY(True)
+
         main_layout.addWidget(self.waterfall)
 
         inverted_depth_labels = list(depth_labels.items())[::-1]
@@ -373,6 +449,35 @@ class WaterfallApp(QMainWindow):
 
         # Serial row
         serial_row = QHBoxLayout()
+
+        # === UDP Connection Row ===
+        udp_row = QHBoxLayout()
+
+        udp_row.addWidget(QLabel("UDP Port:"))
+        self.udp_port_input = QLineEdit()
+        self.udp_port_input.setText("5005")
+        self.udp_port_input.setMaximumWidth(100)
+        udp_row.addWidget(self.udp_port_input)
+
+        self.udp_connect_button = QPushButton("Connect UDP")
+        self.udp_connect_button.clicked.connect(self.toggle_udp_connection)
+        udp_row.addWidget(self.udp_connect_button)
+
+        controls_layout.addLayout(udp_row)
+
+        # === Large Depth Display ===
+        self.large_depth_label = QLabel("--- m")
+        self.large_depth_label.setAlignment(Qt.AlignCenter)
+        self.large_depth_label.setStyleSheet("""
+            QLabel {
+                color: #00ffcc;
+                font-size: 64px;
+                font-weight: bold;
+            }
+        """)
+        self.large_depth_label.setVisible(True)  # hidden by default
+        serial_row.addWidget(self.large_depth_label)
+
         serial_row.addWidget(QLabel("Port:"))
         self.serial_dropdown = QComboBox()
         self.serial_dropdown.addItems(get_serial_ports())
@@ -425,6 +530,39 @@ class WaterfallApp(QMainWindow):
         controls_container.setLayout(controls_layout)
         main_layout.addWidget(controls_container)
 
+    def connect_udp(self):
+        if hasattr(self, 'udp_thread') and self.udp_thread:
+            self.udp_thread.stop()
+            self.udp_thread = None
+
+        try:
+            udp_port = int(self.udp_port_input.text())
+            self.udp_thread = UDPReader(port=udp_port)
+            self.udp_thread.data_received.connect(self.waterfall_plot_callback)
+            self.udp_thread.start()
+            print(f"✅ UDP listener started on port {udp_port}")
+        except Exception as e:
+            print(f"❌ Failed to start UDP listener: {e}")
+
+    def disconnect_udp(self):
+        if hasattr(self, 'udp_thread') and self.udp_thread:
+            self.udp_thread.stop()
+            self.udp_thread = None
+            print("🔌 UDP listener stopped")
+
+    def toggle_udp_connection(self):
+        if hasattr(self, 'udp_thread') and self.udp_thread and self.udp_thread.isRunning():
+            self.disconnect_udp()
+            self.udp_connect_button.setText("Connect UDP")
+        else:
+            self.connect_udp()
+            if hasattr(self, 'udp_thread') and self.udp_thread.isRunning():
+                self.udp_connect_button.setText("Disconnect UDP")
+
+    def set_large_depth_display(self, enabled: bool):
+        self.large_depth_visible = enabled
+        self.large_depth_label.setVisible(enabled)
+
     def configure_nmea_output(self, enabled: bool, port: int):
         self.nmea_output_enabled = enabled
         self.nmea_port = port
@@ -469,7 +607,6 @@ class WaterfallApp(QMainWindow):
             checksum ^= ord(char)
 
         return f"${sentence_body}*{checksum:02X}\r\n"
-
 
     def set_gradient(self, gradient_name):
         self.current_gradient = gradient_name
@@ -544,10 +681,15 @@ class WaterfallApp(QMainWindow):
         mean = np.mean(self.data)
         self.imageitem.setLevels((mean - 2 * sigma, mean + 2 * sigma))
 
-        self.depth_label.setText(f"Depth: {depth_index * SAMPLE_RESOLUTION:.1f} cm | Index: {depth_index:.0f}")
+        depth_cm = depth_index * SAMPLE_RESOLUTION
+        self.depth_label.setText(f"Depth: {depth_cm:.1f} cm | Index: {depth_index:.0f}")
         self.temperature_label.setText(f"Temperature: {temperature:.1f} °C")
         self.drive_voltage_label.setText(f"vDRV: {drive_voltage:.1f} V")
         self.depth_line.setPos(depth_index)
+
+        # Update big depth label (in meters, 1 decimal)
+        if self.large_depth_label.isVisible():
+            self.large_depth_label.setText(f"{depth_cm / 100:.1f} m")
 
         if hasattr(self, 'nmea_output_enabled') and self.nmea_output_enabled:
             now = time.time()
@@ -596,6 +738,9 @@ class WaterfallApp(QMainWindow):
     def closeEvent(self, event):
         if self.serial_thread:
             self.serial_thread.stop()
+        if hasattr(self, 'udp_thread') and self.udp_thread:
+            self.udp_thread.stop()
+
         event.accept()
 
     def open_settings(self):
