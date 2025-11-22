@@ -1,5 +1,13 @@
+#include "settings.h"
 #include <SPI.h>
-#include "FspTimer.h"
+#include <SoftwareSerial.h>
+
+#include <Arduino.h>
+#include <FspTimer.h>
+#if WIFI_ENABLED
+  #include <WiFiS3.h>
+  #include "wifi_server.h"
+#endif
 
 // Pin configuration
 const int SPI_CS = 10;
@@ -8,35 +16,12 @@ const int IO2 = 9;
 const int O3 = 3;
 const int O4 = 2;
 const int analogIn = A0;
+const int nmeaTx = 4;
+const int nmeaRx = 5;
 
-// Number of ADC samples to take per measurement cycle
-// Each sample takes approximately 13.2 microseconds
-// This value must match the number of samples expected by the Python visualization tool
-#define NUM_SAMPLES 1800
+SoftwareSerial nmeaSerial(nmeaRx, nmeaTx); 
 
-// Number of initial samples to ignore after sending the transducer pulse
-// These ignored samples represent the "blind zone" where the transducer is still ringing
-#define BLINDZONE_SAMPLE_END 450
-
-// Threshold level for detecting the bottom echo
-// The first echo stronger than this value (after the blind zone) is considered the bottom
-#define THRESHOLD_VALUE 0x19
-
-// ---------------------- DRIVE FREQUENCY SETTINGS ----------------------
-// Sets the output frequency of the ultrasonic transducer by configuring FspTimer
-#define DRIVE_FREQUENCY 150000
-
-// ---------------------- BANDPASS FILTER SETTINGS ----------------------
-// Sets the digital band-pass filter frequency on the TUSS4470 driver chip
-// This should roughly match the transducer drive frequency
-// For additional register values, see TUSS4470 datasheet, Table 7.1 (pages 17–18)
-// #define FILTER_FREQUENCY_REGISTER 0x00 // 40 kHz
-// #define FILTER_FREQUENCY_REGISTER 0x09 // 68 kHz
-// #define FILTER_FREQUENCY_REGISTER 0x10 // 100 kHz
-#define FILTER_FREQUENCY_REGISTER 0x18 // 151 kHz
-// #define FILTER_FREQUENCY_REGISTER 0x1E // 200 kHz
-
-// ---------------------- ADC SETUP ----------------------
+// ---------------------- ADC SETUP FOR ARDUINO R4 ----------------------
 // Defines addresses and convenience functions for RA4M1 ADC
 // Base addresses for ADC (from RA4M1 hardware manual)
 // Taken from https://github.com/TriodeGirl/Arduino-UNO-R4-code-DAC-ADC-Ints-Fast_Pins/blob/main/Arduino_UNO_R4_Interrupts_ADC_and_DAC_1.ino
@@ -50,10 +35,22 @@ const int analogIn = A0;
 #define ADSTRGR    (*(volatile uint16_t *)(ADC_BASE + 0xC010u)) // Not currently used, could be used to trigger ADC from timer. If combined with DMA, could be even faster.
 #define ADDR09     (*(volatile uint16_t *)(ADC_BASE + 0xC020u + 18)) // channel AN09 (A0 pin)
 
+
+struct __attribute__((packed)) Frame {
+  uint8_t  start = 0xAA;
+  uint16_t  depth_index;            
+  int16_t  temp_scaled;     
+  uint16_t vDrv_scaled;     
+  uint8_t  samples[NUM_SAMPLES];
+  uint8_t  checksum;         
+};
+
+static Frame frame;  // Data frame to send over WebSocket
+static uint8_t samplesXor = 0;   // Accumulate XOR while sampling
+
 byte misoBuf[2];  // SPI receive buffer
 byte inByteArr[2];  // SPI transmit buffer
 
-byte analogValues[NUM_SAMPLES];
 volatile int pulseCount = 0;
 volatile int sampleIndex = 0;
 
@@ -61,7 +58,7 @@ float temperature = 0.0f;
 int vDrv = 0;
 
 volatile bool detectedDepth = false;  // Condition flag
-volatile int depthDetectSample = 0;
+volatile uint16_t depthDetectSample = 0;
 
 // --- Burst Control Timer ---
 FspTimer burstTimer;
@@ -71,6 +68,7 @@ void burstCallback(timer_callback_args_t *) {
   pulseCount++;
   if (pulseCount >= 32) {
     burstTimer.stop();
+    pulseCount = 0;  // Reset counter for next cycle
   }
 }
 
@@ -128,10 +126,13 @@ void handleInterrupt() {
 void setup()
 {
   Serial.begin(250000);
+  nmeaSerial.begin(NMEA_BAUD_RATE);
 
   SPI.begin();
   SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE1)); 
-
+  #if WIFI_ENABLED
+    wifiSetup(WIFI_SSID, WIFI_PASS);
+  #endif
 
   pinMode(SPI_CS, OUTPUT);
   digitalWrite(SPI_CS, HIGH);
@@ -174,11 +175,15 @@ void loop()
   //int startTime = micros();
 
   // Read analog values from A0
-  sampleIndex = 0;
+  samplesXor = 0;
   for (sampleIndex = 0; sampleIndex < NUM_SAMPLES; sampleIndex++) {
     ADCSR |= (1u << 15);        // Set ADST (start)
     while (ADCSR & (1u << 15));  // Wait while ADST remains 1
-    analogValues[sampleIndex] = ADDR09 >> 4; // Read ADC value, 12 bit >> 8 bit
+    uint8_t v = ADDR09 >> 4; // Read ADC value, 12 bit >> 8 bit
+    frame.samples[sampleIndex] = v;
+    samplesXor ^= v; // Accumulate XOR for checksum
+
+    delayMicroseconds(11.5);
 
     if (sampleIndex == BLINDZONE_SAMPLE_END) {
       detectedDepth = false;
@@ -189,50 +194,128 @@ void loop()
   // Stop time-of-flight measurement
   tuss4470Write(0x1B, 0x00);
   
+  // Software depth override
+  #if USE_DEPTH_OVERRIDE
+  int overrideSample = 0;
+  uint8_t max = 0;
+  for (int i = BLINDZONE_SAMPLE_END; i < NUM_SAMPLES; i++) {
+    if (frame.samples[i] > max) {
+      max = frame.samples[i];
+      overrideSample = i;
+    }
+  }
+  if (overrideSample > 0) {
+    depthDetectSample = overrideSample;
+  }
+  #endif
+  
+  sendNmeaDBT();
   sendData();
 
-  delay(10);
+  // delay(10);
+}
+
+void sendData() {
+  // Header fields
+  frame.depth_index = depthDetectSample;
+  Serial.println();
+  Serial.println(depthDetectSample);
+  Serial.println();
+
+  frame.temp_scaled = (int16_t)(temperature * 100.0f);
+  frame.vDrv_scaled = (uint16_t)(vDrv * 100);
+
+  // Compute checksum (XOR of depth bytes, temp bytes, vDrv bytes, all samples)
+  uint8_t cs = 0;
+  // depth
+  cs ^= (uint8_t)(frame.depth_index & 0xFF);
+  cs ^= (uint8_t)(frame.depth_index >> 8);
+  // temp
+  cs ^= (uint8_t)(frame.temp_scaled & 0xFF);
+  cs ^= (uint8_t)(frame.temp_scaled >> 8);
+  // vDrv
+  cs ^= (uint8_t)(frame.vDrv_scaled & 0xFF);
+  cs ^= (uint8_t)(frame.vDrv_scaled >> 8);
+  // samples (already accumulated)
+  cs ^= samplesXor;
+  frame.checksum = cs;
+
+  // Total length (packed, known)
+  const size_t len = 1 + 2 + 2 + 2 + NUM_SAMPLES + 1;
+
+  Serial.write(reinterpret_cast<uint8_t*>(&frame), len);
+
+  #if WIFI_ENABLED && ENABLE_UDP_ECHO
+    udpBroadcastBIN(reinterpret_cast<uint8_t*>(&frame), len, UDP_ECHO_PORT);
+  #endif
 }
 
 
-void sendData() {
-  Serial.write(0xAA);  // Start byte
+void sendNmeaDBT() {
+  // Calculate depth in meters
+  float time_of_flight = depthDetectSample * 13.2e-6f;
+  float depth_m = (time_of_flight * 1450.0f) / 2.0f;
 
-  uint8_t checksum = 0;
+  float depth_ft = depth_m * 3.28084f;
+  float depth_fa = depth_m / 1.8288f;
 
-  // Depth
-  uint8_t depthHigh = depthDetectSample >> 8;
-  uint8_t depthLow  = depthDetectSample & 0xFF;
-  Serial.write(depthHigh);
-  Serial.write(depthLow);
-  checksum ^= depthHigh ^ depthLow;
+  // Convert floats to strings
+  char str_ft[10], str_m[10], str_fa[10];
+  dtostrf(depth_ft, 4, 1, str_ft);
+  dtostrf(depth_m, 4, 1, str_m);
+  dtostrf(depth_fa, 4, 1, str_fa);
 
-  // Temperature × 100
-  int16_t temp_scaled = temperature * 100;
-  uint8_t tempHigh = temp_scaled >> 8;
-  uint8_t tempLow  = temp_scaled & 0xFF;
-  Serial.write(tempHigh);
-  Serial.write(tempLow);
-  checksum ^= tempHigh ^ tempLow;
+  // Trim leading spaces (manually)
+  char* ptr_ft = str_ft;
+  char* ptr_m = str_m;
+  char* ptr_fa = str_fa;
+  while (*ptr_ft == ' ') ptr_ft++;
+  while (*ptr_m == ' ') ptr_m++;
+  while (*ptr_fa == ' ') ptr_fa++;
 
-  // Drive Voltage × 100
-  uint16_t vDrv_scaled = vDrv * 100;
-  uint8_t vDrvHigh = vDrv_scaled >> 8;
-  uint8_t vDrvLow  = vDrv_scaled & 0xFF;
-  Serial.write(vDrvHigh);
-  Serial.write(vDrvLow);
-  checksum ^= vDrvHigh ^ vDrvLow;
+  // Build the NMEA DBT sentence
+  char dbt_sentence[80];
+  snprintf(dbt_sentence, sizeof(dbt_sentence),
+           "$SDDBT,%s,f,%s,M,%s,F", ptr_ft, ptr_m, ptr_fa);
 
-  // Analog samples directly from analogValues[]
-  // TODO: Optimize by sending raw bytes instead of splitting into high/low bytes
-  for (int i = 0; i < NUM_SAMPLES; i++) {
-    uint8_t highByte = analogValues[i] >> 8;
-    uint8_t lowByte  = analogValues[i] & 0xFF;
-    Serial.write(highByte);
-    Serial.write(lowByte);
-    checksum ^= highByte ^ lowByte;
+  // Calculate checksum (XOR of chars between $ and *)
+  uint8_t dbt_checksum = 0;
+  for (int i = 1; dbt_sentence[i] != '\0'; i++) {
+    dbt_checksum ^= dbt_sentence[i];
   }
 
-  // Send checksum
-  Serial.write(checksum);
+  // Final output with checksum
+  char fullDBTSentence[90];
+  snprintf(fullDBTSentence, sizeof(fullDBTSentence), "%s*%02X\r\n", dbt_sentence, dbt_checksum);
+
+  nmeaSerial.print(fullDBTSentence);
+  #if WIFI_ENABLED && ENABLE_UDP_NMEA
+    udpBroadcastNMEA(fullDBTSentence, strlen(fullDBTSentence), UDP_NMEA_PORT);
+  #endif
+
+  // Build the NMEA DPT sentence
+  char str_offset[10];
+  dtostrf(DEPTH_OFFSET, 4, 1, str_offset);
+  char* ptr_offset = str_offset;
+  while (*ptr_offset == ' ') ptr_offset++;
+
+  // We are (possibly optimistically) reporting max depth of 100m
+  char dpt_sentence[80];
+  snprintf(dpt_sentence, sizeof(dpt_sentence),
+           "$SDDPT,%s,%s,100", ptr_m, ptr_offset);
+
+  // Calculate checksum (XOR of chars between $ and *)
+  uint8_t dpt_checksum = 0;
+  for (int i = 1; dpt_sentence[i] != '\0'; i++) {
+    dpt_checksum ^= dpt_sentence[i];
+  }
+
+  // Final output with checksum
+  char fullDPTSentence[90];
+  snprintf(fullDPTSentence, sizeof(fullDPTSentence), "%s*%02X\r\n", dpt_sentence, dpt_checksum);
+
+  nmeaSerial.print(fullDPTSentence);
+  #if WIFI_ENABLED && ENABLE_UDP_NMEA
+    udpBroadcastNMEA(fullDPTSentence, strlen(fullDPTSentence), UDP_NMEA_PORT);
+  #endif
 }
