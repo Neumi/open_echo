@@ -622,8 +622,6 @@ class WaterfallApp(QMainWindow):
         serial_row.addWidget(QLabel("Port:"))
         self.serial_dropdown = QComboBox()
         ports = get_serial_ports()
-        # Prepend a default UDP option (edit port as needed by typing replacement)
-        ports.insert(0, "udp:31338")
         self.serial_dropdown.addItems(ports)
         self.serial_dropdown.setMinimumWidth(150)
         serial_row.addWidget(self.serial_dropdown)
@@ -799,20 +797,8 @@ class WaterfallApp(QMainWindow):
 
         selected_port = self.serial_dropdown.currentText()
         try:
-            if selected_port.startswith("udp:"):
-                # Format udp:<port> or udp:<host>:<port>
-                udp_spec = selected_port[4:]
-                if udp_spec.count(":") == 1:
-                    host, port_str = udp_spec.split(":")
-                else:
-                    host = "0.0.0.0"
-                    port_str = udp_spec
-                port = int(port_str)
-                self.serial_thread = UdpReader(host, port)
-                print(f"🚀 Using UDP reader on {host}:{port}")
-            else:
-                self.serial_thread = SerialReader(selected_port, BAUD_RATE)
-                print(f"🚀 Using Serial reader on {selected_port}")
+            self.serial_thread = SerialReader(selected_port, BAUD_RATE)
+            print(f"🚀 Using Serial reader on {selected_port}")
 
             self.serial_thread.data_received.connect(self.waterfall_plot_callback)
             self.serial_thread.start()
