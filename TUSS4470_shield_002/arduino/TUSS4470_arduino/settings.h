@@ -34,4 +34,4 @@ const int DRIVE_FREQUENCY_TIMER_DIVIDER = (16000000 / (2 * DRIVE_FREQUENCY)) - 1
 // If enabled, software will scan the captured analogValues[] after each
 // acquisition and choose the max sample after the blind zone to be 
 // the bottom echo, instead of the first sample above the threshold.
-#define USE_DEPTH_OVERRIDE 1
+#define USE_DEPTH_OVERRIDE 0

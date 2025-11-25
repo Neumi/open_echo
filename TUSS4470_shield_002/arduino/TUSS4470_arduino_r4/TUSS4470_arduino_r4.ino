@@ -218,9 +218,6 @@ void loop()
 void sendData() {
   // Header fields
   frame.depth_index = depthDetectSample;
-  Serial.println();
-  Serial.println(depthDetectSample);
-  Serial.println();
 
   frame.temp_scaled = (int16_t)(temperature * 100.0f);
   frame.vDrv_scaled = (uint16_t)(vDrv * 100);

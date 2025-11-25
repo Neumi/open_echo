@@ -22,7 +22,7 @@ const int DRIVE_FREQUENCY_TIMER_DIVIDER = (16000000 / (2 * DRIVE_FREQUENCY)) - 1
 // Each sample takes approximately 13.2 microseconds
 // This value must match the number of samples expected by the Python visualization tool
 // Max 1800 on R3, ~10000 on R4
-#define NUM_SAMPLES 12000
+#define NUM_SAMPLES 1800
 
 // Number of initial samples to ignore after sending the transducer pulse
 // These ignored samples represent the "blind zone" where the transducer is still ringing
@@ -52,18 +52,16 @@ const int DRIVE_FREQUENCY_TIMER_DIVIDER = (16000000 / (2 * DRIVE_FREQUENCY)) - 1
 // Only required for Arduino R4 WiFi
 #define WIFI_ENABLED 1
 
-#if WIFI_ENABLED
-  // If not found, will fall back to Access Point mode with SSID "OpenEcho" and password "openecho"
-  static const char WIFI_SSID[] = "Your SSID";
-  static const char WIFI_PASS[] = "Your Password";
+// If not found, will fall back to Access Point mode with SSID "OpenEcho" and password "openecho"
+static const char WIFI_SSID[] = "Your SSID";
+static const char WIFI_PASS[] = "Your Password";
 
-  // ---------------------- UDP BROADCAST SETTINGS ----------------------
-  // Enable/disable UDP broadcast of the binary frame (same payload as Serial / WebSocket)
-  // This cannot be sent to all, so a specific broadcast IP must be set
-  #define ENABLE_UDP_ECHO 0
-  #define UDP_ECHO_PORT 31338
-  static const IPAddress UDP_ECHO_IP(192, 168, 4, 255);
+// ---------------------- UDP BROADCAST SETTINGS ----------------------
+// Enable/disable UDP broadcast of the binary frame (same payload as Serial / WebSocket)
+// This cannot be sent to all, so a specific broadcast IP must be set
+#define ENABLE_UDP_ECHO 1
+#define UDP_ECHO_PORT 31338
+static const IPAddress UDP_ECHO_IP(10, 17, 20, 117);
 
-  #define ENABLE_UDP_NMEA 1
-  #define UDP_NMEA_PORT 31337
-#endif
+#define ENABLE_UDP_NMEA 0
+#define UDP_NMEA_PORT 31337

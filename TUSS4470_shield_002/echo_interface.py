@@ -28,7 +28,7 @@ from PyQt5.QtWidgets import QApplication
 
 # Serial Configuration
 BAUD_RATE = 250000
-NUM_SAMPLES = 12000 # (X-axis)
+NUM_SAMPLES = 1800 # (X-axis)
 
 MAX_ROWS = 300  # Number of time steps (Y-axis)
 Y_LABEL_DISTANCE = 50  # distance between labels in cm
@@ -157,7 +157,7 @@ class SerialReader(QThread):
         self.wait()
 
 
-class UdpReader(QThread):
+class UDPReader(QThread):
     """Thread for reading sonar packets over UDP.
 
     Expected packet format (single datagram per packet or stream inside datagram):
@@ -165,9 +165,9 @@ class UdpReader(QThread):
     """
     data_received = pyqtSignal(np.ndarray, float, float, float)
 
-    def __init__(self, host: str, port: int, timeout: float = 1.0):
+    def __init__(self, port: int, timeout: float = 1.0):
         super().__init__()
-        self.host = host
+        self.host = ""
         self.port = port
         self.timeout = timeout
         self.running = True
@@ -225,7 +225,6 @@ class UdpReader(QThread):
                                     self.data_received.emit(values, depth, temperature, drive_voltage)
                                     packets_ok += 1
                                     # Skip the old emit below by continuing
-                                    continue
                             except struct.error:
                                 # Parsing error; treat as checksum failure for stats
                                 checksum_errors += 1
@@ -239,8 +238,8 @@ class UdpReader(QThread):
                             packet_buf.append(last_byte)
 
                 # Optional: could log stats every N packets
-                # if (packets_ok + checksum_errors) and (packets_ok + checksum_errors) % 200 == 0:
-                #     print(f"UDP stats: ok={packets_ok} bad={checksum_errors}")
+                if (packets_ok + checksum_errors) and (packets_ok + checksum_errors) % 200 == 0:
+                    print(f"UDP stats: ok={packets_ok} bad={checksum_errors}")
         except Exception as e:
             print(f"❌ UDP Reader error: {e}")
         finally:
@@ -449,64 +448,6 @@ class SettingsDialog(QWidget):
             self.main_app.set_large_depth_display(self.large_depth_checkbox.isChecked())
 
         self.close()
-
-
-class UDPReader(QThread):
-    """Thread for receiving UDP packets asynchronously."""
-    data_received = pyqtSignal(np.ndarray, float, float, float)
-
-    def __init__(self, port=5005):
-        super().__init__()
-        self.port = port
-        self.running = True
-
-    def run(self):
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.bind(("", self.port))
-            print(f"📡 Listening for UDP packets on port {self.port}")
-            sock.settimeout(2.0)
-            while self.running:
-                try:
-                    data, addr = sock.recvfrom(8192 * 8)  # Allow large packets
-                    if len(data) < 8:
-                        continue
-
-                    # Parse same structure as serial
-                    if data[0] != 0xAA:
-                        continue
-
-                    payload = data[1:-1]
-                    checksum = data[-1]
-                    calc_checksum = 0
-                    for b in payload:
-                        calc_checksum ^= b
-                    if calc_checksum != checksum:
-                        print("⚠️ UDP checksum mismatch")
-                        continue
-
-                    depth, temp_scaled, vDrv_scaled = struct.unpack(">HhH", payload[:6])
-                    depth = min(depth, NUM_SAMPLES)
-                    samples = struct.unpack(f">{NUM_SAMPLES}H", payload[6:])
-                    print(samples)
-
-                    temperature = temp_scaled / 100.0
-                    drive_voltage = vDrv_scaled / 100.0
-                    values = np.array(samples)
-
-                    self.data_received.emit(values, depth, temperature, drive_voltage)
-                except socket.timeout:
-                    continue
-                except Exception as e:
-                    print(f"⚠️ UDP read error: {e}")
-                    continue
-        except Exception as e:
-            print(f"❌ Failed to start UDP listener: {e}")
-
-    def stop(self):
-        self.running = False
-        self.quit()
-        self.wait()
 
 
 class WaterfallApp(QMainWindow):

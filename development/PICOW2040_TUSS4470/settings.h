@@ -55,9 +55,9 @@
   // ---------------------- UDP BROADCAST SETTINGS ----------------------
   // Enable/disable UDP broadcast of the binary frame (same payload as Serial / WebSocket)
   // This cannot be sent to all, so a specific broadcast IP must be set
-  #define ENABLE_UDP_ECHO 0
+  #define ENABLE_UDP_ECHO 1
   #define UDP_ECHO_PORT 31338
-  static const IPAddress UDP_ECHO_IP(192, 168, 4, 255);
+  static const IPAddress UDP_ECHO_IP(10, 17, 20, 117);
 
   #define ENABLE_UDP_NMEA 1
   #define UDP_NMEA_PORT 31337
