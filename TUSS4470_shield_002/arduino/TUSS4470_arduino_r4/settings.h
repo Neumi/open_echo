@@ -1,4 +1,6 @@
+#pragma once
 
+#include <Arduino.h>
 
 // ---------------------- DRIVE FREQUENCY SETTINGS ----------------------
 // Sets the output frequency of the ultrasonic transducer
@@ -57,8 +59,10 @@ const int DRIVE_FREQUENCY_TIMER_DIVIDER = (16000000 / (2 * DRIVE_FREQUENCY)) - 1
 
   // ---------------------- UDP BROADCAST SETTINGS ----------------------
   // Enable/disable UDP broadcast of the binary frame (same payload as Serial / WebSocket)
+  // This cannot be sent to all, so a specific broadcast IP must be set
   #define ENABLE_UDP_ECHO 0
   #define UDP_ECHO_PORT 31338
+  static const IPAddress UDP_ECHO_IP(192, 168, 4, 255);
 
   #define ENABLE_UDP_NMEA 1
   #define UDP_NMEA_PORT 31337

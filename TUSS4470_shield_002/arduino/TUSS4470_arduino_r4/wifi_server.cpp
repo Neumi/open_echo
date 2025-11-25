@@ -1,5 +1,6 @@
 // Simplified networking: WiFi connection + UDP broadcast only
 #include "wifi_server.h"
+#include "settings.h"
 #include <WiFiS3.h>
 #include <WiFiUdp.h>
 
@@ -58,7 +59,7 @@ void wifiSetup(const char* ssid, const char* pass) {
 
 bool udpBroadcastBIN(const uint8_t* data, size_t len, uint16_t port) {
   if (!udpReady) return false;
-  udp.beginPacket(broadcastIp, port);
+  udp.beginPacket(UDP_ECHO_IP, port);
   udp.write(data, len);
   udp.endPacket();
   return true;

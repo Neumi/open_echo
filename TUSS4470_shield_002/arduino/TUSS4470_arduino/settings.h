@@ -1,3 +1,5 @@
+#pragma once
+
 // ---------------------- DRIVE FREQUENCY SETTINGS ----------------------
 // Sets the output frequency of the ultrasonic transducer
 // Uses DRIVE_FREQUENCY directly for R4, uses divider for R3

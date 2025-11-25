@@ -1,3 +1,7 @@
+#pragma once
+
+#include <Arduino.h>
+
 // ---------------------- DRIVE FREQUENCY SETTINGS ----------------------
 // Sets the output frequency of the ultrasonic transducer
 #define DRIVE_FREQUENCY 40000
