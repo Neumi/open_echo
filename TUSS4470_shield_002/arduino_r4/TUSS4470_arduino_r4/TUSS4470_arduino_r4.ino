@@ -71,6 +71,7 @@ void burstCallback(timer_callback_args_t *) {
   pulseCount++;
   if (pulseCount >= 32) {
     burstTimer.stop();
+    pulseCount = 0;  // Reset counter for next cycle
   }
 }
 
