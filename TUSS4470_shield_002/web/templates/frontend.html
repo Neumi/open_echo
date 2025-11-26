@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Spectrogram with Color Map</title>
+  <link rel="stylesheet" type="text/css" href="/static/style.css">
+</head>
+<body>
+
+  <canvas id="spectrogram" class="canvas"></canvas>
+  <canvas id="cursor-overlay" class="canvas overlay"></canvas>
+
+  <!-- Floating overlays -->
+  <div id="y-axis-labels">
+    <div id="y-axis-labels-inner">
+      <div id="y-ticks"></div>
+      <div class="vertical-label">Depth (m)</div>
+      <div id="y-range-selector">
+        <span id="y-range-label"></span>
+        <div id="y-range-selector-buttons">
+          <button id="zoom-in" class="zoom-btn">+</button>
+          <button id="zoom-out" class="zoom-btn">-</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="measured-depth-label">
+    Depth: 0m
+    <div id="cursor-depth-label">Cursor: -- m</div>
+  </div>
+
+  <!-- <div id="x-axis-labels">
+    <div id="x-ticks"></div>
+    <div class="seconds-label">Seconds</div>
+  </div> -->
+
+  <script src="/static/js-colormaps.js"></script>
+  <script>{% include 'spectrogram.js' %}</script>
+</body>
+</html>
