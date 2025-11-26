@@ -18,6 +18,7 @@ If something is unclear or you find a bug, please open an issue.
 
 If you need the hardware, you can order it using the [Hardware Files](TUSS4470_shield_002/TUSS4470_shield_hardware/TUSS4470_shield) from a board + SMT house ([JLC recommended](https://jlcpcb.com/?from=Neumi)), or send me a DM on the Discord server, or send an email to: openechoes@gmail.com 
 One assmebled board is 50€ + shipping.
+<b>If you don't order the boards directly from me, please be aware that I can't provide support.</b>
 
 <img alt="Open Echo Interface Software" src="/documentation/images/echo_software_screenshot.jpg">
 
