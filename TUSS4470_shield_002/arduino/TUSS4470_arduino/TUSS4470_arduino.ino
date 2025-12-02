@@ -10,18 +10,18 @@ const int O4 = 2;
 const int analogIn = A0;
 
 struct __attribute__((packed)) Frame {
-  uint8_t  start = 0xAA;
-  uint16_t  depth_index;            
-  int16_t  temp_scaled;     
-  uint16_t vDrv_scaled;     
-  uint8_t  samples[NUM_SAMPLES];
-  uint8_t  checksum;         
+  uint8_t start = 0xAA;
+  uint16_t depth_index;
+  int16_t temp_scaled;
+  uint16_t vDrv_scaled;
+  uint8_t samples[NUM_SAMPLES];
+  uint8_t checksum;
 };
 
-static Frame frame;  // Data frame to send over WebSocket
-static uint8_t samplesXor = 0;   // Accumulate XOR while sampling
+static Frame frame;             // Data frame to send over WebSocket
+static uint8_t samplesXor = 0;  // Accumulate XOR while sampling
 
-byte misoBuf[2];  // SPI receive buffer
+byte misoBuf[2];    // SPI receive buffer
 byte inByteArr[2];  // SPI transmit buffer
 float temperature = 0.0f;
 int vDrv = 0;
@@ -133,9 +133,9 @@ void setup() {
   tuss4470Write(0x13, 0x01);                       // Set LNA gain (0x00 = 15V/V, 0x01 = 10V/V, 0x02 = 20V/V, 0x03 = 12.5V/V)
 
   // Set up ADC
-  ADCSRA = (1 << ADEN)  |  // Enable ADC
-          (1 << ADPS2);   // Set prescaler to 16 (16 MHz / 16 = 1 MHz ADC clock)
-  ADMUX = (1 << REFS0);    // Reference voltage: AVcc
+  ADCSRA = (1 << ADEN) |  // Enable ADC
+           (1 << ADPS2);  // Set prescaler to 16 (16 MHz / 16 = 1 MHz ADC clock)
+  ADMUX = (1 << REFS0);   // Reference voltage: AVcc
   // Input channel: ADC0 (default)
   ADCSRB = 0;              // Free-running mode
   ADCSRA |= (1 << ADATE);  // Enable auto-trigger (free-running)
@@ -153,11 +153,12 @@ void loop() {
   // Read analog values from A0
   samplesXor = 0;
   for (sampleIndex = 0; sampleIndex < NUM_SAMPLES; sampleIndex++) {
-      while (!(ADCSRA & (1 << ADIF))); // Wait for conversion to complete
-      ADCSRA |= (1 << ADIF);           // Clear the interrupt flag
-      uint8_t v = ADC >> 2;           // Read ADC value, 10 bit >> 8 bit
-      frame.samples[sampleIndex] = v;
-      samplesXor ^= v; // Accumulate XOR for checksum
+    while (!(ADCSRA & (1 << ADIF)))
+      ;                     // Wait for conversion to complete
+    ADCSRA |= (1 << ADIF);  // Clear the interrupt flag
+    uint8_t v = ADC >> 2;   // Read ADC value, 10 bit >> 8 bit
+    frame.samples[sampleIndex] = v;
+    samplesXor ^= v;  // Accumulate XOR for checksum
 
     if (sampleIndex == BLINDZONE_SAMPLE_END) {
       detectedDepth = false;
@@ -167,9 +168,9 @@ void loop() {
 
   // Stop time-of-flight measurement
   tuss4470Write(0x1B, 0x00);
-  
-  // Software depth override
-  #if USE_DEPTH_OVERRIDE
+
+// Software depth override
+#if USE_DEPTH_OVERRIDE
   int overrideSample = 0;
   uint8_t max = 0;
   for (int i = BLINDZONE_SAMPLE_END; i < NUM_SAMPLES; i++) {
@@ -181,8 +182,8 @@ void loop() {
   if (overrideSample > 0) {
     depthDetectSample = overrideSample;
   }
-  #endif
-  
+#endif
+
   sendData();
 
   delay(10);

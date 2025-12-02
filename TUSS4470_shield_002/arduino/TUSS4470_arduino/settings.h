@@ -28,7 +28,7 @@ const int DRIVE_FREQUENCY_TIMER_DIVIDER = (16000000 / (2 * DRIVE_FREQUENCY)) - 1
 
 // Threshold level for detecting the bottom echo
 // The first echo stronger than this value (after the blind zone) is considered the bottom
-#define THRESHOLD_VALUE 0x19
+#define THRESHOLD_VALUE 0x1F
 
 // ---------------------- DEPTH OVERRIDE ----------------------
 // If enabled, software will scan the captured analogValues[] after each
