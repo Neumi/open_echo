@@ -151,14 +151,12 @@ void loop() {
   //int startTime = micros();
 
   // Read analog values from A0
-  samplesXor = 0;
   for (sampleIndex = 0; sampleIndex < NUM_SAMPLES; sampleIndex++) {
     while (!(ADCSRA & (1 << ADIF)))
       ;                     // Wait for conversion to complete
     ADCSRA |= (1 << ADIF);  // Clear the interrupt flag
     uint8_t v = ADC >> 2;   // Read ADC value, 10 bit >> 8 bit
     frame.samples[sampleIndex] = v;
-    samplesXor ^= v;  // Accumulate XOR for checksum
 
     if (sampleIndex == BLINDZONE_SAMPLE_END) {
       detectedDepth = false;
@@ -206,8 +204,10 @@ void sendData() {
   // vDrv
   cs ^= (uint8_t)(frame.vDrv_scaled & 0xFF);
   cs ^= (uint8_t)(frame.vDrv_scaled >> 8);
-  // samples (already accumulated)
-  cs ^= samplesXor;
+  // samples
+  for (int i = 0; i < NUM_SAMPLES; i++) {
+    cs ^= frame.samples[i];
+  }
   frame.checksum = cs;
 
   // Total length (packed, known)

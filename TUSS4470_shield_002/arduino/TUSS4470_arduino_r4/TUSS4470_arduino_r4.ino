@@ -175,13 +175,11 @@ void loop()
   //int startTime = micros();
 
   // Read analog values from A0
-  samplesXor = 0;
   for (sampleIndex = 0; sampleIndex < NUM_SAMPLES; sampleIndex++) {
     ADCSR |= (1u << 15);        // Set ADST (start)
     while (ADCSR & (1u << 15));  // Wait while ADST remains 1
     uint8_t v = ADDR09 >> 4; // Read ADC value, 12 bit >> 8 bit
     frame.samples[sampleIndex] = v;
-    samplesXor ^= v; // Accumulate XOR for checksum
 
     delayMicroseconds(11.5);
 
@@ -233,8 +231,10 @@ void sendData() {
   // vDrv
   cs ^= (uint8_t)(frame.vDrv_scaled & 0xFF);
   cs ^= (uint8_t)(frame.vDrv_scaled >> 8);
-  // samples (already accumulated)
-  cs ^= samplesXor;
+  // samples
+  for (int i = 0; i < NUM_SAMPLES; i++) {
+    cs ^= frame.samples[i];
+  }
   frame.checksum = cs;
 
   // Total length (packed, known)

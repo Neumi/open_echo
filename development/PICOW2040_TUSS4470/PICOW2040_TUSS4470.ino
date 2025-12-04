@@ -147,8 +147,10 @@ void sendData() {
   // vDrv
   cs ^= (uint8_t)(frame.vDrv_scaled & 0xFF);
   cs ^= (uint8_t)(frame.vDrv_scaled >> 8);
-  // samples (already accumulated)
-  cs ^= samplesXor;
+  // samples
+  for (int i = 0; i < NUM_SAMPLES; i++) {
+    cs ^= frame.samples[i];
+  }
   frame.checksum = cs;
 
   // Total length (packed, known)
@@ -271,7 +273,6 @@ void loop() {
 
   unsigned long startTime = micros();
 
-  samplesXor = 0;
   for (sampleIndex = 0; sampleIndex < NUM_SAMPLES; sampleIndex++) {
     adc_select_input(0);
     adc_run(true);
@@ -281,7 +282,6 @@ void loop() {
     
     uint8_t value = adc_hw->result >> 4;  // Scale 12-bit to 8-bit
     frame.samples[sampleIndex] = value;
-    samplesXor ^= value;
     delayMicroseconds(5);  // 6 uS total sampling per sample
     //delayMicroseconds(11); //    delayMicroseconds(12); // 13 uS total sampling per sample
 

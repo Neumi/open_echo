@@ -72,7 +72,7 @@ def read_packet(ser):
             calc_checksum ^= byte
         if calc_checksum != checksum[0]:
             print("⚠️ Checksum mismatch: {} != {}".format(calc_checksum, checksum[0]))
-            #continue
+            continue
 
         # Unpack payload (firmware sends little-endian raw struct bytes)
         depth, temp_scaled, vDrv_scaled = struct.unpack("<HhH", payload[:6])
