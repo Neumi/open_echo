@@ -6,7 +6,7 @@ import websockets
 import json
 from typing import Any
 
-from settings import NMEAOffset, Settings
+from openecho.settings import NMEAOffset, Settings
 
 log = logging.getLogger("uvicorn")
 

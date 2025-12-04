@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 import asyncio
+from dataclasses import dataclass
 from enum import Enum
-from typing import Callable, Coroutine
+from typing import AsyncGenerator, Callable, Coroutine
 import numpy as np
 import serial.tools.list_ports
 import struct
@@ -11,10 +12,23 @@ import serial_asyncio_fast as aserial
 
 log = logging.getLogger("uvicorn")
 
+@dataclass
+class EchoPacket:
+    samples: np.ndarray
+    depth_index: int
+    temperature: float
+    drive_voltage: float
 
-class Reader(ABC):
+class AsyncReader(ABC):
     def __init__(self, settings):
         self.settings = settings
+
+    async def __aenter__(self) -> "AsyncReader":
+        await self.open()
+        return self
+    
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        await self.close()
 
     @abstractmethod
     async def open(self):
@@ -25,10 +39,10 @@ class Reader(ABC):
         pass
 
     @abstractmethod
-    async def read(self):
+    async def read_bytes(self) -> EchoPacket:
         pass
 
-    def unpack(self, payload: bytes, checksum: bytes) -> tuple[np.ndarray, float, float, float]:
+    def unpack(self, payload: bytes, checksum: bytes) -> EchoPacket:
         if len(payload) != 6 + self.settings.num_samples or len(checksum) != 1:
             raise ValueError("Invalid payload or checksum length")
 
@@ -50,10 +64,17 @@ class Reader(ABC):
         drive_voltage = vDrv_scaled / 100.0
         values = np.array(samples)
 
-        return values, depth, temperature, drive_voltage
+        return EchoPacket(values, depth, temperature, drive_voltage)
+
+    async def __aiter__(self) -> AsyncGenerator[EchoPacket, None]:
+        try:
+            while True:
+                yield await self.read()
+        except asyncio.CancelledError:
+            return
 
 
-class SerialReader(Reader):
+class SerialReader(AsyncReader):
     def __init__(self, settings):
         super().__init__(settings)
 
@@ -94,7 +115,7 @@ class SerialReader(Reader):
                 continue  # Invalid packet, try again
 
 
-class UDPReader(Reader):
+class UDPReader(AsyncReader):
     class _PacketProtocol(asyncio.DatagramProtocol):
         def __init__(self, outer):
             self.outer = outer
@@ -150,84 +171,6 @@ class UDPReader(Reader):
         return await self._queue.get()
 
 
-class EchoReader:
-    def __init__(
-        self,
-        data_callback: Callable[[dict], Coroutine],
-        depth_callback: Callable[[dict], Coroutine],
-        settings = None,
-    ):
-        self.settings = settings
-        self._restart_event = asyncio.Event()
-        self.data_callback = data_callback
-        self.depth_callback = depth_callback
-        self._task: asyncio.Task | None = None
-
-    def update_settings(self, new_settings):
-        log.info("EchoReader updating settings...")
-        self.settings = new_settings
-        self._restart_event.set()  # Signal restart
-
-    def __enter__(self):
-        self._task = asyncio.create_task(self.run_forever())
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        if self._task:
-            self._task.cancel()
-            self._task = None
-
-        if exc_type is not None:
-            log.error(f"Error in EchoReader: {exc_value}")
-
-    async def aread_echo(self, reader: Reader):
-        result = await reader.read()
-        if result:
-            values, depth_index, temperature, drive_voltage = result
-
-            resolution = self.settings.resolution
-            depth = depth_index * (resolution / 100)  # Convert to meters
-            try:
-                data = {
-                    "spectrogram": values.tolist(),
-                    "measured_depth": depth,
-                    "temperature": temperature,
-                    "drive_voltage": drive_voltage,
-                    "resolution": resolution,
-                }
-                await self.data_callback(data)
-            except Exception as e:
-                log.error(f"❌ Error sending data: {e}", exc_info=e)
-
-            try:
-                self.depth_callback(depth)
-            except Exception as e:
-                log.error(f"❌ Error sending depth: {e}", exc_info=e)
-
-        await asyncio.sleep(0.1)  # Allow time for other tasks
-
-    async def run_forever(self):
-        """Continuously read serial data and emit processed arrays. Supports live settings update and restart."""
-        while True:
-            if self.settings is None:
-                log.warning("Settings not initialized, waiting...")
-                await asyncio.sleep(1)
-                continue
-
-            log.info("EchoReader starting...")
-            self._restart_event.clear()
-            try:
-                reader = self.settings.connection_type.value(self.settings)
-                await reader.open()
-                log.info(f"Opening connection: {self.settings.connection_type.name}")
-                while not self._restart_event.is_set():
-                    await self.aread_echo(reader)
-            except Exception as e:
-                log.error(f"❌ Error in EchoReader: {e}", exc_info=e)
-            finally:
-                await reader.close()
-
-            await self._restart_event.wait()
 
 
 class ConnectionTypeEnum(Enum):

@@ -1,7 +1,7 @@
 [project]
-name = "open-echo-web"
+name = "open-echo"
 version = "0.1.0"
-description = "Web interface for OpenEcho"
+description = "Python library for OpenEcho boards"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -10,6 +10,10 @@ dependencies = [
     "jinja2>=3.1.6",
     "numpy>=2.3.2",
     "pydantic-settings>=2.10.1",
+    "pyqt5>=5.15.11",
+    "pyqtdarktheme>=2.1.0",
+    "pyqtgraph>=0.14.0",
+    "qasync>=0.24.0",
     "pyserial<3.5",
     "pyserial-asyncio>=0.6",
     "pyserial-asyncio-fast>=0.16",
@@ -17,3 +21,11 @@ dependencies = [
     "uvicorn>=0.35.0",
     "websockets>=15.0.1",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["TUSS4470_shield_002/python/src/openecho"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
