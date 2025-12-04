@@ -1,34 +1,38 @@
-import sys
-import numpy as np
-import serial
-import serial.tools.list_ports
-import struct
-import time
+# Async integration
+import asyncio
 import socket
-from PyQt5.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QVBoxLayout,
-    QWidget,
-    QComboBox,
-    QPushButton,
-    QLabel,
-    QLineEdit,
-)
-from PyQt5.QtCore import QThread, pyqtSignal
+import sys
+import time
+
+import numpy as np
 import pyqtgraph as pg
 import qdarktheme
+import serial
+import serial.tools.list_ports
+from open_echo.echo import ConnectionTypeEnum
+
+# Use shared settings/readers
+from open_echo.settings import Settings
+from PyQt5.QtCore import QObject, Qt, pyqtSignal
+from PyQt5.QtGui import QColor, QPalette
 from PyQt5.QtWidgets import (
+    QApplication,
+    QCheckBox,
+    QComboBox,
     QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QMainWindow,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPalette, QColor
-from PyQt5.QtWidgets import QVBoxLayout, QLabel, QCheckBox, QLineEdit
-from PyQt5.QtWidgets import QApplication
+from qasync import QEventLoop
 
 # Serial Configuration
 BAUD_RATE = 250000
-NUM_SAMPLES = 1800 # (X-axis)
+# Default values; overridden by WaterfallApp instance settings
+NUM_SAMPLES = 1800  # (X-axis)
 
 MAX_ROWS = 300  # Number of time steps (Y-axis)
 Y_LABEL_DISTANCE = 50  # distance between labels in cm
@@ -40,7 +44,9 @@ SPEED_OF_SOUND = 1440  # default sound speed meters/second in water
 # SAMPLE_TIME = 47.0e-6
 # SAMPLE_TIME = 41.666e-6 # 13.2 microseconds on Atmega328 max sample speed plus 40 microseconds delay in sampling loop
 # SAMPLE_TIME = 22.22e-6  # 13.2 microseconds on Atmega328 max sample speed plus 20 microseconds delay in sampling loop
-SAMPLE_TIME = 13.2e-6     # 13.2 microseconds on Atmega328 max sample speed without additional delay
+SAMPLE_TIME = (
+    13.2e-6  # 13.2 microseconds on Atmega328 max sample speed without additional delay
+)
 # SAMPLE_TIME = 11.0e-6     # 13.2 microseconds on RP2040 max sample speed with 10 microseconds additional delay per sample
 # SAMPLE_TIME = 7.682e-6  # 7.682 microseconds on STM32F103 max sample speed
 # SAMPLE_TIME = 6.0e-6  # 6 microseconds on RP2040 max sample speed with 5 microseconds additional delay per sample
@@ -48,43 +54,14 @@ SAMPLE_TIME = 13.2e-6     # 13.2 microseconds on Atmega328 max sample speed with
 
 DEFAULT_LEVELS = (0, 256)  # Expected data range
 
-SAMPLE_RESOLUTION = (SPEED_OF_SOUND * SAMPLE_TIME * 100) / 2  # cm per row (0.99 cm per row)
-PACKET_SIZE = 1 + 6 + NUM_SAMPLES + 1  # header + payload + checksum
-MAX_DEPTH = NUM_SAMPLES * SAMPLE_RESOLUTION  # Total depth in cm
-depth_labels = {int(i / SAMPLE_RESOLUTION): f"{i / 100}" for i in range(0, int(MAX_DEPTH), Y_LABEL_DISTANCE)}
-
-
-def read_packet(ser):
-    while True:
-        header = ser.read(1)
-        if header != b"\xaa":
-            continue  # Wait for the start byte
-
-        payload = ser.read(6 + NUM_SAMPLES)
-        checksum = ser.read(1)
-
-        if len(payload) != 6 + NUM_SAMPLES or len(checksum) != 1:
-            continue  # Incomplete packet
-
-        # Verify checksum
-        calc_checksum = 0
-        for byte in payload:
-            calc_checksum ^= byte
-        if calc_checksum != checksum[0]:
-            print("⚠️ Checksum mismatch: {} != {}".format(calc_checksum, checksum[0]))
-            continue
-
-        # Unpack payload (firmware sends little-endian raw struct bytes)
-        depth, temp_scaled, vDrv_scaled = struct.unpack("<HhH", payload[:6])
-        depth = min(depth, NUM_SAMPLES)
-
-        sample_bytes = payload[6:6+NUM_SAMPLES]
-        values = np.frombuffer(sample_bytes, dtype=np.uint8, count=NUM_SAMPLES)
-
-        temperature = temp_scaled / 100.0
-        drive_voltage = vDrv_scaled / 100.0
-
-        return values, depth, temperature, drive_voltage
+# Module-level derived values are kept for defaults only; instance values are used in UI
+SAMPLE_RESOLUTION = (SPEED_OF_SOUND * SAMPLE_TIME * 100) / 2
+PACKET_SIZE = 1 + 6 + NUM_SAMPLES + 1
+MAX_DEPTH = NUM_SAMPLES * SAMPLE_RESOLUTION
+depth_labels = {
+    int(i / SAMPLE_RESOLUTION): f"{i / 100}"
+    for i in range(0, int(MAX_DEPTH), Y_LABEL_DISTANCE)
+}
 
 
 def generate_dbt_sentence(depth_cm):
@@ -120,155 +97,21 @@ def get_local_ip():
         return "127.0.0.1"
 
 
-class SerialReader(QThread):
-    """Thread for reading serial data asynchronously."""
-
-    data_received = pyqtSignal(
-        np.ndarray, float, float, float
-    )  # Emit NumPy array and depth value
-
-    def __init__(self, port, baud_rate):
-        super().__init__()
-        self.port = port
-        self.baud_rate = baud_rate
-        self.running = True
-
-    def run(self):
-        """Continuously read serial data and emit processed arrays."""
-        try:
-            with serial.Serial(self.port, BAUD_RATE, timeout=1) as ser:
-                print("connected")
-                while self.running:
-                    result = read_packet(ser)
-                    if result:
-                        values, depth, temperature, drive_voltage = result
-                        print(f"Depth: {depth}, Temp: {temperature}°C, Vdrv: {drive_voltage}V")
-                        # print(len(values))
-
-                        self.data_received.emit(
-                            values, depth, temperature, drive_voltage
-                        )
-        except serial.SerialException as e:
-            print(f"❌ Serial Error: {e}")
-
-    def stop(self):
-        self.running = False
-        self.quit()
-        self.wait()
-
-
-class UDPReader(QThread):
-    """Thread for reading sonar packets over UDP.
-
-    Expected packet format (single datagram per packet or stream inside datagram):
-    0xAA | 6 bytes header payload (depth:uint16_be, temp:int16_be (scaled x100), vDrv:uint16_be (scaled x100)) | NUM_SAMPLES bytes | checksum (xor of payload bytes)
-    """
-    data_received = pyqtSignal(np.ndarray, float, float, float)
-
-    def __init__(self, port: int, timeout: float = 1.0):
-        super().__init__()
-        self.host = ""
-        self.port = port
-        self.timeout = timeout
-        self.running = True
-        self._sock = None
-
-    def run(self):
-        try:
-            import socket as _socket
-            self._sock = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)
-            self._sock.settimeout(self.timeout)
-            self._sock.bind((self.host, self.port))
-            print(f"📡 UDP listener bound to {self.host}:{self.port}")
-            RECV_SIZE = PACKET_SIZE  # we only need at least a packet, can be tuned
-            packet_buf = bytearray()
-            packets_ok = 0
-            checksum_errors = 0
-
-            while self.running:
-                try:
-                    datagram, _addr = self._sock.recvfrom(RECV_SIZE)
-                except _socket.timeout:
-                    continue
-
-                # Iterate each byte to simulate single-byte reads
-                for byte in datagram:
-                    if not packet_buf:
-                        # Waiting for start byte
-                        if byte == 0xAA:
-                            packet_buf.append(byte)
-                        else:
-                            continue
-                    else:
-                        packet_buf.append(byte)
-
-                    # Once we have a full packet length, process it
-                    if len(packet_buf) == PACKET_SIZE:
-                        # Structure: [0xAA][payload...][checksum]
-                        payload = packet_buf[1:1 + 6 + NUM_SAMPLES]
-                        checksum = packet_buf[-1]
-                        calc = 0
-                        for b in payload:
-                            calc ^= b
-                        if calc == checksum:
-                            try:
-                                depth, temp_scaled, vDrv_scaled = struct.unpack("<HhH", payload[:6])
-                                depth = min(depth, NUM_SAMPLES)
-                                sample_bytes = payload[6:6+NUM_SAMPLES]
-                                if len(sample_bytes) != NUM_SAMPLES:
-                                    # Corrupt packet length inside payload
-                                    checksum_errors += 1
-                                else:
-                                    values = np.frombuffer(sample_bytes, dtype=np.uint8, count=NUM_SAMPLES)
-                                    temperature = temp_scaled / 100.0
-                                    drive_voltage = vDrv_scaled / 100.0
-                                    self.data_received.emit(values, depth, temperature, drive_voltage)
-                                    packets_ok += 1
-                                    # Skip the old emit below by continuing
-                            except struct.error:
-                                # Parsing error; treat as checksum failure for stats
-                                checksum_errors += 1
-                        else:
-                            checksum_errors += 1
-
-                        # Reset for next packet. If the last byte (checksum) is also a header (0xAA), start new packet immediately.
-                        last_byte = packet_buf[-1]
-                        packet_buf.clear()
-                        if last_byte == 0xAA:
-                            packet_buf.append(last_byte)
-
-                # Optional: could log stats every N packets
-                if (packets_ok + checksum_errors) and (packets_ok + checksum_errors) % 200 == 0:
-                    print(f"UDP stats: ok={packets_ok} bad={checksum_errors}")
-        except Exception as e:
-            print(f"❌ UDP Reader error: {e}")
-        finally:
-            if self._sock:
-                try:
-                    self._sock.close()
-                except Exception:
-                    pass
-
-    def stop(self):
-        self.running = False
-        if self._sock:
-            try:
-                # Trigger unblock of recvfrom by sending an empty datagram to self
-                import socket as _socket
-                with _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM) as s:
-                    s.sendto(b"\x00", (self.host, self.port))
-            except Exception:
-                pass
-        self.quit()
-        self.wait()
-
-
 class SettingsDialog(QWidget):
-    def __init__(self, parent=None, current_gradient='cyclic', current_speed=343, nmea_enabled=False, nmea_port=10110,
-                 nmea_address="127.0.0.1"):
+    def __init__(
+        self,
+        parent=None,
+        current_gradient="cyclic",
+        current_speed=343,
+        current_num_samples=NUM_SAMPLES,
+        current_sample_time_us=SAMPLE_TIME * 1e6,
+        nmea_enabled=False,
+        nmea_port=10110,
+        nmea_address="127.0.0.1",
+    ):
         super().__init__(parent)
         self.setWindowTitle("Chart Settings")
-        self.setFixedSize(320, 550)
+        self.setFixedSize(340, 640)
 
         self.main_app = parent
 
@@ -310,6 +153,43 @@ class SettingsDialog(QWidget):
         self.speed_dropdown.addItems(["343m/s (Air)", "1440m/s (Water)"])
         self.speed_dropdown.setCurrentIndex(1 if current_speed == 1440 else 0)
         card_layout.addWidget(self.speed_dropdown)
+
+        # --- Sampling Parameters ---
+        sampling_section = QVBoxLayout()
+        sampling_section.setSpacing(8)
+
+        sampling_label = QLabel("Sampling Parameters:")
+        sampling_label.setStyleSheet("font-weight: bold;")
+        sampling_section.addWidget(sampling_label)
+
+        # Number of Samples
+        ns_row = QHBoxLayout()
+        ns_label = QLabel("Num. Samples:")
+        ns_label.setMinimumWidth(100)
+        self.num_samples_input = QLineEdit()
+        self.num_samples_input.setPlaceholderText("e.g. 1800")
+        self.num_samples_input.setText(str(current_num_samples))
+        self.num_samples_input.setMaximumWidth(200)
+        ns_row.addWidget(ns_label)
+        ns_row.addWidget(self.num_samples_input)
+        ns_row.addStretch()
+        sampling_section.addLayout(ns_row)
+
+        # Sample Time (microseconds)
+        st_row = QHBoxLayout()
+        st_label = QLabel("Sample Time (µs):")
+        st_label.setMinimumWidth(100)
+        self.sample_time_input = QLineEdit()
+        self.sample_time_input.setPlaceholderText("e.g. 13.2")
+        # Accept display in microseconds for user convenience
+        self.sample_time_input.setText(f"{current_sample_time_us:.6f}")
+        self.sample_time_input.setMaximumWidth(200)
+        st_row.addWidget(st_label)
+        st_row.addWidget(self.sample_time_input)
+        st_row.addStretch()
+        sampling_section.addLayout(st_row)
+
+        card_layout.addLayout(sampling_section)
 
         # --- NMEA Output Section ---
         nmea_section = QVBoxLayout()
@@ -398,7 +278,8 @@ class SettingsDialog(QWidget):
         outer_layout.addWidget(card)
 
         # --- Styling ---
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
                 QDialog {
                     background-color: #1e1e1e;
                 }
@@ -426,7 +307,8 @@ class SettingsDialog(QWidget):
                 QPushButton:hover {
                     background-color: #555;
                 }
-            """)
+            """
+        )
 
         # Set object name so stylesheet applies to card
         card.setObjectName("Card")
@@ -441,11 +323,27 @@ class SettingsDialog(QWidget):
             int(self.port_input.text()) if self.port_input.text().isdigit() else 10110
         )
 
+        # Parse sampling params
+        try:
+            ns_value = int(self.num_samples_input.text())
+        except Exception:
+            ns_value = None
+        try:
+            st_us_value = float(self.sample_time_input.text())
+        except Exception:
+            st_us_value = None
+
         if self.main_app:
             self.main_app.set_gradient(selected_gradient)
             self.main_app.set_sound_speed(selected_speed)
             self.main_app.configure_nmea_output(enabled=nmea_enabled, port=nmea_port)
             self.main_app.set_large_depth_display(self.large_depth_checkbox.isChecked())
+            # Apply sampling settings if valid
+            if ns_value and ns_value > 0:
+                self.main_app.set_num_samples(ns_value)
+            if st_us_value and st_us_value > 0:
+                # convert microseconds to seconds
+                self.main_app.set_sample_time(st_us_value * 1e-6)
 
         self.close()
 
@@ -453,20 +351,29 @@ class SettingsDialog(QWidget):
 class WaterfallApp(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.serial_thread = None  # ✅ Define it early to avoid AttributeError
+        self.serial_thread = None  # kept for backward-compat, no longer used
+
+        # Single async reader task (generic AsyncReader)
+        self._reader_task = None
+        self._reader_task_type: ConnectionTypeEnum | None = None
 
         self.nmea_enabled = False
         self.nmea_port = 10110
         self.nmea_socket = None
         self.nmea_output_enabled = False
 
-        self.current_gradient = 'cyclic'  # default color scheme
+        self.current_gradient = "cyclic"  # default color scheme
         self.current_speed = SPEED_OF_SOUND  # default sound speed (343)
+
+        # User-configurable sampling parameters
+        self.num_samples = NUM_SAMPLES
+        self.sample_time = SAMPLE_TIME
 
         self.setWindowTitle("Open Echo Interface")
         self.setGeometry(0, 0, 480, 800)  # Portrait mode for Raspberry Pi screen
 
-        self.data = np.zeros((MAX_ROWS, NUM_SAMPLES))
+        self._recompute_sampling_derived()
+        self.data = np.zeros((MAX_ROWS, self.num_samples))
 
         # Disable window translucency
         self.setAttribute(Qt.WA_TranslucentBackground, False)
@@ -497,7 +404,7 @@ class WaterfallApp(QMainWindow):
 
         main_layout.addWidget(self.waterfall)
 
-        inverted_depth_labels = list(depth_labels.items())[::-1]
+        inverted_depth_labels = list(self.depth_labels.items())[::-1]
         self.waterfall.getAxis("left").setTicks([inverted_depth_labels])
         self.depth_line = pg.InfiniteLine(angle=0, pen=pg.mkPen("r", width=2))
         self.waterfall.addItem(self.depth_line)
@@ -508,14 +415,16 @@ class WaterfallApp(QMainWindow):
         right_axis.setStyle(showValues=True)
 
         # dd horizontal lines
-        for i in range(0, int(MAX_DEPTH), Y_LABEL_DISTANCE):
-            row_index = int(i / SAMPLE_RESOLUTION)
+        self._depth_lines = []
+        for i in range(0, int(self.max_depth), Y_LABEL_DISTANCE):
+            row_index = int(i / self.sample_resolution)
             hline = pg.InfiniteLine(
                 pos=row_index,
                 angle=0,
                 pen=pg.mkPen(color="w", style=pg.QtCore.Qt.DotLine),
             )
             self.waterfall.addItem(hline)
+            self._depth_lines.append(hline)
 
         # === Colorbar BELOW the plot to save width ===
         self.colorbar = pg.HistogramLUTWidget()
@@ -550,13 +459,15 @@ class WaterfallApp(QMainWindow):
         # === Large Depth Display ===
         self.large_depth_label = QLabel("--- m")
         self.large_depth_label.setAlignment(Qt.AlignCenter)
-        self.large_depth_label.setStyleSheet("""
+        self.large_depth_label.setStyleSheet(
+            """
             QLabel {
                 color: #00ffcc;
                 font-size: 64px;
                 font-weight: bold;
             }
-        """)
+        """
+        )
         self.large_depth_label.setVisible(True)  # hidden by default
         serial_row.addWidget(self.large_depth_label)
 
@@ -615,33 +526,62 @@ class WaterfallApp(QMainWindow):
         controls_container.setLayout(controls_layout)
         main_layout.addWidget(controls_container)
 
-    def connect_udp(self):
-        if hasattr(self, 'udp_thread') and self.udp_thread:
-            self.udp_thread.stop()
-            self.udp_thread = None
+        # Adapter to safely update UI from async packets
 
+        class EchoAdapter(QObject):
+            packet_signal = pyqtSignal(object)
+
+            def __init__(self, app_ref):
+                super().__init__()
+                self._app = app_ref
+                self.packet_signal.connect(self._on_packet)
+
+            def _on_packet(self, pkt):
+                try:
+                    # EchoPacket fields: spectrogram, depth_index, temperature, drive_voltage
+                    self._app.waterfall_plot_callback(
+                        pkt.samples,
+                        pkt.depth_index,
+                        pkt.temperature,
+                        pkt.drive_voltage,
+                    )
+                except Exception as e:
+                    print(f"❌ UI packet handling error: {e}")
+
+            async def emit(self, pkt):
+                self.packet_signal.emit(pkt)
+
+        self._adapter = EchoAdapter(self)
+
+    def connect_udp(self):
         try:
             udp_port = int(self.udp_port_input.text())
-            self.udp_thread = UDPReader(port=udp_port)
-            self.udp_thread.data_received.connect(self.waterfall_plot_callback)
-            self.udp_thread.start()
+            settings = Settings(
+                connection_type=ConnectionTypeEnum.UDP,
+                udp_port=udp_port,
+                num_samples=self.num_samples,
+            )
+            self._start_reader(settings)
+            self._reader_task_type = ConnectionTypeEnum.UDP
             print(f"✅ UDP listener started on port {udp_port}")
         except Exception as e:
             print(f"❌ Failed to start UDP listener: {e}")
 
     def disconnect_udp(self):
-        if hasattr(self, 'udp_thread') and self.udp_thread:
-            self.udp_thread.stop()
-            self.udp_thread = None
+        if self._reader_task and self._reader_task_type == ConnectionTypeEnum.UDP:
+            self._stop_reader()
+            self._reader_task_type = None
             print("🔌 UDP listener stopped")
+        else:
+            print("⚠️ No active UDP connection to disconnect")
 
     def toggle_udp_connection(self):
-        if hasattr(self, 'udp_thread') and self.udp_thread and self.udp_thread.isRunning():
+        if self._reader_task and self._reader_task_type == ConnectionTypeEnum.UDP:
             self.disconnect_udp()
             self.udp_connect_button.setText("Connect UDP")
         else:
             self.connect_udp()
-            if hasattr(self, 'udp_thread') and self.udp_thread.isRunning():
+            if self._reader_task and self._reader_task_type == ConnectionTypeEnum.UDP:
                 self.udp_connect_button.setText("Disconnect UDP")
 
     def set_large_depth_display(self, enabled: bool):
@@ -651,6 +591,9 @@ class WaterfallApp(QMainWindow):
     def configure_nmea_output(self, enabled: bool, port: int):
         self.nmea_output_enabled = enabled
         self.nmea_port = port
+
+        self.nmea_server_socket: socket.socket | None
+        self.nmea_client_socket: socket.socket | None
 
         # Close previous connections if needed
         if hasattr(self, "nmea_client_socket") and self.nmea_client_socket:
@@ -669,8 +612,6 @@ class WaterfallApp(QMainWindow):
 
         if enabled:
             try:
-                import socket
-
                 self.nmea_server_socket = socket.socket(
                     socket.AF_INET, socket.SOCK_STREAM
                 )
@@ -703,24 +644,13 @@ class WaterfallApp(QMainWindow):
         self.colorbar.item.gradient.loadPreset(gradient_name)
 
     def set_sound_speed(self, speed):
-        global SPEED_OF_SOUND, SAMPLE_RESOLUTION, MAX_DEPTH, depth_labels
-
+        global SPEED_OF_SOUND
         SPEED_OF_SOUND = speed
         self.current_speed = speed
-        SAMPLE_RESOLUTION = (SPEED_OF_SOUND * SAMPLE_TIME * 100) / 2
-        print(SAMPLE_RESOLUTION)
-        MAX_DEPTH = NUM_SAMPLES * SAMPLE_RESOLUTION
-        depth_labels = {
-            int(i / SAMPLE_RESOLUTION): f"{i / 100}"
-            for i in range(0, int(MAX_DEPTH), Y_LABEL_DISTANCE)
-        }
+        self._recompute_sampling_derived()
+        self._refresh_axes_and_grid()
 
-        # Re-apply Y-axis ticks
-        inverted_depth_labels = list(depth_labels.items())[::-1]
-        self.waterfall.getAxis("left").setTicks([inverted_depth_labels])
-        self.waterfall.getAxis("right").setTicks([inverted_depth_labels])
-
-    def keyPressEvent(self, event):
+    def key_press_event(self, event):
         print("key pressed")
         if event.key() == ord("Q"):
             print("🛑 Quit triggered from keyboard.")
@@ -732,39 +662,36 @@ class WaterfallApp(QMainWindow):
             super().keyPressEvent(event)
 
     def connect_serial(self):
-        if self.serial_thread:
-            self.serial_thread.stop()
-            self.serial_thread = None
-
         selected_port = self.serial_dropdown.currentText()
         try:
-            self.serial_thread = SerialReader(selected_port, BAUD_RATE)
-            print(f"🚀 Using Serial reader on {selected_port}")
-
-            self.serial_thread.data_received.connect(self.waterfall_plot_callback)
-            self.serial_thread.start()
+            settings = Settings(
+                connection_type=ConnectionTypeEnum.SERIAL,
+                serial_port=selected_port,
+                num_samples=self.num_samples,
+            )
+            self._start_reader(settings)
+            self._reader_task_type = ConnectionTypeEnum.SERIAL
             print(f"✅ Connected to {selected_port}")
         except Exception as e:
             print(f"❌ Connection failed: {e}")
 
     def toggle_serial_connection(self):
-        if self.serial_thread and self.serial_thread.isRunning():
+        if self._reader_task and self._reader_task_type == ConnectionTypeEnum.SERIAL:
             self.disconnect_serial()
             self.connect_button.setText("Connect")
         else:
             self.connect_serial()
-            if self.serial_thread and self.serial_thread.isRunning():
+            if (
+                self._reader_task
+                and self._reader_task_type == ConnectionTypeEnum.SERIAL
+            ):
                 self.connect_button.setText("Disconnect")
 
     def disconnect_serial(self):
-        if self.serial_thread:
-            try:
-                self.serial_thread.stop()
-                self.serial_thread.wait()  # Ensure thread ends before continuing
-                self.serial_thread = None
-                print("🔌 Disconnected from serial device")
-            except Exception as e:
-                print(f"❌ Disconnection failed: {e}")
+        if self._reader_task and self._reader_task_type == ConnectionTypeEnum.SERIAL:
+            self._stop_reader()
+            self._reader_task_type = None
+            print("🔌 Disconnected from serial device")
         else:
             print("⚠️ No active serial connection to disconnect")
 
@@ -779,7 +706,7 @@ class WaterfallApp(QMainWindow):
         mean = np.mean(self.data)
         self.imageitem.setLevels((mean - 2 * sigma, mean + 2 * sigma))
 
-        depth_cm = depth_index * SAMPLE_RESOLUTION
+        depth_cm = depth_index * self.sample_resolution
         self.depth_label.setText(f"Depth: {depth_cm:.1f} cm | Index: {depth_index:.0f}")
         self.temperature_label.setText(f"Temperature: {temperature:.1f} °C")
         self.drive_voltage_label.setText(f"vDRV: {drive_voltage:.1f} V")
@@ -789,7 +716,7 @@ class WaterfallApp(QMainWindow):
         if self.large_depth_label.isVisible():
             self.large_depth_label.setText(f"{depth_cm / 100:.1f} m")
 
-        if hasattr(self, 'nmea_output_enabled') and self.nmea_output_enabled:
+        if hasattr(self, "nmea_output_enabled") and self.nmea_output_enabled:
             now = time.time()
 
             # Check if it's time to send again
@@ -799,7 +726,7 @@ class WaterfallApp(QMainWindow):
             ):
                 print("Sending NMEA data")
                 try:
-                    depth_cm = depth_index * SAMPLE_RESOLUTION
+                    depth_cm = depth_index * self.sample_resolution
                     depth_m = depth_cm / 100
                     depth_ft = depth_m * 3.28084
                     depth_fathoms = depth_m * 0.546807
@@ -842,13 +769,41 @@ class WaterfallApp(QMainWindow):
         else:
             print("❌ Invalid hex value. Please enter a valid hex string (e.g., 0x1F)")
 
-    def closeEvent(self, event):
-        if self.serial_thread:
-            self.serial_thread.stop()
-        if hasattr(self, 'udp_thread') and self.udp_thread:
-            self.udp_thread.stop()
-
+    def close_event(self, event):
+        # Cancel async reader task
+        if self._reader_task:
+            try:
+                self._reader_task.cancel()
+            except Exception:
+                pass
+            self._reader_task = None
         event.accept()
+
+    def _start_reader(self, settings: Settings):
+        # Generic starter for any AsyncReader subclass
+        if self._reader_task:
+            self._stop_reader()
+
+        async def _run():
+            reader_cls = settings.connection_type.value
+            print(f"Starting {reader_cls.__name__}")
+            try:
+                reader = reader_cls(settings)
+                async with reader:
+                    async for pkt in reader:
+                        await self._adapter.emit(pkt)
+            except Exception as e:
+                print(f"❌ Reader error: {e}")
+
+        self._reader_task = asyncio.create_task(_run())
+
+    def _stop_reader(self):
+        if self._reader_task:
+            try:
+                self._reader_task.cancel()
+            except Exception:
+                pass
+            self._reader_task = None
 
     def open_settings(self):
         device_ip = get_local_ip()
@@ -857,11 +812,75 @@ class WaterfallApp(QMainWindow):
             parent=self,
             current_gradient=self.current_gradient,
             current_speed=self.current_speed,
+            current_num_samples=self.num_samples,
+            current_sample_time_us=self.sample_time * 1e6,
             nmea_enabled=self.nmea_output_enabled,
             nmea_port=self.nmea_port,
             nmea_address=device_ip,
         )
         self.settings_dialog.show()
+
+    def _recompute_sampling_derived(self):
+        # Derived values based on current sampling configuration and speed of sound
+        self.sample_resolution = (SPEED_OF_SOUND * self.sample_time * 100) / 2
+        self.max_depth = int(self.num_samples * self.sample_resolution)
+        self.depth_labels = {
+            int(i / self.sample_resolution): f"{i / 100}"
+            for i in range(0, int(self.max_depth), Y_LABEL_DISTANCE)
+        }
+
+    def _refresh_axes_and_grid(self):
+        inverted_depth_labels = list(self.depth_labels.items())[::-1]
+        self.waterfall.getAxis("left").setTicks([inverted_depth_labels])
+        self.waterfall.getAxis("right").setTicks([inverted_depth_labels])
+
+        # Remove old grid lines
+        if hasattr(self, "_depth_lines"):
+            for ln in self._depth_lines:
+                try:
+                    self.waterfall.removeItem(ln)
+                except Exception:
+                    pass
+        self._depth_lines = []
+
+        # Add new grid lines
+        for i in range(0, int(self.max_depth), Y_LABEL_DISTANCE):
+            row_index = int(i / self.sample_resolution)
+            hline = pg.InfiniteLine(
+                pos=row_index,
+                angle=0,
+                pen=pg.mkPen(color="w", style=pg.QtCore.Qt.DotLine),
+            )
+            self.waterfall.addItem(hline)
+            self._depth_lines.append(hline)
+
+    def set_num_samples(self, n: int):
+        try:
+            n = int(n)
+        except Exception:
+            return
+        if n <= 0:
+            return
+        if n == self.num_samples:
+            return
+        self.num_samples = n
+        # Resize data buffer
+        self.data = np.zeros((MAX_ROWS, self.num_samples))
+        self._recompute_sampling_derived()
+        self._refresh_axes_and_grid()
+
+    def set_sample_time(self, seconds: float):
+        try:
+            seconds = float(seconds)
+        except Exception:
+            return
+        if seconds <= 0:
+            return
+        if abs(seconds - self.sample_time) < 1e-12:
+            return
+        self.sample_time = seconds
+        self._recompute_sampling_derived()
+        self._refresh_axes_and_grid()
 
 
 def set_gradient(self, gradient_name):
@@ -880,14 +899,20 @@ def get_current_gradient(self):
         return "cyclic"  # Fallback
 
 
-if __name__ == "__main__":
+def run_desktop():
     app = QApplication(sys.argv)
-
-    # Apply the dark theme
     qdarktheme.setup_theme("dark")
-    window = WaterfallApp()
 
-    # window.showFullScreen()
+    # Run Qt and asyncio together
+    loop = QEventLoop(app)
+    asyncio.set_event_loop(loop)
+
+    window = WaterfallApp()
     window.show()
 
-    sys.exit(app.exec())
+    with loop:
+        loop.run_forever()
+
+
+if __name__ == "__main__":
+    run_desktop()

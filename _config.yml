@@ -1,0 +1,87 @@
+# Welcome to Jekyll!
+#
+# This config file is meant for settings that affect your whole blog, values
+# which you are expected to set up once and rarely edit after that. If you find
+# yourself editing this file very often, consider using Jekyll's data files
+# feature for the data you need to update frequently.
+#
+# For technical reasons, this file is *NOT* reloaded automatically when you use
+# 'bundle exec jekyll serve'. If you change this file, please restart the server process.
+#
+# If you need help with YAML syntax, here are some quick references for you:
+# https://learn-the-web.algonquindesign.ca/topics/markdown-yaml-cheat-sheet/#yaml
+# https://learnxinyminutes.com/docs/yaml/
+#
+# Site settings
+# These are used to personalize your new site. If you look in the HTML files,
+# you will see them accessed via {{ site.title }}, {{ site.email }}, and so on.
+# You can create any custom variable you would like, and they will be accessible
+# in the templates via {{ site.myvariable }}.
+
+title: Open Echo 
+description: >-
+  Universal Open-Source SONAR Controller and Development Stack. 
+  An ongoing open-source hardware and software project for building 
+  sonar systems for testing, boating, bathymetry, and research.
+baseurl: "/open_echo"
+url: "https://neumi.github.io" 
+github_username: Neumi
+
+# Build settings
+theme: just-the-docs
+plugins:
+  - jekyll-feed
+  - jekyll-readme-index
+  - jekyll-gfm-admonitions
+#   - jekyll-relative-links
+
+# relative_links:
+#   enabled: true
+#   collections: true
+
+# Use README.md as the site's index
+readme_index:
+  enabled: true
+  with_frontmatter: true
+
+# Just the Docs configuration
+just_the_docs:
+  # Set the navigation to use a side-bar
+  navigation: true
+  search_enabled: true
+  color_scheme: light
+  heading_anchors: true
+
+aux_links:
+  GitHub:
+    - https://github.com/Neumi/open_echo
+
+include:
+  - README.md
+  - documentation/**
+
+exclude:
+  - development/
+  - software/
+  - Gemfile
+  - Gemfile.lock
+  - .githooks
+  - .github
+  - python/
+  - .gitignore
+  - '**/*.py'
+  - pyproject.toml
+  - uv.lock
+  - '**/*.ino'
+  - '**/*.h'
+  - '**/*.cpp'
+  - '**/*.json'
+  - '**/*.yml'
+  - '**/*.toml'
+  - '**/*.csv'
+  - '**/*.step'
+  - '**/*.kicad*'
+  - '**/*.zip'
+  - '**/*.gbr*'
+  - '**/*.drl'
+  - '**/*.ipc'

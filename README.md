@@ -1,29 +1,36 @@
+---
+layout: home
+title: Open Echo
+nav_exclude: true
+---
+
+
 <img alt="Open Echo Cover" src="documentation/images/open_echo_logo.svg">
 
 ## Universal Open-Source SONAR Controller and Development Stack
 
 An ongoing open-source hardware and software project for building sonar systems for testing, boating, bathymetry, and research.  
-The most commonly used hardware is the [TUSS4470 Arduino Shield](TUSS4470_shield_002/), which stacks on top of an Arduino Uno to drive the TUSS4470 ultrasonic driver.  
-The board can run the [RAW Data Firmware](TUSS4470_shield_002/getting_started_TUSS4470_firmware.md) to operate a wide variety of ultrasonic transducers, covering frequencies from 40 kHz up to 1000 kHz in different media such as air or water.  
+The most commonly used hardware is the [TUSS4470 Arduino Shield](documentation/getting_started/TUSS4470_hardware.md), which stacks on top of an Arduino Uno to drive the TUSS4470 ultrasonic driver.  
+The board can run the [RAW Data Firmware](documentation/getting_started/desktop_interface.md) to operate a wide variety of ultrasonic transducers, covering frequencies from 40 kHz up to 1000 kHz in different media such as air or water.  
 
-The [NMEA Output Firmware](TUSS4470_shield_002/arduino/NMEA_DBT_OUT/NMEA_DBT_OUT.ino) can read depth data from commercially available in-water ultrasonic transducers (e.g., on boats) and output NMEA0183-compatible data to a computer or a UART-connected device such as a Pixhawk or other controllers.  
+The [NMEA Output Firmware](https://github.com/neumi/open_echo/tree/main/TUSS4470_shield_002/arduino/NMEA_DBT_OUT/NMEA_DBT_OUT.ino) can read depth data from commercially available in-water ultrasonic transducers (e.g., on boats) and output NMEA0183-compatible data to a computer or a UART-connected device such as a Pixhawk or other controllers.  
 
 Open Echo has been tested on multiple ultrasonic transducers and is compatible with all of them—from car parking sensors to Lowrance Tripleshot side-scan transducers.  
 
-The [Python Interface Software](TUSS4470_shield_002/getting_started_interface.md) connects to Open Echo boards running the [RAW Data Firmware](TUSS4470_shield_002/getting_started_TUSS4470_firmware.md). It can display raw echo data, change configurations, output a TCP depth data stream, and more.  
+The [Python Interface Software](documentation/getting_started/desktop_interface.md) connects to Open Echo boards running the [RAW Data Firmware](documentation/getting_started/TUSS4470_firmware.md). It can display raw echo data, change configurations, output a TCP depth data stream, and more.  
 
-Check the [Getting Started Guide](TUSS4470_shield_002/README.md)!  
+Check the [Getting Started Guide](documentation/getting_started/index.md)!  
 
 If something is unclear or you find a bug, please open an issue.  
 
 
 Raw Data Waterfall chart in the Python Desktop software:  
-<img alt="Open Echo Interface Software" src="/documentation/images/echo_software_screenshot.jpg">
+<img alt="Open Echo Interface Software" src="documentation/images/echo_software_screenshot.jpg">
 
 
 ## Getting the Hardware
 
-If you need the hardware, you can order it using the [Hardware Files](TUSS4470_shield_002/TUSS4470_shield_hardware/TUSS4470_shield) from a board + SMT house ([JLC recommended](https://jlcpcb.com/?from=Neumi)).
+If you need the hardware, you can order it using the [Hardware Files](https://github.com/neumi/open_echo/tree/main/TUSS4470_shield_002/TUSS4470_shield_hardware/TUSS4470_shield) from a board + SMT house ([JLC recommended](https://jlcpcb.com/?from=Neumi)).
 
 They can also be bought as a complete and tested set direclty from Elecrow: https://www.elecrow.com/open-echo-tuss4470-development-shield.html
 
@@ -36,12 +43,12 @@ All profits go directly toward supporting and advancing the Open Echo project!
 [TUSS4470 Arduino Shield](TUSS4470_shield_002/):  
 <img alt="PCB overview TUSS4470" src="/documentation/images/TUSS4470_shield002.jpg">
 
-### This project is currently in development. The [TUSS4470 Development Shield](TUSS4470_shield_002/) is ready for external use!  
+### This project is currently in development. The [TUSS4470 Development Shield](documentation/getting_started/TUSS4470_hardware.md) is ready for external use!  
 Development is ongoing! Check the documentation and Discord channel for the latest updates.  
 
 Want to stay updated or participate? Join the [Discord](https://discord.com/invite/rerCyqAcrw)!  
 
-Check the [Getting Started Guide](TUSS4470_shield_002/README.md).  
+Check the [Getting Started Guide](documentation/getting_started/).  
 
 ## Vision
 An accessible Open Source SONAR stack for development, research and real use:
