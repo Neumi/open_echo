@@ -19,14 +19,13 @@ struct __attribute__((packed)) Frame {
 };
 
 static Frame frame;             // Data frame to send over WebSocket
-static uint8_t samplesXor = 0;  // Accumulate XOR while sampling
 
 byte misoBuf[2];    // SPI receive buffer
 byte inByteArr[2];  // SPI transmit buffer
 float temperature = 0.0f;
 int vDrv = 0;
 
-volatile int pulseCount = 0;
+volatile uint8_t pulseCount = 0;
 volatile int sampleIndex = 0;
 
 volatile bool detectedDepth = false;  // Condition flag
@@ -91,7 +90,7 @@ unsigned int BitShiftCombine(unsigned char x_high, unsigned char x_low) {
 
 byte parity16(unsigned int val) {
   byte ones = 0;
-  for (int i = 0; i < 16; i++) {
+  for (uint8_t i = 0; i < 16; i++) {
     if ((val >> i) & 1) {
       ones++;
     }
@@ -194,21 +193,20 @@ void sendData() {
   frame.vDrv_scaled = (uint16_t)(vDrv * 100);
 
   // Compute checksum (XOR of depth bytes, temp bytes, vDrv bytes, all samples)
-  uint8_t cs = 0;
+  frame.checksum = 0;
   // depth
-  cs ^= (uint8_t)(frame.depth_index & 0xFF);
-  cs ^= (uint8_t)(frame.depth_index >> 8);
+  frame.checksum ^= (uint8_t)(frame.depth_index & 0xFF);
+  frame.checksum ^= (uint8_t)(frame.depth_index >> 8);
   // temp
-  cs ^= (uint8_t)(frame.temp_scaled & 0xFF);
-  cs ^= (uint8_t)(frame.temp_scaled >> 8);
+  frame.checksum ^= (uint8_t)(frame.temp_scaled & 0xFF);
+  frame.checksum ^= (uint8_t)(frame.temp_scaled >> 8);
   // vDrv
-  cs ^= (uint8_t)(frame.vDrv_scaled & 0xFF);
-  cs ^= (uint8_t)(frame.vDrv_scaled >> 8);
+  frame.checksum ^= (uint8_t)(frame.vDrv_scaled & 0xFF);
+  frame.checksum ^= (uint8_t)(frame.vDrv_scaled >> 8);
   // samples
-  for (int i = 0; i < NUM_SAMPLES; i++) {
-    cs ^= frame.samples[i];
+  for (sampleIndex = 0; sampleIndex < NUM_SAMPLES; sampleIndex++) {
+    frame.checksum ^= frame.samples[sampleIndex];
   }
-  frame.checksum = cs;
 
   // Total length (packed, known)
   const size_t len = 1 + 2 + 2 + 2 + NUM_SAMPLES + 1;
