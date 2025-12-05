@@ -151,3 +151,8 @@ www.kogger.tech
 Check this Cheap Yellow Display implementation out: https://github.com/matztam/open_echo_cyd_display
   
 And all the great stuff JohnCHarrington contributed: https://github.com/JohnCHarrington/open_echo
+
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Neumi/open_echo&type=date&legend=top-left)](https://www.star-history.com/#Neumi/open_echo&type=date&legend=top-left)
