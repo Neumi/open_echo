@@ -12,8 +12,10 @@ import serial_asyncio_fast as aserial
 class EchoReadError(ValueError):
     pass
 
+
 class ChecksumMismatchError(EchoReadError):
     pass
+
 
 @dataclass
 class EchoPacket:
@@ -47,6 +49,7 @@ class EchoPacket:
 
         return cls(values, depth, temperature, drive_voltage)
 
+
 class AsyncReader(ABC):
     def __init__(self, settings):
         print("AsyncReader initialized")
@@ -55,14 +58,14 @@ class AsyncReader(ABC):
     async def __aenter__(self) -> "AsyncReader":
         await self.open()
         return self
-    
+
     async def __aexit__(self, exc_type, exc_value, traceback):
         await self.close()
 
     @abstractmethod
     async def open(self):
         pass
-    
+
     @abstractmethod
     async def close(self):
         pass
@@ -106,7 +109,7 @@ class SerialReader(AsyncReader):
     async def read(self):
         if self.reader is None:
             raise RuntimeError("Serial port not opened")
-        
+
         while True:
             header = await self.reader.readexactly(1)
             if header != b"\xaa":
@@ -140,10 +143,14 @@ class UDPReader(AsyncReader):
 
                 if len(self.outer._buf) >= self.outer.packet_size:
                     # Full packet
-                    payload = self.outer._buf[1:1 + 6 + self.outer.settings.num_samples]
+                    payload = self.outer._buf[
+                        1 : 1 + 6 + self.outer.settings.num_samples
+                    ]
                     checksum = self.outer._buf[-1:]
                     try:
-                        result = EchoPacket.unpack(payload, checksum, self.outer.settings.num_samples)
+                        result = EchoPacket.unpack(
+                            payload, checksum, self.outer.settings.num_samples
+                        )
                         self.outer._queue.put_nowait(result)
                     except EchoReadError:
                         pass

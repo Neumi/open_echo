@@ -36,7 +36,7 @@ from openecho.echo import ConnectionTypeEnum
 
 # Serial Configuration
 BAUD_RATE = 250000
-NUM_SAMPLES = 1800 # (X-axis)
+NUM_SAMPLES = 1800  # (X-axis)
 
 MAX_ROWS = 300  # Number of time steps (Y-axis)
 Y_LABEL_DISTANCE = 50  # distance between labels in cm
@@ -56,10 +56,15 @@ SAMPLE_TIME = 13.2e-6     # 13.2 microseconds on Atmega328 max sample speed with
 
 DEFAULT_LEVELS = (0, 256)  # Expected data range
 
-SAMPLE_RESOLUTION = (SPEED_OF_SOUND * SAMPLE_TIME * 100) / 2  # cm per row (0.99 cm per row)
+SAMPLE_RESOLUTION = (
+    SPEED_OF_SOUND * SAMPLE_TIME * 100
+) / 2  # cm per row (0.99 cm per row)
 PACKET_SIZE = 1 + 6 + NUM_SAMPLES + 1  # header + payload + checksum
 MAX_DEPTH = NUM_SAMPLES * SAMPLE_RESOLUTION  # Total depth in cm
-depth_labels = {int(i / SAMPLE_RESOLUTION): f"{i / 100}" for i in range(0, int(MAX_DEPTH), Y_LABEL_DISTANCE)}
+depth_labels = {
+    int(i / SAMPLE_RESOLUTION): f"{i / 100}"
+    for i in range(0, int(MAX_DEPTH), Y_LABEL_DISTANCE)
+}
 
 
 def generate_dbt_sentence(depth_cm):
@@ -96,8 +101,15 @@ def get_local_ip():
 
 
 class SettingsDialog(QWidget):
-    def __init__(self, parent=None, current_gradient='cyclic', current_speed=343, nmea_enabled=False, nmea_port=10110,
-                 nmea_address="127.0.0.1"):
+    def __init__(
+        self,
+        parent=None,
+        current_gradient="cyclic",
+        current_speed=343,
+        nmea_enabled=False,
+        nmea_port=10110,
+        nmea_address="127.0.0.1",
+    ):
         super().__init__(parent)
         self.setWindowTitle("Chart Settings")
         self.setFixedSize(320, 550)
@@ -230,7 +242,8 @@ class SettingsDialog(QWidget):
         outer_layout.addWidget(card)
 
         # --- Styling ---
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
                 QDialog {
                     background-color: #1e1e1e;
                 }
@@ -258,7 +271,8 @@ class SettingsDialog(QWidget):
                 QPushButton:hover {
                     background-color: #555;
                 }
-            """)
+            """
+        )
 
         # Set object name so stylesheet applies to card
         card.setObjectName("Card")
@@ -296,7 +310,7 @@ class WaterfallApp(QMainWindow):
         self.nmea_socket = None
         self.nmea_output_enabled = False
 
-        self.current_gradient = 'cyclic'  # default color scheme
+        self.current_gradient = "cyclic"  # default color scheme
         self.current_speed = SPEED_OF_SOUND  # default sound speed (343)
 
         self.setWindowTitle("Open Echo Interface")
@@ -386,13 +400,15 @@ class WaterfallApp(QMainWindow):
         # === Large Depth Display ===
         self.large_depth_label = QLabel("--- m")
         self.large_depth_label.setAlignment(Qt.AlignCenter)
-        self.large_depth_label.setStyleSheet("""
+        self.large_depth_label.setStyleSheet(
+            """
             QLabel {
                 color: #00ffcc;
                 font-size: 64px;
                 font-weight: bold;
             }
-        """)
+        """
+        )
         self.large_depth_label.setVisible(True)  # hidden by default
         serial_row.addWidget(self.large_depth_label)
 
@@ -481,7 +497,9 @@ class WaterfallApp(QMainWindow):
     def connect_udp(self):
         try:
             udp_port = int(self.udp_port_input.text())
-            settings = Settings(connection_type=ConnectionTypeEnum.UDP, udp_port=udp_port)
+            settings = Settings(
+                connection_type=ConnectionTypeEnum.UDP, udp_port=udp_port
+            )
             self._start_reader(settings)
             self._reader_task_type = ConnectionTypeEnum.UDP
             print(f"✅ UDP listener started on port {udp_port}")
@@ -595,7 +613,9 @@ class WaterfallApp(QMainWindow):
     def connect_serial(self):
         selected_port = self.serial_dropdown.currentText()
         try:
-            settings = Settings(connection_type=ConnectionTypeEnum.SERIAL, serial_port=selected_port)
+            settings = Settings(
+                connection_type=ConnectionTypeEnum.SERIAL, serial_port=selected_port
+            )
             self._start_reader(settings)
             self._reader_task_type = ConnectionTypeEnum.SERIAL
             print(f"✅ Connected to {selected_port}")
@@ -608,7 +628,10 @@ class WaterfallApp(QMainWindow):
             self.connect_button.setText("Connect")
         else:
             self.connect_serial()
-            if self._reader_task and self._reader_task_type == ConnectionTypeEnum.SERIAL:
+            if (
+                self._reader_task
+                and self._reader_task_type == ConnectionTypeEnum.SERIAL
+            ):
                 self.connect_button.setText("Disconnect")
 
     def disconnect_serial(self):
@@ -640,7 +663,7 @@ class WaterfallApp(QMainWindow):
         if self.large_depth_label.isVisible():
             self.large_depth_label.setText(f"{depth_cm / 100:.1f} m")
 
-        if hasattr(self, 'nmea_output_enabled') and self.nmea_output_enabled:
+        if hasattr(self, "nmea_output_enabled") and self.nmea_output_enabled:
             now = time.time()
 
             # Check if it's time to send again

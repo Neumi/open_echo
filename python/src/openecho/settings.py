@@ -22,7 +22,12 @@ speed_of_sound_map = {
 
 
 class Settings(BaseModel):
-    connection_type: Annotated[ConnectionTypeEnum, PlainSerializer(lambda v: v.name, return_type=str)] | None = None
+    connection_type: (
+        Annotated[
+            ConnectionTypeEnum, PlainSerializer(lambda v: v.name, return_type=str)
+        ]
+        | None
+    ) = None
     udp_port: int = 9999
     serial_port: str = "init"
     baud_rate: int = 250000
@@ -89,5 +94,5 @@ class Settings(BaseModel):
     def load(cls, filename=".settings.json"):
         with open(filename, "r", encoding="utf-8") as f:
             data = f.read()
-        
+
         return cls.model_validate_json(data)

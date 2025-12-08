@@ -124,16 +124,19 @@ class SignalKOutput(OutputMethod):
             access_request_uri = f"http://{uri}/signalk/v1/access/requests"
 
             async with AsyncClient() as client:
-                access_request = await client.post(access_request_uri, json={
-                    "clientId": "f6b20288-5ecf-4daa-9a13-1594bc145abe",
-                    "description": "OpenEcho Depth Sounder"
-                })
+                access_request = await client.post(
+                    access_request_uri,
+                    json={
+                        "clientId": "f6b20288-5ecf-4daa-9a13-1594bc145abe",
+                        "description": "OpenEcho Depth Sounder",
+                    },
+                )
                 access_request.raise_for_status()
 
                 poll_path = access_request.json().get("href")
                 if not poll_path:
                     raise ValueError("Failed to get poll URI from access request")
-            
+
                 poll_uri = f"http://{uri}{poll_path}"
 
                 # Poll until approved (this is a simple implementation; consider adding timeout/retry)
@@ -142,21 +145,21 @@ class SignalKOutput(OutputMethod):
                     poll_response = await client.get(poll_uri)
                     state = poll_response.json().get("state")
                     await asyncio.sleep(1)
-                
+
                 if state != "COMPLETED":
                     raise ValueError(f"Unknown access request state: {state}")
 
                 access_request_response = poll_response.json().get("accessRequest")
                 if access_request_response["permission"] != "APPROVED":
-                    raise ValueError(f"SignalK access request not approved: {access_request_response['permission']}")
+                    raise ValueError(
+                        f"SignalK access request not approved: {access_request_response['permission']}"
+                    )
 
                 self.settings.signalk_token = access_request_response.get("token")
                 self.settings.save()
             self._access_request_ongoing = False
 
         return self.settings.signalk_token
-
-        
 
     async def stop(self):
         if self._ws:
@@ -257,7 +260,9 @@ class NMEA0183Output(OutputMethod):
                 return f"*{checksum:02X}"
 
             # DBT: Depth Below Transducer
-            dbt_sentence = f"SDDBT,{depth_ft:.1f},f,{depth_m:.1f},M,{depth_fathoms:.1f},F"
+            dbt_sentence = (
+                f"SDDBT,{depth_ft:.1f},f,{depth_m:.1f},M,{depth_fathoms:.1f},F"
+            )
             dbt_full = f"${dbt_sentence}{calculate_checksum(dbt_sentence)}\r\n"
 
             self._writer.write(dbt_full.encode())

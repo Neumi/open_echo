@@ -36,7 +36,7 @@ class EchoReader:
         self,
         data_callback: Callable[[dict], Coroutine],
         depth_callback: Callable[[dict], Coroutine],
-        settings = None,
+        settings=None,
     ):
         self.settings = settings
         self._restart_event = asyncio.Event()
@@ -81,7 +81,6 @@ class EchoReader:
         except Exception as e:
             log.error(f"❌ Error sending depth: {e}", exc_info=e)
 
-
     async def run_forever(self):
         """Continuously read serial data and emit processed arrays. Supports live settings update and restart."""
         while True:
@@ -103,6 +102,7 @@ class EchoReader:
                 log.error(f"❌ Error in EchoReader: {e}", exc_info=e)
 
             await self._restart_event.wait()
+
 
 connection_manager = ConnectionManager()
 output_manager = OutputManager()
@@ -129,11 +129,16 @@ templates = Jinja2Templates(directory="assets/templates")
 
 app.mount("/static", StaticFiles(directory="assets/static"), name="static")
 
+
 async def update_settings(new_settings: Settings):
     settings = Settings.model_validate(
         {
-            **app.state.settings.model_dump(exclude_none=True, exclude_unset=True, exclude_defaults=True),
-            **new_settings.model_dump(exclude_none=True, exclude_unset=True, exclude_defaults=True),
+            **app.state.settings.model_dump(
+                exclude_none=True, exclude_unset=True, exclude_defaults=True
+            ),
+            **new_settings.model_dump(
+                exclude_none=True, exclude_unset=True, exclude_defaults=True
+            ),
         }
     )
 
@@ -142,7 +147,6 @@ async def update_settings(new_settings: Settings):
     app.state.settings = settings
 
     app.state.settings.save()
-
 
 
 @app.websocket("/ws")
