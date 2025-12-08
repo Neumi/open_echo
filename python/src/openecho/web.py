@@ -3,7 +3,7 @@ from typing import Callable, Coroutine
 from contextlib import asynccontextmanager
 from depth_output import OutputManager
 from settings import Settings
-from openecho.echo import AsyncReader, EchoPacket, EchoReader, SerialReader
+from openecho.echo import EchoPacket, SerialReader
 import logging
 from fastapi import FastAPI, WebSocket, Request, Form
 from fastapi.responses import RedirectResponse
@@ -125,9 +125,9 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 app.state.settings = Settings()
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="assets/templates")
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="assets/static"), name="static")
 
 async def update_settings(new_settings: Settings):
     settings = Settings.model_validate(

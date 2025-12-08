@@ -23,7 +23,7 @@ dependencies = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["TUSS4470_shield_002/python/src/openecho"]
+packages = ["python/src/openecho"]
 
 [build-system]
 requires = ["hatchling"]

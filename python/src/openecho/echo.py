@@ -2,15 +2,18 @@ from abc import ABC, abstractmethod
 import asyncio
 from dataclasses import dataclass
 from enum import Enum
-from typing import AsyncGenerator, Callable, Coroutine
+from typing import AsyncGenerator
 import numpy as np
 import serial.tools.list_ports
 import struct
-import logging
 import serial_asyncio_fast as aserial
 
 
-log = logging.getLogger("uvicorn")
+class EchoReadError(ValueError):
+    pass
+
+class ChecksumMismatchError(EchoReadError):
+    pass
 
 @dataclass
 class EchoPacket:
@@ -19,8 +22,34 @@ class EchoPacket:
     temperature: float
     drive_voltage: float
 
+    @classmethod
+    def unpack(cls, payload: bytes, checksum: bytes, num_samples: int) -> "EchoPacket":
+        if len(payload) != 6 + num_samples or len(checksum) != 1:
+            raise EchoReadError("Invalid payload or checksum length")
+
+        # Verify checksum
+        calc_checksum = 0
+        for byte in payload:
+            calc_checksum ^= byte
+        if calc_checksum != checksum[0]:
+            print("⚠️ Checksum mismatch")
+            raise ChecksumMismatchError("Checksum mismatch")
+
+        # Unpack payload
+        depth, temp_scaled, vDrv_scaled = struct.unpack("<HhH", payload[:6])
+        depth = min(depth, num_samples)
+
+        samples = np.frombuffer(payload[6:], dtype=np.uint8, count=num_samples)
+
+        temperature = temp_scaled / 100.0
+        drive_voltage = vDrv_scaled / 100.0
+        values = np.array(samples)
+
+        return cls(values, depth, temperature, drive_voltage)
+
 class AsyncReader(ABC):
     def __init__(self, settings):
+        print("AsyncReader initialized")
         self.settings = settings
 
     async def __aenter__(self) -> "AsyncReader":
@@ -39,32 +68,8 @@ class AsyncReader(ABC):
         pass
 
     @abstractmethod
-    async def read_bytes(self) -> EchoPacket:
+    async def read(self) -> EchoPacket:
         pass
-
-    def unpack(self, payload: bytes, checksum: bytes) -> EchoPacket:
-        if len(payload) != 6 + self.settings.num_samples or len(checksum) != 1:
-            raise ValueError("Invalid payload or checksum length")
-
-        # Verify checksum
-        calc_checksum = 0
-        for byte in payload:
-            calc_checksum ^= byte
-        if calc_checksum != checksum[0]:
-            log.warning("⚠️ Checksum mismatch")
-            # raise ValueError("Checksum mismatch")
-
-        # Unpack payload
-        depth, temp_scaled, vDrv_scaled = struct.unpack("<HhH", payload[:6])
-        depth = min(depth, self.settings.num_samples)
-
-        samples = np.frombuffer(payload[6:], dtype=np.uint8, count=self.settings.num_samples)
-
-        temperature = temp_scaled / 100.0
-        drive_voltage = vDrv_scaled / 100.0
-        values = np.array(samples)
-
-        return EchoPacket(values, depth, temperature, drive_voltage)
 
     async def __aiter__(self) -> AsyncGenerator[EchoPacket, None]:
         try:
@@ -76,7 +81,10 @@ class AsyncReader(ABC):
 
 class SerialReader(AsyncReader):
     def __init__(self, settings):
+        print("SerialReader initialized")
         super().__init__(settings)
+        self.reader: asyncio.StreamReader | None = None
+        self.writer: asyncio.StreamWriter | None = None
 
     @staticmethod
     def get_serial_ports():
@@ -110,8 +118,8 @@ class SerialReader(AsyncReader):
             checksum = await self.reader.readexactly(1)
 
             try:
-                return self.unpack(payload, checksum)
-            except ValueError:
+                return EchoPacket.unpack(payload, checksum, self.settings.num_samples)
+            except EchoReadError:
                 continue  # Invalid packet, try again
 
 
@@ -135,9 +143,9 @@ class UDPReader(AsyncReader):
                     payload = self.outer._buf[1:1 + 6 + self.outer.settings.num_samples]
                     checksum = self.outer._buf[-1:]
                     try:
-                        result = self.outer.unpack(payload, checksum)
+                        result = EchoPacket.unpack(payload, checksum, self.outer.settings.num_samples)
                         self.outer._queue.put_nowait(result)
-                    except ValueError:
+                    except EchoReadError:
                         pass
                     finally:
                         self.outer._buf.clear()
@@ -169,8 +177,6 @@ class UDPReader(AsyncReader):
     async def read(self):
         # Wait for next valid parsed packet
         return await self._queue.get()
-
-
 
 
 class ConnectionTypeEnum(Enum):

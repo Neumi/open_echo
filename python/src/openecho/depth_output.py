@@ -242,7 +242,7 @@ class NMEA0183Output(OutputMethod):
             try:
                 await self.start()
             except Exception as e:
-                print(f"NMEA0183 TCP connection error: {e}")
+                log.info(f"NMEA0183 TCP connection error: {e}")
                 return
         try:
             # Send DBT and DPT sentences, ending with CRLF (NMEA standard)
@@ -282,7 +282,7 @@ class NMEA0183Output(OutputMethod):
 
             await self._writer.drain()
         except Exception as e:
-            print(f"NMEA0183 TCP send error: {e}")
+            log.info(f"NMEA0183 TCP send error: {e}")
             # Attempt reconnect next time
             await self.stop()
 

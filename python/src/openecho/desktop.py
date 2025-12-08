@@ -21,7 +21,7 @@ import qdarktheme
 from PyQt5.QtWidgets import (
     QHBoxLayout,
 )
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QObject
 from PyQt5.QtGui import QPalette, QColor
 from PyQt5.QtWidgets import QVBoxLayout, QLabel, QCheckBox, QLineEdit
 from PyQt5.QtWidgets import QApplication
@@ -60,39 +60,6 @@ SAMPLE_RESOLUTION = (SPEED_OF_SOUND * SAMPLE_TIME * 100) / 2  # cm per row (0.99
 PACKET_SIZE = 1 + 6 + NUM_SAMPLES + 1  # header + payload + checksum
 MAX_DEPTH = NUM_SAMPLES * SAMPLE_RESOLUTION  # Total depth in cm
 depth_labels = {int(i / SAMPLE_RESOLUTION): f"{i / 100}" for i in range(0, int(MAX_DEPTH), Y_LABEL_DISTANCE)}
-
-
-def read_packet(ser):
-    while True:
-        header = ser.read(1)
-        if header != b"\xaa":
-            continue  # Wait for the start byte
-
-        payload = ser.read(6 + NUM_SAMPLES)
-        checksum = ser.read(1)
-
-        if len(payload) != 6 + NUM_SAMPLES or len(checksum) != 1:
-            continue  # Incomplete packet
-
-        # Verify checksum
-        calc_checksum = 0
-        for byte in payload:
-            calc_checksum ^= byte
-        if calc_checksum != checksum[0]:
-            print("⚠️ Checksum mismatch: {} != {}".format(calc_checksum, checksum[0]))
-            continue
-
-        # Unpack payload (firmware sends little-endian raw struct bytes)
-        depth, temp_scaled, vDrv_scaled = struct.unpack("<HhH", payload[:6])
-        depth = min(depth, NUM_SAMPLES)
-
-        sample_bytes = payload[6:6+NUM_SAMPLES]
-        values = np.frombuffer(sample_bytes, dtype=np.uint8, count=NUM_SAMPLES)
-
-        temperature = temp_scaled / 100.0
-        drive_voltage = vDrv_scaled / 100.0
-
-        return values, depth, temperature, drive_voltage
 
 
 def generate_dbt_sentence(depth_cm):
@@ -322,6 +289,7 @@ class WaterfallApp(QMainWindow):
 
         # Single async reader task (generic AsyncReader)
         self._reader_task = None
+        self._reader_task_type: ConnectionTypeEnum | None = None
 
         self.nmea_enabled = False
         self.nmea_port = 10110
@@ -484,7 +452,6 @@ class WaterfallApp(QMainWindow):
         main_layout.addWidget(controls_container)
 
         # Adapter to safely update UI from async packets
-        from PyQt5.QtCore import QObject
 
         class EchoAdapter(QObject):
             packet_signal = pyqtSignal(object)
@@ -497,9 +464,8 @@ class WaterfallApp(QMainWindow):
             def _on_packet(self, pkt):
                 try:
                     # EchoPacket fields: spectrogram, depth_index, temperature, drive_voltage
-                    spectrogram = np.array(pkt.spectrogram, dtype=np.uint8)
                     self._app.waterfall_plot_callback(
-                        spectrogram,
+                        pkt.samples,
                         pkt.depth_index,
                         pkt.temperature,
                         pkt.drive_voltage,
@@ -517,21 +483,26 @@ class WaterfallApp(QMainWindow):
             udp_port = int(self.udp_port_input.text())
             settings = Settings(connection_type=ConnectionTypeEnum.UDP, udp_port=udp_port)
             self._start_reader(settings)
+            self._reader_task_type = ConnectionTypeEnum.UDP
             print(f"✅ UDP listener started on port {udp_port}")
         except Exception as e:
             print(f"❌ Failed to start UDP listener: {e}")
 
     def disconnect_udp(self):
-        self._stop_reader()
-        print("🔌 UDP listener stopped")
+        if self._reader_task and self._reader_task_type == ConnectionTypeEnum.UDP:
+            self._stop_reader()
+            self._reader_task_type = None
+            print("🔌 UDP listener stopped")
+        else:
+            print("⚠️ No active UDP connection to disconnect")
 
     def toggle_udp_connection(self):
-        if hasattr(self, 'udp_thread') and self.udp_thread and self.udp_thread.isRunning():
+        if self._reader_task and self._reader_task_type == ConnectionTypeEnum.UDP:
             self.disconnect_udp()
             self.udp_connect_button.setText("Connect UDP")
         else:
             self.connect_udp()
-            if hasattr(self, 'udp_thread') and self.udp_thread.isRunning():
+            if self._reader_task and self._reader_task_type == ConnectionTypeEnum.UDP:
                 self.udp_connect_button.setText("Disconnect UDP")
 
     def set_large_depth_display(self, enabled: bool):
@@ -626,22 +597,24 @@ class WaterfallApp(QMainWindow):
         try:
             settings = Settings(connection_type=ConnectionTypeEnum.SERIAL, serial_port=selected_port)
             self._start_reader(settings)
+            self._reader_task_type = ConnectionTypeEnum.SERIAL
             print(f"✅ Connected to {selected_port}")
         except Exception as e:
             print(f"❌ Connection failed: {e}")
 
     def toggle_serial_connection(self):
-        if self.serial_thread and self.serial_thread.isRunning():
+        if self._reader_task and self._reader_task_type == ConnectionTypeEnum.SERIAL:
             self.disconnect_serial()
             self.connect_button.setText("Connect")
         else:
             self.connect_serial()
-            if self.serial_thread and self.serial_thread.isRunning():
+            if self._reader_task and self._reader_task_type == ConnectionTypeEnum.SERIAL:
                 self.connect_button.setText("Disconnect")
 
     def disconnect_serial(self):
-        if self._reader_task:
+        if self._reader_task and self._reader_task_type == ConnectionTypeEnum.SERIAL:
             self._stop_reader()
+            self._reader_task_type = None
             print("🔌 Disconnected from serial device")
         else:
             print("⚠️ No active serial connection to disconnect")
@@ -731,21 +704,18 @@ class WaterfallApp(QMainWindow):
         event.accept()
 
     def _start_reader(self, settings: Settings):
-        print("Starting reader...")
         # Generic starter for any AsyncReader subclass
         if self._reader_task:
             self._stop_reader()
 
         async def _run():
             reader_cls = settings.connection_type.value
-            reader = reader_cls(settings)
+            print(f"Starting {reader_cls.__name__}")
             try:
+                reader = reader_cls(settings)
                 async with reader:
                     async for pkt in reader:
-                        print("Reader started")
                         await self._adapter.emit(pkt)
-            except asyncio.CancelledError:
-                pass
             except Exception as e:
                 print(f"❌ Reader error: {e}")
 
