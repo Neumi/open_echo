@@ -8,8 +8,10 @@ from enum import Enum
 import numpy as np
 import serial.tools.list_ports
 import serial_asyncio_fast as aserial
+from typing import TYPE_CHECKING
 
-from openecho.settings import Settings
+if TYPE_CHECKING:
+    from openecho.settings import Settings
 
 
 class EchoReadError(ValueError):
@@ -54,7 +56,7 @@ class EchoPacket:
 
 
 class AsyncReader(ABC):
-    def __init__(self, settings):
+    def __init__(self, settings: "Settings"):
         print("AsyncReader initialized")
         self.settings = settings
 
@@ -86,7 +88,7 @@ class AsyncReader(ABC):
 
 
 class SerialReader(AsyncReader):
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: "Settings"):
         print("SerialReader initialized")
         super().__init__(settings)
         self.reader: asyncio.StreamReader | None = None
@@ -155,7 +157,7 @@ class UDPReader(AsyncReader):
                     finally:
                         self.outer._buf.clear()
 
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: "Settings"):
         super().__init__(settings)
         self._transport = None
         self._queue: asyncio.Queue = asyncio.Queue()

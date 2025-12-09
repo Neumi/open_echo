@@ -1,6 +1,5 @@
 import asyncio
 import json
-import logging
 from abc import ABC, abstractmethod
 from typing import Any
 
@@ -8,8 +7,6 @@ import websockets
 from httpx import AsyncClient
 
 from openecho.settings import NMEAOffset, Settings
-
-log = logging.getLogger("uvicorn")
 
 
 class OutputManager:
@@ -36,7 +33,7 @@ class OutputManager:
             if method in output_methods
         ]
         self._output_classes = [cls(self.settings) for cls in new_output_classes]
-        log.info(f"Output classes: {self._output_classes}")
+        print(f"Output classes: {self._output_classes}")
 
         for output_class in self._output_classes:
             await output_class.start()
@@ -170,10 +167,10 @@ class SignalKOutput(OutputMethod):
     async def output(self):
         if self._ws is None:
             try:
-                log.info("Reconnecting to SignalK server...")
+                print("Reconnecting to SignalK server...")
                 await self.start()
             except Exception as e:
-                log.error(f"SignalK connection error: {e}")
+                print(f"SignalK connection error: {e}")
                 return
         try:
             # Format as SignalK delta message for depth
@@ -205,10 +202,10 @@ class SignalKOutput(OutputMethod):
 
             delta = {"updates": [{"values": values}]}
 
-            log.debug("Send signalk delta: %s", delta)
+            print("Send signalk delta: %s", delta)
             await self._ws.send(json.dumps(delta))
         except Exception as e:
-            log.error(f"SignalK send error: {e}")
+            print(f"SignalK send error: {e}")
             # Attempt reconnect next time
             if self._ws:
                 await self.stop()
@@ -246,7 +243,7 @@ class NMEA0183Output(OutputMethod):
             try:
                 await self.start()
             except Exception as e:
-                log.info(f"NMEA0183 TCP connection error: {e}")
+                print(f"NMEA0183 TCP connection error: {e}")
                 return
         try:
             # Send DBT and DPT sentences, ending with CRLF (NMEA standard)
@@ -288,7 +285,7 @@ class NMEA0183Output(OutputMethod):
 
             await self._writer.drain()
         except Exception as e:
-            log.info(f"NMEA0183 TCP send error: {e}")
+            print(f"NMEA0183 TCP send error: {e}")
             # Attempt reconnect next time
             await self.stop()
 
