@@ -1,5 +1,5 @@
 [project]
-name = "open-echo"
+name = "openecho"
 version = "0.1.0"
 description = "Python library for OpenEcho boards"
 readme = "README.md"
@@ -32,3 +32,38 @@ packages = ["python/src/openecho"]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[dependency-groups]
+dev = [
+    "hypothesis>=6.148.7",
+    "mypy>=1.19.0",
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+    "types-pyserial>=3.5.0.20251001",
+]
+
+[tool.mypy]
+packages = ["openecho"]
+ignore_missing_imports = true
+
+[tool.ruff]
+include = ["python/**"]
+
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+]
+ignore = [
+    "E501", # line too long
+    "SIM105" # "with contextlib.suppress(Exception)"
+]

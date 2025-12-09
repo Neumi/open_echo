@@ -1,21 +1,23 @@
 import asyncio
-from pathlib import Path
-from typing import Callable, Coroutine
-from contextlib import asynccontextmanager
-from openecho.depth_output import OutputManager
-from openecho.settings import Settings
-from openecho.echo import EchoPacket, SerialReader
 import logging
-from fastapi import FastAPI, WebSocket, Request, Form
+from collections.abc import Callable, Coroutine
+from contextlib import asynccontextmanager
+from pathlib import Path
+
+from fastapi import FastAPI, Form, Request, WebSocket
 from fastapi.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+
+from openecho.depth_output import OutputManager
+from openecho.echo import EchoPacket, SerialReader
+from openecho.settings import Settings
 
 log = logging.getLogger("uvicorn")
 
 
 class ConnectionManager:
-    def __init__(self):
+    def __init__(self) -> None:
         self.active_connections: list[WebSocket] = []
 
     async def connect(self, websocket: WebSocket):
@@ -23,11 +25,11 @@ class ConnectionManager:
         self.active_connections.append(websocket)
         log.info(f"WebSocket connected: {websocket.client}")
 
-    async def disconnect(self, websocket: WebSocket):
+    async def disconnect(self, websocket: WebSocket) -> None:
         if websocket in self.active_connections:
             self.active_connections.remove(websocket)
 
-    async def broadcast_json(self, data):
+    async def broadcast_json(self, data) -> None:
         for connection in self.active_connections:
             await connection.send_json(data)
 
@@ -78,7 +80,7 @@ class EchoReader:
             log.error(f"❌ Error sending data: {e}", exc_info=e)
 
         try:
-            self.depth_callback(depth)
+            await self.depth_callback(depth)
         except Exception as e:
             log.error(f"❌ Error sending depth: {e}", exc_info=e)
 
@@ -184,7 +186,7 @@ async def config(request: Request):
 
 
 @app.post("/config")
-async def config_post(request: Request, new_settings: Settings = Form(...)):
+async def config_post(request: Request, new_settings: Settings = Form(...)): # noqa: B008 
     await update_settings(new_settings)
     return RedirectResponse("/", status_code=303)
 

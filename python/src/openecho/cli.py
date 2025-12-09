@@ -1,5 +1,6 @@
-from argparse import ArgumentParser
 import sys
+from argparse import ArgumentParser
+
 from openecho.desktop import run_desktop
 from openecho.web import run_web
 

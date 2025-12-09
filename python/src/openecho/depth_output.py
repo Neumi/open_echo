@@ -1,10 +1,11 @@
-from abc import ABC, abstractmethod
 import asyncio
-import logging
-from httpx import AsyncClient
-import websockets
 import json
+import logging
+from abc import ABC, abstractmethod
 from typing import Any
+
+import websockets
+from httpx import AsyncClient
 
 from openecho.settings import NMEAOffset, Settings
 

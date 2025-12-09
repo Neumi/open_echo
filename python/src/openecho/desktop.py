@@ -1,38 +1,34 @@
-import sys
-import numpy as np
-import serial
-import serial.tools.list_ports
-import struct
-import time
-import socket
-from PyQt5.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QVBoxLayout,
-    QWidget,
-    QComboBox,
-    QPushButton,
-    QLabel,
-    QLineEdit,
-)
-from PyQt5.QtCore import pyqtSignal
-import pyqtgraph as pg
-import qdarktheme
-from PyQt5.QtWidgets import (
-    QHBoxLayout,
-)
-from PyQt5.QtCore import Qt, QObject
-from PyQt5.QtGui import QPalette, QColor
-from PyQt5.QtWidgets import QVBoxLayout, QLabel, QCheckBox, QLineEdit
-from PyQt5.QtWidgets import QApplication
-
 # Async integration
 import asyncio
+import socket
+import sys
+import time
+
+import numpy as np
+import pyqtgraph as pg
+import qdarktheme
+import serial
+import serial.tools.list_ports
+from PyQt5.QtCore import QObject, Qt, pyqtSignal
+from PyQt5.QtGui import QColor, QPalette
+from PyQt5.QtWidgets import (
+    QApplication,
+    QCheckBox,
+    QComboBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QMainWindow,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 from qasync import QEventLoop
+
+from openecho.echo import ConnectionTypeEnum
 
 # Use shared settings/readers
 from openecho.settings import Settings
-from openecho.echo import ConnectionTypeEnum
 
 # Serial Configuration
 BAUD_RATE = 250000
@@ -531,6 +527,9 @@ class WaterfallApp(QMainWindow):
         self.nmea_output_enabled = enabled
         self.nmea_port = port
 
+        self.nmea_server_socket: socket.socket | None
+        self.nmea_client_socket: socket.socket | None
+
         # Close previous connections if needed
         if hasattr(self, "nmea_client_socket") and self.nmea_client_socket:
             try:
@@ -548,8 +547,6 @@ class WaterfallApp(QMainWindow):
 
         if enabled:
             try:
-                import socket
-
                 self.nmea_server_socket = socket.socket(
                     socket.AF_INET, socket.SOCK_STREAM
                 )
@@ -599,7 +596,7 @@ class WaterfallApp(QMainWindow):
         self.waterfall.getAxis("left").setTicks([inverted_depth_labels])
         self.waterfall.getAxis("right").setTicks([inverted_depth_labels])
 
-    def keyPressEvent(self, event):
+    def key_press_event(self, event):
         print("key pressed")
         if event.key() == ord("Q"):
             print("🛑 Quit triggered from keyboard.")
@@ -716,7 +713,7 @@ class WaterfallApp(QMainWindow):
         else:
             print("❌ Invalid hex value. Please enter a valid hex string (e.g., 0x1F)")
 
-    def closeEvent(self, event):
+    def close_event(self, event):
         # Cancel async reader task
         if self._reader_task:
             try:

@@ -1,7 +1,9 @@
 from enum import StrEnum
 from typing import Annotated
+
+from pydantic import BaseModel, Field, PlainSerializer, field_validator
+
 from openecho.echo import ConnectionTypeEnum
-from pydantic import BaseModel, Field, field_validator, PlainSerializer
 
 
 class Medium(StrEnum):
@@ -92,7 +94,7 @@ class Settings(BaseModel):
 
     @classmethod
     def load(cls, filename=".settings.json"):
-        with open(filename, "r", encoding="utf-8") as f:
+        with open(filename, encoding="utf-8") as f:
             data = f.read()
 
         return cls.model_validate_json(data)

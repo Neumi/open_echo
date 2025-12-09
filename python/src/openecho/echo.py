@@ -1,12 +1,15 @@
-from abc import ABC, abstractmethod
 import asyncio
+import struct
+from abc import ABC, abstractmethod
+from collections.abc import AsyncGenerator
 from dataclasses import dataclass
 from enum import Enum
-from typing import AsyncGenerator
+
 import numpy as np
 import serial.tools.list_ports
-import struct
 import serial_asyncio_fast as aserial
+
+from openecho.settings import Settings
 
 
 class EchoReadError(ValueError):
@@ -83,14 +86,14 @@ class AsyncReader(ABC):
 
 
 class SerialReader(AsyncReader):
-    def __init__(self, settings):
+    def __init__(self, settings: Settings):
         print("SerialReader initialized")
         super().__init__(settings)
         self.reader: asyncio.StreamReader | None = None
         self.writer: asyncio.StreamWriter | None = None
 
     @staticmethod
-    def get_serial_ports():
+    def get_serial_ports() -> list[str]:
         """Retrieve a list of available serial ports."""
         return [port.device for port in serial.tools.list_ports.comports()][::-1]
 
@@ -106,7 +109,7 @@ class SerialReader(AsyncReader):
             self.writer.close()
             await self.writer.wait_closed()
 
-    async def read(self):
+    async def read(self) -> EchoPacket:
         if self.reader is None:
             raise RuntimeError("Serial port not opened")
 
@@ -152,7 +155,7 @@ class UDPReader(AsyncReader):
                     finally:
                         self.outer._buf.clear()
 
-    def __init__(self, settings):
+    def __init__(self, settings: Settings):
         super().__init__(settings)
         self._transport = None
         self._queue: asyncio.Queue = asyncio.Queue()
@@ -162,21 +165,21 @@ class UDPReader(AsyncReader):
         self.port = getattr(settings, "udp_port", 9999)
 
     async def open(self):
-        log.info("Starting UDP listener...")
+        print("Starting UDP listener...")
         loop = asyncio.get_running_loop()
         transport, protocol = await loop.create_datagram_endpoint(
             lambda: UDPReader._PacketProtocol(self),
             local_addr=(self.host, self.port),
         )
         self._transport = transport
-        log.info(f"📡 UDP listener bound to {self.host}:{self.port}")
+        print(f"📡 UDP listener bound to {self.host}:{self.port}")
 
     async def close(self):
         if self._transport:
             self._transport.close()
             self._transport = None
 
-    async def read(self):
+    async def read(self) -> EchoPacket:
         # Wait for next valid parsed packet
         return await self._queue.get()
 
