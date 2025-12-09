@@ -40,7 +40,7 @@ jobs:
 
       - name: Bump version (patch) and tag
         if: github.ref == 'refs/heads/main' && steps.changes.outputs.python == 'true'
-        run: uvx bump-my-version bump --patch
+        run: uvx bump-my-version bump patch
 
       - name: Build package (sdist and wheel)
         run: uv build
