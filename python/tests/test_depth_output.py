@@ -1,14 +1,14 @@
 import asyncio
 import json
-import pytest
 
+import pytest
 from openecho.depth_output import (
+    NMEA0183Output,
     OutputManager,
     SignalKOutput,
-    NMEA0183Output,
     output_methods,
 )
-from openecho.settings import Settings, NMEAOffset, Medium
+from openecho.settings import NMEAOffset, Settings
 
 
 class DummyWS:
