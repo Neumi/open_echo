@@ -3,8 +3,14 @@ name: Python CI
 on:
   push:
     branches: ["**"]
+    paths:
+      - '**/*.py'
+      - 'pyproject.toml'
   pull_request:
     branches: ["**"]
+    paths:
+      - '**/*.py'
+      - 'pyproject.toml'
 
 jobs:
   test-lint-typecheck:

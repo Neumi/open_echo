@@ -29,17 +29,13 @@ openecho = "openecho.cli:main"
 packages = ["python/src/openecho"]
 
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
+requires = ["hatchling"]
 build-backend = "hatchling.build"
-[tool.hatch.version]
-source = "vcs"
 
-[tool.hatch.build.hooks.vcs]
-# Use current version when no tag is present
-fallback_version = "0.1.0"
-# Avoid local version suffixes like "+g<hash>"
-local_scheme = "no-local-version"
-version-file = "python/src/openecho/__about__.py"
+[tool.bumpversion]
+current_version = "0.1.0"
+tag = true
+commit = true
 
 [dependency-groups]
 dev = [

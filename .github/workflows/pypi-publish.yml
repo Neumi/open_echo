@@ -1,19 +1,34 @@
 name: Publish to PyPI
 
 on:
-  release:
-    types: [published]
   push:
-    tags:
-      - "v*"
+    branches:
+      - main
+    paths:
+      - '**/*.py'
+      - 'pyproject.toml'
   workflow_dispatch:
 
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Fetch tags
+        run: git fetch --tags --depth=1
+
+      - name: Detect Python changes
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            python:
+              - '**/*.py'
+              - 'pyproject.toml'
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -23,10 +38,15 @@ jobs:
       - name: Setup uv
         uses: astral-sh/setup-uv@v3
 
+      - name: Bump version (patch) and tag
+        if: github.ref == 'refs/heads/main' && steps.changes.outputs.python == 'true'
+        run: uvx bump-my-version bump --patch
+
       - name: Build package (sdist and wheel)
         run: uv build
 
       - name: Publish to PyPI
+        if: github.event_name != 'push' || steps.changes.outputs.python == 'true'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_TOKEN }}
