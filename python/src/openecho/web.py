@@ -1,8 +1,9 @@
 import asyncio
+from pathlib import Path
 from typing import Callable, Coroutine
 from contextlib import asynccontextmanager
-from depth_output import OutputManager
-from settings import Settings
+from openecho.depth_output import OutputManager
+from openecho.settings import Settings
 from openecho.echo import EchoPacket, SerialReader
 import logging
 from fastapi import FastAPI, WebSocket, Request, Form
@@ -97,6 +98,7 @@ class EchoReader:
                     async for pkt in reader:
                         await self.process_echo(pkt)
                         if self._restart_event.is_set():
+                            print("Restart event set, breaking loop")
                             break
             except Exception as e:
                 log.error(f"❌ Error in EchoReader: {e}", exc_info=e)
@@ -123,22 +125,20 @@ async def lifespan(app: FastAPI):
         yield
 
 
+assets_dir = Path(__file__).parent.resolve() / "assets"
+
 app = FastAPI(lifespan=lifespan)
 app.state.settings = Settings()
-templates = Jinja2Templates(directory="assets/templates")
+templates = Jinja2Templates(directory=assets_dir / "templates")
 
-app.mount("/static", StaticFiles(directory="assets/static"), name="static")
+app.mount("/static", StaticFiles(directory=assets_dir / "static"), name="static")
 
 
 async def update_settings(new_settings: Settings):
     settings = Settings.model_validate(
         {
-            **app.state.settings.model_dump(
-                exclude_none=True, exclude_unset=True, exclude_defaults=True
-            ),
-            **new_settings.model_dump(
-                exclude_none=True, exclude_unset=True, exclude_defaults=True
-            ),
+            **app.state.settings.model_dump(exclude_none=True, exclude_unset=True),
+            **new_settings.model_dump(exclude_none=True, exclude_unset=True),
         }
     )
 
@@ -187,3 +187,13 @@ async def config(request: Request):
 async def config_post(request: Request, new_settings: Settings = Form(...)):
     await update_settings(new_settings)
     return RedirectResponse("/", status_code=303)
+
+
+def run_web():
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+
+if __name__ == "__main__":
+    run_web()

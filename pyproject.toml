@@ -22,6 +22,9 @@ dependencies = [
     "websockets>=15.0.1",
 ]
 
+[project.scripts]
+openecho = "openecho.cli:main"
+
 [tool.hatch.build.targets.wheel]
 packages = ["python/src/openecho"]
 

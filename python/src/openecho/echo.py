@@ -120,10 +120,7 @@ class SerialReader(AsyncReader):
             )  # Read payload
             checksum = await self.reader.readexactly(1)
 
-            try:
-                return EchoPacket.unpack(payload, checksum, self.settings.num_samples)
-            except EchoReadError:
-                continue  # Invalid packet, try again
+            return EchoPacket.unpack(payload, checksum, self.settings.num_samples)
 
 
 class UDPReader(AsyncReader):
@@ -152,8 +149,6 @@ class UDPReader(AsyncReader):
                             payload, checksum, self.outer.settings.num_samples
                         )
                         self.outer._queue.put_nowait(result)
-                    except EchoReadError:
-                        pass
                     finally:
                         self.outer._buf.clear()
 

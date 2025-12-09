@@ -782,7 +782,7 @@ def get_current_gradient(self):
         return "cyclic"  # Fallback
 
 
-if __name__ == "__main__":
+def run_desktop():
     app = QApplication(sys.argv)
     qdarktheme.setup_theme("dark")
 
@@ -795,3 +795,7 @@ if __name__ == "__main__":
 
     with loop:
         loop.run_forever()
+
+
+if __name__ == "__main__":
+    run_desktop()
