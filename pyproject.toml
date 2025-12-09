@@ -29,8 +29,11 @@ openecho = "openecho.cli:main"
 packages = ["python/src/openecho"]
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
 
 [tool.bumpversion]
 current_version = "0.1.1"
