@@ -17,22 +17,15 @@ The application is intended primarily as a testing and development tool, but is 
 
 ## Installation & Setup
 
-### 1. Create and activate a virtual environment
-
+### 1. Install openecho
 ```bash
-cd open_echo/TUSS4470_shield_002
-python3 -m venv venv 
-source venv/bin/activate 
+pip install openecho
 ```
 
-### 2. Install requirements
+### 2. Start Open Echo Interface Software
+Run the following command to start the web server. 
 ```bash
-pip install -r requirements.txt 
-```
-
-### 3. Start Open Echo Interface Software
-```bash
-python echo_interface.py
+openecho desktop
 ```
 
 Select the correct COM port, then click Connect or press c on your keyboard. Once connected, the Open Echo board will begin streaming data, which will appear on the right side of the interface.
