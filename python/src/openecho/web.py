@@ -8,7 +8,6 @@ from fastapi import FastAPI, Form, Request, WebSocket
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-
 from openecho.depth_output import OutputManager
 from openecho.echo import EchoPacket, SerialReader
 from openecho.settings import Settings
@@ -186,7 +185,7 @@ async def config(request: Request):
 
 
 @app.post("/config")
-async def config_post(request: Request, new_settings: Settings = Form(...)): # noqa: B008 
+async def config_post(request: Request, new_settings: Settings = Form(...)):  # noqa: B008
     await update_settings(new_settings)
     return RedirectResponse("/", status_code=303)
 

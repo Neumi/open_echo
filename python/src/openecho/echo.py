@@ -4,11 +4,11 @@ from abc import ABC, abstractmethod
 from collections.abc import AsyncGenerator
 from dataclasses import dataclass
 from enum import Enum
+from typing import TYPE_CHECKING
 
 import numpy as np
 import serial.tools.list_ports
 import serial_asyncio_fast as aserial
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from openecho.settings import Settings

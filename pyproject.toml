@@ -47,7 +47,7 @@ packages = ["openecho"]
 ignore_missing_imports = true
 
 [tool.ruff]
-include = ["python/**"]
+include = ["python/**/*.py"]
 
 [tool.ruff.lint]
 select = [

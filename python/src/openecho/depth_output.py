@@ -5,7 +5,6 @@ from typing import Any
 
 import websockets
 from httpx import AsyncClient
-
 from openecho.settings import NMEAOffset, Settings
 
 

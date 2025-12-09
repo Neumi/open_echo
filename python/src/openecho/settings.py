@@ -1,9 +1,8 @@
 from enum import StrEnum
 from typing import Annotated
 
-from pydantic import BaseModel, Field, PlainSerializer, field_validator
-
 from openecho.echo import ConnectionTypeEnum
+from pydantic import BaseModel, Field, PlainSerializer, field_validator
 
 
 class Medium(StrEnum):

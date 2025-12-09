@@ -9,6 +9,10 @@ import pyqtgraph as pg
 import qdarktheme
 import serial
 import serial.tools.list_ports
+from openecho.echo import ConnectionTypeEnum
+
+# Use shared settings/readers
+from openecho.settings import Settings
 from PyQt5.QtCore import QObject, Qt, pyqtSignal
 from PyQt5.QtGui import QColor, QPalette
 from PyQt5.QtWidgets import (
@@ -24,11 +28,6 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 from qasync import QEventLoop
-
-from openecho.echo import ConnectionTypeEnum
-
-# Use shared settings/readers
-from openecho.settings import Settings
 
 # Serial Configuration
 BAUD_RATE = 250000
