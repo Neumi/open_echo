@@ -36,7 +36,7 @@ build-backend = "hatchling.build"
 source = "vcs"
 
 [tool.bumpversion]
-current_version = "0.1.1"
+current_version = "0.1.2"
 tag = true
 commit = true
 
