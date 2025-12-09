@@ -1,0 +1,34 @@
+name: Python CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  test-lint-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Sync dependencies (including dev)
+        run: uv sync --all-extras --dev
+
+      - name: Run tests (pytest)
+        run: uv run pytest
+
+      - name: Lint (ruff)
+        run: uvx ruff check
+
+      - name: Type check (mypy)
+        run: uv run mypy

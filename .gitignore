@@ -1,3 +1,6 @@
 __pycache__/
 .*
 !.gitignore
+!.githooks
+!.github
+__about__.py

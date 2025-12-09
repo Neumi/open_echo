@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "[pre-commit] Running ruff (fix), pytest, and mypy..."
+
+# Only run if Python files changed; otherwise skip quickly
+changed_py=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.py$' || true)
+if [[ -z "$changed_py" ]]; then
+  echo "[pre-commit] No Python changes detected. Skipping checks."
+  exit 0
+fi
+
+if ! command -v uv >/dev/null 2>&1; then
+  echo "[pre-commit] 'uv' not found. Install from https://github.com/astral-sh/uv"
+  exit 1
+fi
+
+# Lint and auto-fix Python code
+echo "[pre-commit] Ruff: check & fix"
+uvx ruff check --fix
+
+# Re-stage any auto-fixed files so the commit includes updates
+git add -A
+
+# Run tests
+echo "[pre-commit] Pytest"
+uv run pytest -q
+
+# Type checking
+echo "[pre-commit] Mypy"
+uv run mypy
+
+echo "[pre-commit] All checks passed. Proceeding with commit."
+exit 0
