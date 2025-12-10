@@ -1,5 +1,6 @@
 import asyncio
 import json
+from unittest.mock import patch
 
 import pytest
 from openecho.depth_output import (
@@ -50,7 +51,9 @@ class DummyReader:
 
 
 @pytest.mark.asyncio
-async def test_output_manager_update_settings_starts_methods(monkeypatch):
+@patch("websockets.connect")
+@patch("openecho.depth_output.AsyncClient")
+async def test_output_manager_update_settings_starts_methods(MockAsyncClient, mock_ws_connect):
     # Monkeypatch websockets.connect
     dummy_ws = DummyWS()
 
@@ -58,8 +61,7 @@ async def test_output_manager_update_settings_starts_methods(monkeypatch):
         assert uri.startswith("ws://localhost:3000/signalk/v1/stream")
         return dummy_ws
 
-    import websockets
-    monkeypatch.setattr(websockets, "connect", fake_connect)
+    mock_ws_connect.side_effect = fake_connect
 
     # Monkeypatch httpx.AsyncClient.post/get for token flow
     class DummyResponse:
@@ -94,8 +96,7 @@ async def test_output_manager_update_settings_starts_methods(monkeypatch):
             })
 
     # Patch the imported AsyncClient used inside module, not httpx.AsyncClient
-    import openecho.depth_output as depth_mod
-    monkeypatch.setattr(depth_mod, "AsyncClient", DummyClient)
+    MockAsyncClient.return_value = DummyClient()
 
     # Prepare settings enabling both outputs
     s = Settings(
@@ -122,7 +123,9 @@ async def test_output_manager_update_settings_starts_methods(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_signalk_get_token_waits_when_ongoing(monkeypatch):
+@patch("openecho.depth_output.AsyncClient")
+@patch("websockets.connect")
+async def test_signalk_get_token_waits_when_ongoing(mock_ws_connect, MockAsyncClient):
     # Ensure concurrent get_token calls wait for ongoing request
     class DummyClient:
         async def __aenter__(self):
@@ -134,14 +137,11 @@ async def test_signalk_get_token_waits_when_ongoing(monkeypatch):
         async def get(self, url):
             return type("G", (), {"json": lambda self: {"state": "COMPLETED", "accessRequest": {"permission": "APPROVED", "token": "tokX"}}})()
 
-    import openecho.depth_output as depth_mod
-    monkeypatch.setattr(depth_mod, "AsyncClient", DummyClient)
-
+    MockAsyncClient.return_value = DummyClient()
     # Stub websockets to avoid real connect
     async def fake_connect(uri):
         return DummyWS()
-    import websockets
-    monkeypatch.setattr(websockets, "connect", fake_connect)
+    mock_ws_connect.side_effect = fake_connect
 
     s = Settings(signalk_enable=True, signalk_address="localhost:3000")
     sk = SignalKOutput(s)
@@ -158,15 +158,14 @@ async def test_signalk_get_token_waits_when_ongoing(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_signalk_output_sends_delta(monkeypatch):
+@patch("websockets.connect")
+async def test_signalk_output_sends_delta(mock_ws_connect):
     dummy_ws = DummyWS()
 
     async def fake_connect(uri):
         return dummy_ws
 
-    import websockets
-    monkeypatch.setattr(websockets, "connect", fake_connect)
-
+    mock_ws_connect.side_effect = fake_connect
     # Bypass token fetch
     s = Settings(signalk_enable=True, signalk_address="localhost:3000", transducer_depth=2.0, draft=0.5, signalk_token="tok")
     sk = SignalKOutput(s)
@@ -184,7 +183,8 @@ async def test_signalk_output_sends_delta(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_signalk_output_reconnect_on_send_error(monkeypatch):
+@patch("websockets.connect")
+async def test_signalk_output_reconnect_on_send_error(mock_ws_connect):
     # First connection returns ws that raises on send; second connection returns working ws
     class FailingWS(DummyWS):
         async def send(self, data: str):
@@ -199,9 +199,7 @@ async def test_signalk_output_reconnect_on_send_error(monkeypatch):
         # Return failing first, then working
         return failing_ws if len(calls) == 1 else working_ws
 
-    import websockets
-    monkeypatch.setattr(websockets, "connect", fake_connect)
-
+    mock_ws_connect.side_effect = fake_connect
     s = Settings(signalk_enable=True, signalk_address="localhost:3000", signalk_token="tok")
     sk = SignalKOutput(s)
     await sk.start()
@@ -215,7 +213,8 @@ async def test_signalk_output_reconnect_on_send_error(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_nmea0183_output_writes_sentences(monkeypatch):
+@patch("asyncio.open_connection")
+async def test_nmea0183_output_writes_sentences(mock_open_conn):
     dummy_writer = DummyWriter()
     dummy_reader = DummyReader()
 
@@ -223,8 +222,7 @@ async def test_nmea0183_output_writes_sentences(monkeypatch):
         assert host == "localhost" and port == 10110
         return dummy_reader, dummy_writer
 
-    monkeypatch.setattr(asyncio, "open_connection", fake_open_connection)
-
+    mock_open_conn.side_effect = fake_open_connection
     s = Settings(nmea_enable=True, nmea_address="localhost:10110", nmea_offset=NMEAOffset.ToKeel, transducer_depth=1.0, draft=2.0)
     nmea = NMEA0183Output(s)
     await nmea.start()
@@ -239,7 +237,8 @@ async def test_nmea0183_output_writes_sentences(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_nmea0183_output_reconnects_when_writer_closing(monkeypatch):
+@patch("asyncio.open_connection")
+async def test_nmea0183_output_reconnects_when_writer_closing(mock_open_conn):
     dummy_writer = DummyWriter()
     dummy_writer._closing = True
     dummy_reader = DummyReader()
@@ -251,19 +250,20 @@ async def test_nmea0183_output_reconnects_when_writer_closing(monkeypatch):
         reconnects["count"] += 1
         return dummy_reader, DummyWriter()  # new open writer
 
-    monkeypatch.setattr(asyncio, "open_connection", fake_open_connection)
-
+    mock_open_conn.side_effect = fake_open_connection
     s = Settings(nmea_enable=True, nmea_address="localhost:10110", nmea_offset=NMEAOffset.ToTransducer)
     nmea = NMEA0183Output(s)
+
     # Manually set closing writer
     nmea._writer = dummy_writer
     nmea.update(2.5)
+
     await nmea.output()
     assert reconnects["count"] >= 1
 
 
 @pytest.mark.asyncio
-async def test_output_manager_context_lifecycle(monkeypatch):
+async def test_output_manager_context_lifecycle():
     # Avoid running an infinite loop: set settings to None so it sleeps; then exit quickly
     om = OutputManager(Settings())
     # Replace _run to a short coroutine
@@ -299,7 +299,7 @@ async def test_nmea_start_missing_or_invalid_address_raises():
 
 
 @pytest.mark.asyncio
-async def test_nmea_stop_handles_wait_closed_exception(monkeypatch):
+async def test_nmea_stop_handles_wait_closed_exception():
     class ErrWriter(DummyWriter):
         async def wait_closed(self):
             raise RuntimeError("boom")
@@ -311,15 +311,15 @@ async def test_nmea_stop_handles_wait_closed_exception(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_nmea_offset_to_surface_branch(monkeypatch):
+@patch("asyncio.open_connection")
+async def test_nmea_offset_to_surface_branch(mock_open_conn):
     dummy_writer = DummyWriter()
     dummy_reader = DummyReader()
 
     async def fake_open_connection(host, port):
         return dummy_reader, dummy_writer
 
-    monkeypatch.setattr(asyncio, "open_connection", fake_open_connection)
-
+    mock_open_conn.side_effect = fake_open_connection
     # ToSurface should use transducer_depth as positive offset
     s = Settings(
         nmea_enable=True,
@@ -338,7 +338,7 @@ async def test_nmea_offset_to_surface_branch(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_output_manager_run_loop_behaviour(monkeypatch):
+async def test_output_manager_run_loop_behaviour():
     # Use a concrete OutputMethod that records outputs
     class Recorder(NMEA0183Output):
         async def start(self):
@@ -368,15 +368,14 @@ def test_output_methods_registry():
 
 
 @pytest.mark.asyncio
-async def test_signalk_output_only_below_transducer_when_no_offsets(monkeypatch):
+@patch("websockets.connect")
+async def test_signalk_output_only_below_transducer_when_no_offsets(mock_ws_connect):
     dummy_ws = DummyWS()
 
     async def fake_connect(uri):
         return dummy_ws
 
-    import websockets
-    monkeypatch.setattr(websockets, "connect", fake_connect)
-
+    mock_ws_connect.side_effect = fake_connect
     s = Settings(signalk_enable=True, signalk_address="localhost:3000", signalk_token="tok")
     sk = SignalKOutput(s)
     await sk.start()

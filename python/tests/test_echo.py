@@ -1,5 +1,6 @@
 import asyncio
 from dataclasses import dataclass
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -124,7 +125,8 @@ def test_echopacket_unpack_checksum_mismatch():
         EchoPacket.unpack(payload, bad_checksum, num_samples)
 
 
-def test_serialreader_get_serial_ports_does_not_throw(monkeypatch):
+@patch("serial.tools.list_ports.comports")
+def test_serialreader_get_serial_ports_does_not_throw(mock_comports):
     # Monkeypatch serial.tools.list_ports.comports to return a dummy list
     class DummyPort:
         def __init__(self, device):
@@ -133,9 +135,7 @@ def test_serialreader_get_serial_ports_does_not_throw(monkeypatch):
     def fake_comports():
         return [DummyPort("/dev/tty.usbmodem0"), DummyPort("/dev/tty.usbserial1")]
 
-    import serial.tools.list_ports
-
-    monkeypatch.setattr(serial.tools.list_ports, "comports", fake_comports)
+    mock_comports.side_effect = fake_comports
 
     ports = SerialReader.get_serial_ports()
     assert ports == ["/dev/tty.usbserial1", "/dev/tty.usbmodem0"]
@@ -300,7 +300,8 @@ async def test_udpreader_open_and_close_monkeypatched_log():
 
 
 @pytest.mark.asyncio
-async def test_serialreader_open_read_close_with_mock(monkeypatch):
+@patch("serial_asyncio_fast.open_serial_connection")
+async def test_serialreader_open_read_close_with_mock(mock_open_serial_connection):
     # Mock serial_asyncio_fast.open_serial_connection to return a reader/writer
     class DummyStreamReader:
         def __init__(self, packets: bytes | None = None):
@@ -340,9 +341,7 @@ async def test_serialreader_open_read_close_with_mock(monkeypatch):
         assert baudrate == settings.baud_rate
         return dummy_reader, dummy_writer
 
-    import serial_asyncio_fast as aserial
-
-    monkeypatch.setattr(aserial, "open_serial_connection", fake_open_serial_connection)
+    mock_open_serial_connection.side_effect = fake_open_serial_connection
 
     sr = SerialReader(settings)
     await sr.open()
@@ -355,7 +354,8 @@ async def test_serialreader_open_read_close_with_mock(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_serialreader_read_skips_until_start_byte(monkeypatch):
+@patch("serial_asyncio_fast.open_serial_connection")
+async def test_serialreader_read_skips_until_start_byte(mock_open_serial_connection):
     # Build buffer with noise byte then a valid packet
     settings = DummySettings(num_samples=4)
 
@@ -392,9 +392,7 @@ async def test_serialreader_read_skips_until_start_byte(monkeypatch):
     async def fake_open_serial_connection(url, baudrate, timeout):
         return dummy_reader, dummy_writer
 
-    import serial_asyncio_fast as aserial
-
-    monkeypatch.setattr(aserial, "open_serial_connection", fake_open_serial_connection)
+    mock_open_serial_connection.side_effect = fake_open_serial_connection
 
     sr = SerialReader(settings)
     await sr.open()

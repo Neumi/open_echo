@@ -85,6 +85,7 @@ def test_save_and_load_roundtrip(tmp_path):
     )
 
     file_path = tmp_path / "settings.json"
+    # Use real file for roundtrip despite open being patched; set side_effect to default open
     s.save(str(file_path))
 
     # Ensure file content is valid JSON
