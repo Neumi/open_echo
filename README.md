@@ -141,9 +141,9 @@ https://www.youtube.com/watch?v=ZtUkt8Q4EJE
 | Cheap Bathymetry 200kHz | ⭐ ⭐ ⭐ | good range, good price/performance, hard to order | 200kHz | 2m/>30m | 25€ | https://www.alibaba.com/product-detail/Range-customization-lakes-river-surveys-no_1600829423846.html |
 | Cheap Car Parking Sensor | ⭐ ⭐ | Great for air, also works in water (not recommended) | 40kHz | >7m/>30m | 5€ | https://de.aliexpress.com/item/1005006546490802.html |
 | Water flow sensor transducer | ⭐ ⭐ | Cheap and works in Air and Water. Very narrow beam in Water (about 5°)! | 1000kHz | 0.25m/>10m | 16€ for 5pcs | https://de.aliexpress.com/item/32818381566.html |
-| Only for air 200 kHz | ⭐ | has a sinter glass matching layer, can only be used in air | 200kHz | 0.8m/>8m | 10€ | https://de.aliexpress.com/item/1005006007865920.html |
-| Different Encapsualated Transducers | ⭐| Can be used for short range testing at higher frequencies | 200-400kHz | ?m/?m | 9-18€ | https://de.aliexpress.com/item/4000389134890.html |
-| Very small PZT only | ⭐ | Only for testing / experimentation| 200kHz | 0.2m/?m | 10€ | https://de.aliexpress.com/item/1005007032482539.html |
+| Only for air 200 kHz | ⭐ | has a sinter glass matching layer, should only be used in air | 200kHz | 0.8m/(>8m) | 10€ | https://de.aliexpress.com/item/1005006007865920.html |
+| Different Encapsualated Transducers | ⭐| Can be used for short range testing at higher frequencies | 200,300,400kHz | ?m/?m | 9-18€ | https://de.aliexpress.com/item/4000389134890.html |
+| Very small PZT only | ⭐ | Only for testing / experimentation | 200kHz | 0.2m/?m | 10€ | https://de.aliexpress.com/item/1005007032482539.html |
 
 > [!Note]
 > The range values were measured using the TUSS4470 shield and Arduino Uno with an MT3608 boost converter set to 20 V for vDRV, so consider them approximate.
