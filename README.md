@@ -16,11 +16,20 @@ Check the [Getting Started Guide](TUSS4470_shield_002/README.md)!
 
 If something is unclear or you find a bug, please open an issue.  
 
-If you need the hardware, you can order it using the [Hardware Files](TUSS4470_shield_002/TUSS4470_shield_hardware/TUSS4470_shield) from a board + SMT house ([JLC recommended](https://jlcpcb.com/?from=Neumi)), or send me a DM on the Discord server, or send an email to: openechoes@gmail.com 
-One assmebled board is 50€ + shipping.
-<b>If you don't order the boards directly from me, please be aware that I can't provide support.</b>
 
+Raw Data Waterfall chart in the Python Desktop software:  
 <img alt="Open Echo Interface Software" src="/documentation/images/echo_software_screenshot.jpg">
+
+
+## Getting the Hardware
+
+If you need the hardware, you can order it using the [Hardware Files](TUSS4470_shield_002/TUSS4470_shield_hardware/TUSS4470_shield) from a board + SMT house ([JLC recommended](https://jlcpcb.com/?from=Neumi)).
+
+They can also be bought as a complete and tested set direclty from Elecrow: https://www.elecrow.com/open-echo-tuss4470-development-shield.html
+
+All profits go directly toward supporting and advancing the Open Echo project!
+
+<b>If you don't order the boards directly from me or Elecrow, please be aware that I can't provide support.</b>
 
 [TUSS4470 Arduino Shield](TUSS4470_shield_002/):  
 <img alt="PCB overview TUSS4470" src="/TUSS4470_shield_002/TUSS4470_shield_hardware/images/top.jpg">
@@ -61,11 +70,8 @@ The [TUSS4470 Arduino Shield](TUSS4470_shield_002/) is and will remain the main 
 It can drive a wide range of transducers at different voltages, but it is limited by RAM size and sampling speed. You can capture 1800 samples at 12 microseconds per sample (~18 m range in water) with 8-bit resolution. For longer ranges, you can add a delay to capture echoes from more distant objects.  
 This makes it a perfect board for learning, testing, and prototyping. Most software development is done using this board.  
 
-For special use cases, additional boards are under development.  
-Some use STM32 + TUSS4470, some include additional data outputs, some have a boost transformer stage between the TUSS4470 and the transducer, and others are purely experimental.  
-Check the [development](development) folder.  
-
-<img alt="All-In-One Board" src="/documentation/images/all-in-one-x1.jpg">
+For special use cases, additional boards and software are under development. 
+Check the [development](development) folder for development work.
 
 --------
 ## Open Echo Interface Software
