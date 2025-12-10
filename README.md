@@ -131,24 +131,28 @@ https://www.youtube.com/watch?v=UDYWQIizN7A
 https://www.rapp-instruments.de/RemoteSensing/Roves/sidescan/sidescan.htm  
 https://www.youtube.com/watch?v=ZtUkt8Q4EJE  
 
-## Shopping List
+## Transducers: 
 
-**Transducers:**  
-- Best price/performance: https://www.alibaba.com/product-detail/Range-customization-lakes-river-surveys-no_1600829423846.html  
-- OK for air, 200 kHz: https://de.aliexpress.com/item/1005006007865920.html  
-- Very small PZT only: https://de.aliexpress.com/item/1005007032482539.html  
-- Not fully tested: https://de.aliexpress.com/item/4000389134890.html  
-- Great for air, also works in water, 40 kHz: https://de.aliexpress.com/item/1005006546490802.html
-- Cheap and works in Air for 20cm, in water for at least 8m: https://de.aliexpress.com/item/32818381566.html
+| Transducer Name | Ranking | Description                                                             | Frequency | Range Air/Water |  Price | Link |
+|-----------------|---------|-------------------------------------------------------------------------|-----------|-----------------|--------|------|
+| NASA / Seafarer 150kHz Echo Sounder | ⭐ ⭐ ⭐ | NASA in-hull boat transducer for echo sounding and simple fish-finding | >2m/>50m | 150kHz | 50-100€ | https://www.nasamarine.com/product/depth-transducer-with-7-metre-cable/7 
+| Raymarine CPT-S |  ⭐ ⭐ ⭐ | High quality In-hull transducer with two frequencies | 2m/>50m | 50 + 200kHz | 200€ | https://www.raymarine.com/de-de/unsere-produkte/fischfinder-und-sonarmodule/fischfindergeber/cpt-s-durchbruchgeber |
+| Lowrance Tripleshot Sidescan | ⭐ ⭐ ⭐ | Sidescan transducer with three FANS + temperature + down-scan | 200 + 455 + 600kHz | 0m/>20m | 200€ | https://www.echolotzentrum.de/shop/lowrance-tripleshot-heckgeber/ |
+| Cheap Bathymetry 200kHz | ⭐ ⭐ ⭐ | good range, good price/performance, hard to order | 200kHz | 2m/>30m | 25€ | https://www.alibaba.com/product-detail/Range-customization-lakes-river-surveys-no_1600829423846.html |
+| Cheap Car Parking Sensor | ⭐ ⭐ | Great for air, also works in water (not recommended) | 40kHz | >7m/>30m | 5€ | https://de.aliexpress.com/item/1005006546490802.html |
+| Water flow sensor transducer | ⭐ ⭐ | Cheap and works in Air and Water. Very narrow beam in Water (about 5°)! | 1000kHz | 0.25m/>10m | 16€ for 5pcs | https://de.aliexpress.com/item/32818381566.html |
+| Only for air 200 kHz | ⭐ | has a sinter glass matching layer, can only be used in air | 200kHz | 0.8m/>8m | 10€ | https://de.aliexpress.com/item/1005006007865920.html |
+| Different Encapsualated Transducers | ⭐| Can be used for short range testing at higher frequencies | 200-400kHz | ?m/?m | 9-18€ | https://de.aliexpress.com/item/4000389134890.html |
+| Very small PZT only | ⭐ | Only for testing / experimentation| 200kHz | 0.2m/?m | 10€ | https://de.aliexpress.com/item/1005007032482539.html |
 
-**Transformers (to step up transducer voltage):**  
-https://de.aliexpress.com/item/1005003733606845.html  
+> [!Note]
+> The range values were measured using the TUSS4470 shield and Arduino Uno with an MT3608 boost converter set to 20 V for vDRV, so consider them approximate.
 
-**Matching capacitors:**  
-https://de.aliexpress.com/item/1005007159862392.html  
+> [!Tip]
+> As a general rule of thumb, lower frequencies propagate farther, while higher frequencies produce narrower beams and more detailed echoes.
+>
+> If you need a transducer for bathymetry, choose one of the first four options. Most commercial marine-grade (boating) transducers are also suitable, as long as they operate in the 40-200 kHz range.
 
-**Lucky Fishfinder:**  
-https://de.aliexpress.com/item/32711659077.html  
 
 # Big Thanks for Your Support!
 www.kogger.tech
