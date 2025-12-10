@@ -52,16 +52,19 @@ class DummyReader:
 
 @pytest.mark.asyncio
 @patch("websockets.connect")
+@patch("asyncio.open_connection")
 @patch("openecho.depth_output.AsyncClient")
-async def test_output_manager_update_settings_starts_methods(MockAsyncClient, mock_ws_connect):
+async def test_output_manager_update_settings_starts_methods(MockAsyncClient, mock_open_connection, mock_ws_connect):
     # Monkeypatch websockets.connect
     dummy_ws = DummyWS()
 
-    async def fake_connect(uri):
+    mock_open_connection.return_value = (DummyReader(), DummyWriter())
+
+    async def mock_connect(uri):
         assert uri.startswith("ws://localhost:3000/signalk/v1/stream")
         return dummy_ws
 
-    mock_ws_connect.side_effect = fake_connect
+    mock_ws_connect.side_effect = mock_connect
 
     # Monkeypatch httpx.AsyncClient.post/get for token flow
     class DummyResponse:
@@ -139,9 +142,9 @@ async def test_signalk_get_token_waits_when_ongoing(mock_ws_connect, MockAsyncCl
 
     MockAsyncClient.return_value = DummyClient()
     # Stub websockets to avoid real connect
-    async def fake_connect(uri):
+    async def mock_connect(uri):
         return DummyWS()
-    mock_ws_connect.side_effect = fake_connect
+    mock_ws_connect.side_effect = mock_connect
 
     s = Settings(signalk_enable=True, signalk_address="localhost:3000")
     sk = SignalKOutput(s)
@@ -162,10 +165,10 @@ async def test_signalk_get_token_waits_when_ongoing(mock_ws_connect, MockAsyncCl
 async def test_signalk_output_sends_delta(mock_ws_connect):
     dummy_ws = DummyWS()
 
-    async def fake_connect(uri):
+    async def mock_connect(uri):
         return dummy_ws
 
-    mock_ws_connect.side_effect = fake_connect
+    mock_ws_connect.side_effect = mock_connect
     # Bypass token fetch
     s = Settings(signalk_enable=True, signalk_address="localhost:3000", transducer_depth=2.0, draft=0.5, signalk_token="tok")
     sk = SignalKOutput(s)
@@ -194,12 +197,12 @@ async def test_signalk_output_reconnect_on_send_error(mock_ws_connect):
     working_ws = DummyWS()
     calls = []
 
-    async def fake_connect(uri):
+    async def mock_connect(uri):
         calls.append(uri)
         # Return failing first, then working
         return failing_ws if len(calls) == 1 else working_ws
 
-    mock_ws_connect.side_effect = fake_connect
+    mock_ws_connect.side_effect = mock_connect
     s = Settings(signalk_enable=True, signalk_address="localhost:3000", signalk_token="tok")
     sk = SignalKOutput(s)
     await sk.start()
@@ -218,11 +221,11 @@ async def test_nmea0183_output_writes_sentences(mock_open_conn):
     dummy_writer = DummyWriter()
     dummy_reader = DummyReader()
 
-    async def fake_open_connection(host, port):
+    async def mock_open_connection(host, port):
         assert host == "localhost" and port == 10110
         return dummy_reader, dummy_writer
 
-    mock_open_conn.side_effect = fake_open_connection
+    mock_open_conn.side_effect = mock_open_connection
     s = Settings(nmea_enable=True, nmea_address="localhost:10110", nmea_offset=NMEAOffset.ToKeel, transducer_depth=1.0, draft=2.0)
     nmea = NMEA0183Output(s)
     await nmea.start()
@@ -246,11 +249,11 @@ async def test_nmea0183_output_reconnects_when_writer_closing(mock_open_conn):
     # Track reconnect calls
     reconnects = {"count": 0}
 
-    async def fake_open_connection(host, port):
+    async def mock_open_connection(host, port):
         reconnects["count"] += 1
         return dummy_reader, DummyWriter()  # new open writer
 
-    mock_open_conn.side_effect = fake_open_connection
+    mock_open_conn.side_effect = mock_open_connection
     s = Settings(nmea_enable=True, nmea_address="localhost:10110", nmea_offset=NMEAOffset.ToTransducer)
     nmea = NMEA0183Output(s)
 
@@ -316,10 +319,10 @@ async def test_nmea_offset_to_surface_branch(mock_open_conn):
     dummy_writer = DummyWriter()
     dummy_reader = DummyReader()
 
-    async def fake_open_connection(host, port):
+    async def mock_open_connection(host, port):
         return dummy_reader, dummy_writer
 
-    mock_open_conn.side_effect = fake_open_connection
+    mock_open_conn.side_effect = mock_open_connection
     # ToSurface should use transducer_depth as positive offset
     s = Settings(
         nmea_enable=True,
@@ -372,10 +375,10 @@ def test_output_methods_registry():
 async def test_signalk_output_only_below_transducer_when_no_offsets(mock_ws_connect):
     dummy_ws = DummyWS()
 
-    async def fake_connect(uri):
+    async def mock_connect(uri):
         return dummy_ws
 
-    mock_ws_connect.side_effect = fake_connect
+    mock_ws_connect.side_effect = mock_connect
     s = Settings(signalk_enable=True, signalk_address="localhost:3000", signalk_token="tok")
     sk = SignalKOutput(s)
     await sk.start()
