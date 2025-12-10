@@ -27,6 +27,8 @@ If you need the hardware, you can order it using the [Hardware Files](TUSS4470_s
 
 They can also be bought as a complete and tested set direclty from Elecrow: https://www.elecrow.com/open-echo-tuss4470-development-shield.html
 
+If they’re out of stock, or if you’d prefer to order them within Germany to reduce shipping costs, please send me an email at: openechoes@gmail.com
+
 All profits go directly toward supporting and advancing the Open Echo project!
 
 <b>If you don't order the boards directly from me or Elecrow, please be aware that I can't provide support.</b>
