@@ -135,8 +135,8 @@ https://www.youtube.com/watch?v=ZtUkt8Q4EJE
 
 | Transducer Name | Ranking | Description                                                             | Frequency | Range Air/Water |  Price | Link |
 |-----------------|---------|-------------------------------------------------------------------------|-----------|-----------------|--------|------|
-| NASA / Seafarer 150kHz Echo Sounder | ⭐ ⭐ ⭐ | NASA in-hull boat transducer for echo sounding and simple fish-finding | >2m/>50m | 150kHz | 50-100€ | https://www.nasamarine.com/product/depth-transducer-with-7-metre-cable/7 
-| Raymarine CPT-S |  ⭐ ⭐ ⭐ | High quality In-hull transducer with two frequencies | 2m/>50m | 50 + 200kHz | 200€ | https://www.raymarine.com/de-de/unsere-produkte/fischfinder-und-sonarmodule/fischfindergeber/cpt-s-durchbruchgeber |
+| NASA / Seafarer 150kHz Echo Sounder | ⭐ ⭐ ⭐ | NASA in-hull boat transducer for echo sounding and simple fish-finding | 150kHz | >2m/>50m | 50-100€ | https://www.nasamarine.com/product/depth-transducer-with-7-metre-cable/7 
+| Raymarine CPT-S |  ⭐ ⭐ ⭐ | High quality In-hull transducer with two frequencies | 50 + 200kHz | 2m/>50m | 200€ | https://www.raymarine.com/de-de/unsere-produkte/fischfinder-und-sonarmodule/fischfindergeber/cpt-s-durchbruchgeber |
 | Lowrance Tripleshot Sidescan | ⭐ ⭐ ⭐ | Sidescan transducer with three FANS + temperature + down-scan | 200 + 455 + 600kHz | 0m/>20m | 200€ | https://www.echolotzentrum.de/shop/lowrance-tripleshot-heckgeber/ |
 | Cheap Bathymetry 200kHz | ⭐ ⭐ ⭐ | good range, good price/performance, hard to order | 200kHz | 2m/>30m | 25€ | https://www.alibaba.com/product-detail/Range-customization-lakes-river-surveys-no_1600829423846.html |
 | Cheap Car Parking Sensor | ⭐ ⭐ | Great for air, also works in water (not recommended) | 40kHz | >7m/>30m | 5€ | https://de.aliexpress.com/item/1005006546490802.html |
