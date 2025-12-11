@@ -1,13 +1,13 @@
 import sys
 from argparse import ArgumentParser
 
-from openecho.desktop import run_desktop
-from openecho.web import run_web
+from open_echo.desktop import run_desktop
+from open_echo.web import run_web
 
 
 def main():
     parser = ArgumentParser(
-        description="Command-line interface for the openecho package."
+        description="Command-line interface for the open_echo package."
     )
     parser.add_argument(
         "command", choices=["desktop", "web"], help="The command to run."

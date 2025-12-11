@@ -2,8 +2,8 @@ import json
 import math
 
 import pytest
-from openecho.echo import ConnectionTypeEnum
-from openecho.settings import Medium, NMEAOffset, Settings
+from open_echo.echo import ConnectionTypeEnum
+from open_echo.settings import Medium, NMEAOffset, Settings
 
 
 def test_connection_type_parsing_from_enum():

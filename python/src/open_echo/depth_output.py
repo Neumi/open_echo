@@ -5,7 +5,7 @@ from typing import Any
 
 import websockets
 from httpx import AsyncClient
-from openecho.settings import NMEAOffset, Settings
+from open_echo.settings import NMEAOffset, Settings
 
 
 class OutputManager:
@@ -132,7 +132,7 @@ class SignalKOutput(OutputMethod):
                     access_request_uri,
                     json={
                         "clientId": "f6b20288-5ecf-4daa-9a13-1594bc145abe",
-                        "description": "OpenEcho Depth Sounder",
+                        "description": "open_echo Depth Sounder",
                     },
                 )
                 access_request.raise_for_status()

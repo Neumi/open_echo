@@ -530,7 +530,7 @@ wheels = [
 ]
 
 [[package]]
-name = "openecho"
+name = "open-echo"
 source = { editable = "." }
 dependencies = [
     { name = "fastapi" },

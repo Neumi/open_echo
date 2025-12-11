@@ -8,9 +8,9 @@ from fastapi import FastAPI, Form, Request, WebSocket
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from openecho.depth_output import OutputManager
-from openecho.echo import EchoPacket, SerialReader
-from openecho.settings import Settings
+from open_echo.depth_output import OutputManager
+from open_echo.echo import EchoPacket, SerialReader
+from open_echo.settings import Settings
 
 log = logging.getLogger("uvicorn")
 

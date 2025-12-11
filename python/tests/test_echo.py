@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
-from openecho.echo import (
+from open_echo.echo import (
     ChecksumMismatchError,
     ConnectionTypeEnum,
     EchoPacket,
@@ -248,7 +248,7 @@ async def test_udpreader_protocol_checksum_mismatch_clears_buffer_and_does_not_e
 async def test_asyncreader_iterator_yields_until_cancelled():
     # Build a minimal stub of AsyncReader that produces N packets then cancels
     # Subclass AsyncReader to exercise its __aiter__ implementation directly
-    from openecho.echo import AsyncReader
+    from open_echo.echo import AsyncReader
 
     class ConcreteReader(AsyncReader):
         def __init__(self, settings, packets: int):
@@ -281,7 +281,7 @@ async def test_asyncreader_iterator_yields_until_cancelled():
 @pytest.mark.asyncio
 async def test_udpreader_open_and_close_monkeypatched_log():
     # Patch a dummy logger into module to avoid NameError
-    import openecho.echo as echo_mod
+    import open_echo.echo as echo_mod
 
     class DummyLog:
         def info(self, *_args, **_kwargs):

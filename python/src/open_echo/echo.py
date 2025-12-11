@@ -11,7 +11,7 @@ import serial.tools.list_ports
 import serial_asyncio_fast as aserial
 
 if TYPE_CHECKING:
-    from openecho.settings import Settings
+    from open_echo.settings import Settings
 
 
 class EchoReadError(ValueError):

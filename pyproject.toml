@@ -1,5 +1,5 @@
 [project]
-name = "openecho"
+name = "open_echo"
 description = "Python library for OpenEcho boards"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -23,10 +23,10 @@ dependencies = [
 ]
 
 [project.scripts]
-openecho = "openecho.cli:main"
+openecho = "open_echo.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["python/src/openecho"]
+packages = ["python/src/open_echo"]
 
 [build-system]
 requires = ["hatchling", "hatch-vcs"]
@@ -46,7 +46,7 @@ dev = [
 ]
 
 [tool.mypy]
-packages = ["openecho"]
+packages = ["open_echo"]
 ignore_missing_imports = true
 
 [tool.ruff]

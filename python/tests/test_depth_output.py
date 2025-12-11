@@ -3,13 +3,13 @@ import json
 from unittest.mock import patch
 
 import pytest
-from openecho.depth_output import (
+from open_echo.depth_output import (
     NMEA0183Output,
     OutputManager,
     SignalKOutput,
     output_methods,
 )
-from openecho.settings import NMEAOffset, Settings
+from open_echo.settings import NMEAOffset, Settings
 
 
 class DummyWS:
@@ -53,7 +53,7 @@ class DummyReader:
 @pytest.mark.asyncio
 @patch("websockets.connect")
 @patch("asyncio.open_connection")
-@patch("openecho.depth_output.AsyncClient")
+@patch("open_echo.depth_output.AsyncClient")
 async def test_output_manager_update_settings_starts_methods(
     MockAsyncClient, mock_open_connection, mock_ws_connect
 ):
@@ -132,7 +132,7 @@ async def test_output_manager_update_settings_starts_methods(
 
 
 @pytest.mark.asyncio
-@patch("openecho.depth_output.AsyncClient")
+@patch("open_echo.depth_output.AsyncClient")
 @patch("websockets.connect")
 async def test_signalk_get_token_waits_when_ongoing(mock_ws_connect, MockAsyncClient):
     # Ensure concurrent get_token calls wait for ongoing request

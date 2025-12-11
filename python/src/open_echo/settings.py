@@ -1,7 +1,7 @@
 from enum import StrEnum
 from typing import Annotated
 
-from openecho.echo import ConnectionTypeEnum
+from open_echo.echo import ConnectionTypeEnum
 from pydantic import BaseModel, Field, PlainSerializer, field_validator
 
 
