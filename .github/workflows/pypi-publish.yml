@@ -1,18 +1,15 @@
 name: Publish to PyPI
 
 on:
-  workflow_run:
-    workflows:
-      - "Update version"
-    types:
-      - completed
-    branches:
-      - main
-      # - refactor-python-code
+  push:
+    branches: 
+      - "main"
+      - "refactor-python-code"
+    tags:
+      - 'v*.*.*'
 
 jobs:
   build-and-publish:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
