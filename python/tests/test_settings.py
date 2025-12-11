@@ -47,6 +47,7 @@ def test_resolution_water_and_air_calculation():
 def test_resolution_unsupported_medium_raises():
     class FakeMedium(str):
         pass
+
     fake = FakeMedium("ice")
     # Bypass Pydantic constraint by setting after init
     s = Settings()

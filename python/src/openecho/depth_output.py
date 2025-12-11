@@ -37,10 +37,16 @@ class OutputManager:
         for output_class in self._output_classes:
             await output_class.start()
 
-    async def output(self):
-        """Override this in subclasses to define output behavior."""
+    async def output(self) -> Any:
         for output_class in self._output_classes:
-            if output_class._current_value is not None:
+            if output_class.current_value is not None or (
+                output_class.last_output_time is None
+                or (
+                    (asyncio.get_event_loop().time() - output_class.last_output_time)
+                    >= (output_class.output_interval * 1000)
+                )
+            ):
+                output_class.last_output_time = asyncio.get_event_loop().time()
                 await output_class.output()
 
     async def _run(self):
@@ -50,7 +56,6 @@ class OutputManager:
                 continue
 
             await self.output()
-            await asyncio.sleep(1.0)
 
     def __enter__(self):
         self._task = asyncio.create_task(self._run())
@@ -64,7 +69,9 @@ class OutputManager:
 class OutputMethod(ABC):
     def __init__(self, settings: Settings):
         self.settings = settings
-        self._current_value = None
+        self.current_value = None
+        self.last_output_time: float | None = None
+        self.output_interval = 1.0  # seconds
 
     @abstractmethod
     async def start(self):
@@ -78,7 +85,7 @@ class OutputMethod(ABC):
 
     def update(self, value: Any):
         """Update the current value."""
-        self._current_value = value
+        self.current_value = value
 
     @abstractmethod
     async def output(self):
@@ -173,7 +180,7 @@ class SignalKOutput(OutputMethod):
                 return
         try:
             # Format as SignalK delta message for depth
-            depth_m = self._current_value
+            depth_m = self.current_value
             values = [{"path": "environment.depth.belowTransducer", "value": depth_m}]
 
             # Add water depth and depth below keel if settings are present
@@ -246,7 +253,7 @@ class NMEA0183Output(OutputMethod):
                 return
         try:
             # Send DBT and DPT sentences, ending with CRLF (NMEA standard)
-            depth_m = self._current_value
+            depth_m = self.current_value
             depth_ft = depth_m * 3.28084
             depth_fathoms = depth_m * 0.546807
 

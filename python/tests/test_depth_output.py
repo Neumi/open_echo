@@ -54,7 +54,9 @@ class DummyReader:
 @patch("websockets.connect")
 @patch("asyncio.open_connection")
 @patch("openecho.depth_output.AsyncClient")
-async def test_output_manager_update_settings_starts_methods(MockAsyncClient, mock_open_connection, mock_ws_connect):
+async def test_output_manager_update_settings_starts_methods(
+    MockAsyncClient, mock_open_connection, mock_ws_connect
+):
     # Monkeypatch websockets.connect
     dummy_ws = DummyWS()
 
@@ -86,17 +88,21 @@ async def test_output_manager_update_settings_starts_methods(MockAsyncClient, mo
 
         async def post(self, url, json=None):
             assert url == "http://localhost:3000/signalk/v1/access/requests"
-            return DummyResponse({"href": "/signalk/v1/access/requests/abc", "state": "PENDING"})
+            return DummyResponse(
+                {"href": "/signalk/v1/access/requests/abc", "state": "PENDING"}
+            )
 
         async def get(self, url):
             # First poll returns PENDING then COMPLETED with APPROVED
             if not hasattr(self, "_polled"):
                 self._polled = True
                 return DummyResponse({"state": "PENDING"})
-            return DummyResponse({
-                "state": "COMPLETED",
-                "accessRequest": {"permission": "APPROVED", "token": "tok123"}
-            })
+            return DummyResponse(
+                {
+                    "state": "COMPLETED",
+                    "accessRequest": {"permission": "APPROVED", "token": "tok123"},
+                }
+            )
 
     # Patch the imported AsyncClient used inside module, not httpx.AsyncClient
     MockAsyncClient.return_value = DummyClient()
@@ -133,27 +139,50 @@ async def test_signalk_get_token_waits_when_ongoing(mock_ws_connect, MockAsyncCl
     class DummyClient:
         async def __aenter__(self):
             return self
+
         async def __aexit__(self, exc_type, exc, tb):
             return None
+
         async def post(self, url, json=None):
-            return type("R", (), {"json": lambda self: {"href": "/h", "state": "PENDING"}, "raise_for_status": lambda self: None})()
+            return type(
+                "R",
+                (),
+                {
+                    "json": lambda self: {"href": "/h", "state": "PENDING"},
+                    "raise_for_status": lambda self: None,
+                },
+            )()
+
         async def get(self, url):
-            return type("G", (), {"json": lambda self: {"state": "COMPLETED", "accessRequest": {"permission": "APPROVED", "token": "tokX"}}})()
+            return type(
+                "G",
+                (),
+                {
+                    "json": lambda self: {
+                        "state": "COMPLETED",
+                        "accessRequest": {"permission": "APPROVED", "token": "tokX"},
+                    }
+                },
+            )()
 
     MockAsyncClient.return_value = DummyClient()
+
     # Stub websockets to avoid real connect
     async def mock_connect(uri):
         return DummyWS()
+
     mock_ws_connect.side_effect = mock_connect
 
     s = Settings(signalk_enable=True, signalk_address="localhost:3000")
     sk = SignalKOutput(s)
     # Set ongoing flag and call get_token twice concurrently
     sk._access_request_ongoing = True
+
     async def unset_ongoing():
         # simulate another task completing access request soon
         await asyncio.sleep(0.01)
         sk._access_request_ongoing = False
+
     t = asyncio.create_task(unset_ongoing())
     tok = await sk.get_token()
     await t
@@ -170,7 +199,13 @@ async def test_signalk_output_sends_delta(mock_ws_connect):
 
     mock_ws_connect.side_effect = mock_connect
     # Bypass token fetch
-    s = Settings(signalk_enable=True, signalk_address="localhost:3000", transducer_depth=2.0, draft=0.5, signalk_token="tok")
+    s = Settings(
+        signalk_enable=True,
+        signalk_address="localhost:3000",
+        transducer_depth=2.0,
+        draft=0.5,
+        signalk_token="tok",
+    )
     sk = SignalKOutput(s)
     await sk.start()
 
@@ -203,7 +238,9 @@ async def test_signalk_output_reconnect_on_send_error(mock_ws_connect):
         return failing_ws if len(calls) == 1 else working_ws
 
     mock_ws_connect.side_effect = mock_connect
-    s = Settings(signalk_enable=True, signalk_address="localhost:3000", signalk_token="tok")
+    s = Settings(
+        signalk_enable=True, signalk_address="localhost:3000", signalk_token="tok"
+    )
     sk = SignalKOutput(s)
     await sk.start()
     sk.update(1.0)
@@ -226,7 +263,13 @@ async def test_nmea0183_output_writes_sentences(mock_open_conn):
         return dummy_reader, dummy_writer
 
     mock_open_conn.side_effect = mock_open_connection
-    s = Settings(nmea_enable=True, nmea_address="localhost:10110", nmea_offset=NMEAOffset.ToKeel, transducer_depth=1.0, draft=2.0)
+    s = Settings(
+        nmea_enable=True,
+        nmea_address="localhost:10110",
+        nmea_offset=NMEAOffset.ToKeel,
+        transducer_depth=1.0,
+        draft=2.0,
+    )
     nmea = NMEA0183Output(s)
     await nmea.start()
 
@@ -254,7 +297,11 @@ async def test_nmea0183_output_reconnects_when_writer_closing(mock_open_conn):
         return dummy_reader, DummyWriter()  # new open writer
 
     mock_open_conn.side_effect = mock_open_connection
-    s = Settings(nmea_enable=True, nmea_address="localhost:10110", nmea_offset=NMEAOffset.ToTransducer)
+    s = Settings(
+        nmea_enable=True,
+        nmea_address="localhost:10110",
+        nmea_offset=NMEAOffset.ToTransducer,
+    )
     nmea = NMEA0183Output(s)
 
     # Manually set closing writer
@@ -269,6 +316,7 @@ async def test_nmea0183_output_reconnects_when_writer_closing(mock_open_conn):
 async def test_output_manager_context_lifecycle():
     # Avoid running an infinite loop: set settings to None so it sleeps; then exit quickly
     om = OutputManager(Settings())
+
     # Replace _run to a short coroutine
     async def short_run():
         await asyncio.sleep(0)
@@ -306,6 +354,7 @@ async def test_nmea_stop_handles_wait_closed_exception():
     class ErrWriter(DummyWriter):
         async def wait_closed(self):
             raise RuntimeError("boom")
+
     nmea = NMEA0183Output(Settings(nmea_enable=True, nmea_address="localhost:10110"))
     nmea._writer = ErrWriter()
     nmea._reader = DummyReader()
@@ -346,10 +395,12 @@ async def test_output_manager_run_loop_behaviour():
     class Recorder(NMEA0183Output):
         async def start(self):
             self.started = True
+
         async def stop(self):
             self.stopped = True
+
         async def output(self):
-            self.last_output = self._current_value
+            self.last_output = self.current_value
 
     s = Settings(nmea_enable=True, nmea_address="localhost:10110")
     om = OutputManager(s)
@@ -361,6 +412,7 @@ async def test_output_manager_run_loop_behaviour():
     # Run a couple of iterations
     async def one_tick():
         await om.output()
+
     await one_tick()
     assert om._output_classes[0].last_output == 1.23
 
@@ -379,7 +431,9 @@ async def test_signalk_output_only_below_transducer_when_no_offsets(mock_ws_conn
         return dummy_ws
 
     mock_ws_connect.side_effect = mock_connect
-    s = Settings(signalk_enable=True, signalk_address="localhost:3000", signalk_token="tok")
+    s = Settings(
+        signalk_enable=True, signalk_address="localhost:3000", signalk_token="tok"
+    )
     sk = SignalKOutput(s)
     await sk.start()
     sk.update(3.3)
