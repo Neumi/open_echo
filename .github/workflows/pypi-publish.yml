@@ -3,7 +3,7 @@ name: Publish to PyPI
 on:
   push:
     branches:
-      - main
+      - refactor-python-code
     paths:
       - '**/*.py'
       - 'pyproject.toml'
