@@ -1,11 +1,12 @@
 name: Python CI
 
 on:
+  workflow_call:
   push:
     branches: ["**"]
-    # paths:
-    #   - '**/*.py'
-    #   - 'pyproject.toml'
+    paths:
+      - '**/*.py'
+      - 'pyproject.toml'
   pull_request:
     branches: ["**"]
     paths:

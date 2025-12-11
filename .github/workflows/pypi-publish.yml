@@ -5,6 +5,8 @@ on:
     types: [published]
 
 jobs:
+  test-lint-typecheck:
+    uses: ./.github/workflows/python-ci.yml
   build-and-publish:
     runs-on: ubuntu-latest
     permissions:
