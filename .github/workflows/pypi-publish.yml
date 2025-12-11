@@ -7,6 +7,7 @@ on:
     paths:
       - '**/*.py'
       - 'pyproject.toml'
+      - '.github/workflows/pypi-publish.yml' # Uncomment to test workflow changes
   workflow_dispatch:
 
 jobs:
