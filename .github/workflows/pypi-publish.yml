@@ -1,17 +1,18 @@
 name: Publish to PyPI
 
 on:
-  push:
+  workflow_run:
+    workflows:
+      - "Update version"
+    types:
+      - completed
     branches:
-      - refactor-python-code
-    paths:
-      - '**/*.py'
-      - 'pyproject.toml'
-      - '.github/workflows/pypi-publish.yml' # Uncomment to test workflow changes
-  workflow_dispatch:
+      - main
+      # - refactor-python-code
 
 jobs:
   build-and-publish:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -23,15 +24,6 @@ jobs:
       - name: Fetch tags
         run: git fetch --tags --depth=1
 
-      - name: Detect Python changes
-        id: changes
-        uses: dorny/paths-filter@v3
-        with:
-          filters: |
-            python:
-              - '**/*.py'
-              - 'pyproject.toml'
-
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -40,15 +32,10 @@ jobs:
       - name: Setup uv
         uses: astral-sh/setup-uv@v3
 
-      - name: Bump version (patch) and tag
-        if: github.ref == 'refs/heads/main' && steps.changes.outputs.python == 'true'
-        run: uvx bump-my-version bump patch
-
       - name: Build package (sdist and wheel)
         run: uv build
 
       - name: Publish to PyPI
-        if: github.event_name != 'push' || steps.changes.outputs.python == 'true'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_TOKEN }}
