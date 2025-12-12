@@ -31,6 +31,7 @@ theme: just-the-docs
 plugins:
   - jekyll-feed
   - jekyll-readme-index
+  - jekyll-gfm-admonitions
 
 # Use README.md as the site's index
 readme_index:
@@ -49,6 +50,34 @@ aux_links:
   GitHub:
     - https://github.com/Neumi/open_echo
 
+include:
+  - README.md
+  - documentation/**
+
 exclude:
-  - software/README.md 
-  - development/README.md
+  - development/
+  - software/
+  - TUSS4470_shield_002/
+  - Gemfile
+  - Gemfile.lock
+  - .githooks
+  - .github
+  - python/
+  - .gitignore
+  - '**/*.py'
+  - pyproject.toml
+  - uv.lock
+  - '**/*.ino'
+  - '**/*.h'
+  - '**/*.cpp'
+  - '**/*.md'
+  - '**/*.json'
+  - '**/*.yml'
+  - '**/*.toml'
+  - '**/*.csv'
+  - '**/*.step'
+  - '**/*.kicad*'
+  - '**/*.zip'
+  - '**/*.gbr*'
+  - '**/*.drl'
+  - '**/*.ipc'
