@@ -4,3 +4,4 @@ __pycache__/
 !.githooks
 !.github
 __about__.py
+_site

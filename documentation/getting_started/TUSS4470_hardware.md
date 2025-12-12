@@ -1,3 +1,10 @@
+---
+layout: default
+title: TUSS4470 Hardware
+parent: Getting Started
+nav_order: 1
+---
+
 # Open Echo TUSS4470 Shield Getting Started Guide
 
 The TUSS4470 is an ultrasonic driver and receiver IC designed for seamless interaction with ultrasonic transducers. The TUSS4470 Arduino Shield is a development board that enables quick evaluation of the TUSS4470's features using the Arduino UNO platform.
@@ -13,13 +20,15 @@ Upload one of the provided example sketches to explore different features of the
 Use the Python software to see the echoes.
 
 ### Ordering
-The shield can be easily ordered via [JLCPCB](https://jlcpcb.com/?from=Neumi) or other PCB fabrication services.
+If you need the hardware, you can order it using the [Hardware Files](https://github.com/neumi/open_echo/TUSS4470_shield_002/TUSS4470_shield_hardware/TUSS4470_shield) from a board + SMT house ([JLC recommended](https://jlcpcb.com/?from=Neumi)).
 
-<img alt="TUSS4470 schematic" src="/documentation/images/starter_kit.jpg">
+They can also be bought as a complete and tested set direclty from Elecrow: https://www.elecrow.com/open-echo-tuss4470-development-shield.html
 
-> [!Note]
-> I just got a few new boards, I sell as starter kits. Feel free to DM me on [Discord](https://discord.com/invite/rerCyqAcrw) if you're interested. Or send an email to: openechoes@gmail.com One assmebled board is 50€ + shipping. (10/2025)
+If they’re out of stock, or if you’d prefer to order them within Germany to reduce shipping costs, please send me an email at: openechoes@gmail.com
 
+All profits go directly toward supporting and advancing the Open Echo project!
+
+<b>If you don't order the boards directly from me or Elecrow, please be aware that I can't provide support.</b>
 
 <img alt="PCB overview TUSS4470" src="/documentation/images/shield_pinout.png">
 

@@ -1,3 +1,9 @@
+---
+layout: default
+title: Lucky Fishfinder
+nav_order: 9
+---
+
 # open_echo
 
 Reverse engineering of the LUCKY fishfinder to learn about ultrasonics projects from a real product.
