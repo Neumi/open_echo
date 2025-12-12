@@ -31,6 +31,7 @@ from qasync import QEventLoop
 
 # Serial Configuration
 BAUD_RATE = 250000
+# Default values; overridden by WaterfallApp instance settings
 NUM_SAMPLES = 1800  # (X-axis)
 
 MAX_ROWS = 300  # Number of time steps (Y-axis)
@@ -43,7 +44,9 @@ SPEED_OF_SOUND = 1440  # default sound speed meters/second in water
 # SAMPLE_TIME = 47.0e-6
 # SAMPLE_TIME = 41.666e-6 # 13.2 microseconds on Atmega328 max sample speed plus 40 microseconds delay in sampling loop
 # SAMPLE_TIME = 22.22e-6  # 13.2 microseconds on Atmega328 max sample speed plus 20 microseconds delay in sampling loop
-SAMPLE_TIME = 13.2e-6     # 13.2 microseconds on Atmega328 max sample speed without additional delay
+SAMPLE_TIME = (
+    13.2e-6  # 13.2 microseconds on Atmega328 max sample speed without additional delay
+)
 # SAMPLE_TIME = 11.0e-6     # 13.2 microseconds on RP2040 max sample speed with 10 microseconds additional delay per sample
 # SAMPLE_TIME = 7.682e-6  # 7.682 microseconds on STM32F103 max sample speed
 # SAMPLE_TIME = 6.0e-6  # 6 microseconds on RP2040 max sample speed with 5 microseconds additional delay per sample
@@ -51,11 +54,10 @@ SAMPLE_TIME = 13.2e-6     # 13.2 microseconds on Atmega328 max sample speed with
 
 DEFAULT_LEVELS = (0, 256)  # Expected data range
 
-SAMPLE_RESOLUTION = (
-    SPEED_OF_SOUND * SAMPLE_TIME * 100
-) / 2  # cm per row (0.99 cm per row)
-PACKET_SIZE = 1 + 6 + NUM_SAMPLES + 1  # header + payload + checksum
-MAX_DEPTH = NUM_SAMPLES * SAMPLE_RESOLUTION  # Total depth in cm
+# Module-level derived values are kept for defaults only; instance values are used in UI
+SAMPLE_RESOLUTION = (SPEED_OF_SOUND * SAMPLE_TIME * 100) / 2
+PACKET_SIZE = 1 + 6 + NUM_SAMPLES + 1
+MAX_DEPTH = NUM_SAMPLES * SAMPLE_RESOLUTION
 depth_labels = {
     int(i / SAMPLE_RESOLUTION): f"{i / 100}"
     for i in range(0, int(MAX_DEPTH), Y_LABEL_DISTANCE)
@@ -101,13 +103,15 @@ class SettingsDialog(QWidget):
         parent=None,
         current_gradient="cyclic",
         current_speed=343,
+        current_num_samples=NUM_SAMPLES,
+        current_sample_time_us=SAMPLE_TIME * 1e6,
         nmea_enabled=False,
         nmea_port=10110,
         nmea_address="127.0.0.1",
     ):
         super().__init__(parent)
         self.setWindowTitle("Chart Settings")
-        self.setFixedSize(320, 550)
+        self.setFixedSize(340, 640)
 
         self.main_app = parent
 
@@ -149,6 +153,43 @@ class SettingsDialog(QWidget):
         self.speed_dropdown.addItems(["343m/s (Air)", "1440m/s (Water)"])
         self.speed_dropdown.setCurrentIndex(1 if current_speed == 1440 else 0)
         card_layout.addWidget(self.speed_dropdown)
+
+        # --- Sampling Parameters ---
+        sampling_section = QVBoxLayout()
+        sampling_section.setSpacing(8)
+
+        sampling_label = QLabel("Sampling Parameters:")
+        sampling_label.setStyleSheet("font-weight: bold;")
+        sampling_section.addWidget(sampling_label)
+
+        # Number of Samples
+        ns_row = QHBoxLayout()
+        ns_label = QLabel("Num. Samples:")
+        ns_label.setMinimumWidth(100)
+        self.num_samples_input = QLineEdit()
+        self.num_samples_input.setPlaceholderText("e.g. 1800")
+        self.num_samples_input.setText(str(current_num_samples))
+        self.num_samples_input.setMaximumWidth(200)
+        ns_row.addWidget(ns_label)
+        ns_row.addWidget(self.num_samples_input)
+        ns_row.addStretch()
+        sampling_section.addLayout(ns_row)
+
+        # Sample Time (microseconds)
+        st_row = QHBoxLayout()
+        st_label = QLabel("Sample Time (µs):")
+        st_label.setMinimumWidth(100)
+        self.sample_time_input = QLineEdit()
+        self.sample_time_input.setPlaceholderText("e.g. 13.2")
+        # Accept display in microseconds for user convenience
+        self.sample_time_input.setText(f"{current_sample_time_us:.6f}")
+        self.sample_time_input.setMaximumWidth(200)
+        st_row.addWidget(st_label)
+        st_row.addWidget(self.sample_time_input)
+        st_row.addStretch()
+        sampling_section.addLayout(st_row)
+
+        card_layout.addLayout(sampling_section)
 
         # --- NMEA Output Section ---
         nmea_section = QVBoxLayout()
@@ -282,11 +323,27 @@ class SettingsDialog(QWidget):
             int(self.port_input.text()) if self.port_input.text().isdigit() else 10110
         )
 
+        # Parse sampling params
+        try:
+            ns_value = int(self.num_samples_input.text())
+        except Exception:
+            ns_value = None
+        try:
+            st_us_value = float(self.sample_time_input.text())
+        except Exception:
+            st_us_value = None
+
         if self.main_app:
             self.main_app.set_gradient(selected_gradient)
             self.main_app.set_sound_speed(selected_speed)
             self.main_app.configure_nmea_output(enabled=nmea_enabled, port=nmea_port)
             self.main_app.set_large_depth_display(self.large_depth_checkbox.isChecked())
+            # Apply sampling settings if valid
+            if ns_value and ns_value > 0:
+                self.main_app.set_num_samples(ns_value)
+            if st_us_value and st_us_value > 0:
+                # convert microseconds to seconds
+                self.main_app.set_sample_time(st_us_value * 1e-6)
 
         self.close()
 
@@ -308,10 +365,15 @@ class WaterfallApp(QMainWindow):
         self.current_gradient = "cyclic"  # default color scheme
         self.current_speed = SPEED_OF_SOUND  # default sound speed (343)
 
+        # User-configurable sampling parameters
+        self.num_samples = NUM_SAMPLES
+        self.sample_time = SAMPLE_TIME
+
         self.setWindowTitle("Open Echo Interface")
         self.setGeometry(0, 0, 480, 800)  # Portrait mode for Raspberry Pi screen
 
-        self.data = np.zeros((MAX_ROWS, NUM_SAMPLES))
+        self._recompute_sampling_derived()
+        self.data = np.zeros((MAX_ROWS, self.num_samples))
 
         # Disable window translucency
         self.setAttribute(Qt.WA_TranslucentBackground, False)
@@ -342,7 +404,7 @@ class WaterfallApp(QMainWindow):
 
         main_layout.addWidget(self.waterfall)
 
-        inverted_depth_labels = list(depth_labels.items())[::-1]
+        inverted_depth_labels = list(self.depth_labels.items())[::-1]
         self.waterfall.getAxis("left").setTicks([inverted_depth_labels])
         self.depth_line = pg.InfiniteLine(angle=0, pen=pg.mkPen("r", width=2))
         self.waterfall.addItem(self.depth_line)
@@ -353,14 +415,16 @@ class WaterfallApp(QMainWindow):
         right_axis.setStyle(showValues=True)
 
         # dd horizontal lines
-        for i in range(0, int(MAX_DEPTH), Y_LABEL_DISTANCE):
-            row_index = int(i / SAMPLE_RESOLUTION)
+        self._depth_lines = []
+        for i in range(0, int(self.max_depth), Y_LABEL_DISTANCE):
+            row_index = int(i / self.sample_resolution)
             hline = pg.InfiniteLine(
                 pos=row_index,
                 angle=0,
                 pen=pg.mkPen(color="w", style=pg.QtCore.Qt.DotLine),
             )
             self.waterfall.addItem(hline)
+            self._depth_lines.append(hline)
 
         # === Colorbar BELOW the plot to save width ===
         self.colorbar = pg.HistogramLUTWidget()
@@ -493,7 +557,9 @@ class WaterfallApp(QMainWindow):
         try:
             udp_port = int(self.udp_port_input.text())
             settings = Settings(
-                connection_type=ConnectionTypeEnum.UDP, udp_port=udp_port
+                connection_type=ConnectionTypeEnum.UDP,
+                udp_port=udp_port,
+                num_samples=self.num_samples,
             )
             self._start_reader(settings)
             self._reader_task_type = ConnectionTypeEnum.UDP
@@ -578,22 +644,11 @@ class WaterfallApp(QMainWindow):
         self.colorbar.item.gradient.loadPreset(gradient_name)
 
     def set_sound_speed(self, speed):
-        global SPEED_OF_SOUND, SAMPLE_RESOLUTION, MAX_DEPTH, depth_labels
-
+        global SPEED_OF_SOUND
         SPEED_OF_SOUND = speed
         self.current_speed = speed
-        SAMPLE_RESOLUTION = (SPEED_OF_SOUND * SAMPLE_TIME * 100) / 2
-        print(SAMPLE_RESOLUTION)
-        MAX_DEPTH = NUM_SAMPLES * SAMPLE_RESOLUTION
-        depth_labels = {
-            int(i / SAMPLE_RESOLUTION): f"{i / 100}"
-            for i in range(0, int(MAX_DEPTH), Y_LABEL_DISTANCE)
-        }
-
-        # Re-apply Y-axis ticks
-        inverted_depth_labels = list(depth_labels.items())[::-1]
-        self.waterfall.getAxis("left").setTicks([inverted_depth_labels])
-        self.waterfall.getAxis("right").setTicks([inverted_depth_labels])
+        self._recompute_sampling_derived()
+        self._refresh_axes_and_grid()
 
     def key_press_event(self, event):
         print("key pressed")
@@ -610,7 +665,9 @@ class WaterfallApp(QMainWindow):
         selected_port = self.serial_dropdown.currentText()
         try:
             settings = Settings(
-                connection_type=ConnectionTypeEnum.SERIAL, serial_port=selected_port
+                connection_type=ConnectionTypeEnum.SERIAL,
+                serial_port=selected_port,
+                num_samples=self.num_samples,
             )
             self._start_reader(settings)
             self._reader_task_type = ConnectionTypeEnum.SERIAL
@@ -649,7 +706,7 @@ class WaterfallApp(QMainWindow):
         mean = np.mean(self.data)
         self.imageitem.setLevels((mean - 2 * sigma, mean + 2 * sigma))
 
-        depth_cm = depth_index * SAMPLE_RESOLUTION
+        depth_cm = depth_index * self.sample_resolution
         self.depth_label.setText(f"Depth: {depth_cm:.1f} cm | Index: {depth_index:.0f}")
         self.temperature_label.setText(f"Temperature: {temperature:.1f} °C")
         self.drive_voltage_label.setText(f"vDRV: {drive_voltage:.1f} V")
@@ -669,7 +726,7 @@ class WaterfallApp(QMainWindow):
             ):
                 print("Sending NMEA data")
                 try:
-                    depth_cm = depth_index * SAMPLE_RESOLUTION
+                    depth_cm = depth_index * self.sample_resolution
                     depth_m = depth_cm / 100
                     depth_ft = depth_m * 3.28084
                     depth_fathoms = depth_m * 0.546807
@@ -755,11 +812,75 @@ class WaterfallApp(QMainWindow):
             parent=self,
             current_gradient=self.current_gradient,
             current_speed=self.current_speed,
+            current_num_samples=self.num_samples,
+            current_sample_time_us=self.sample_time * 1e6,
             nmea_enabled=self.nmea_output_enabled,
             nmea_port=self.nmea_port,
             nmea_address=device_ip,
         )
         self.settings_dialog.show()
+
+    def _recompute_sampling_derived(self):
+        # Derived values based on current sampling configuration and speed of sound
+        self.sample_resolution = (SPEED_OF_SOUND * self.sample_time * 100) / 2
+        self.max_depth = int(self.num_samples * self.sample_resolution)
+        self.depth_labels = {
+            int(i / self.sample_resolution): f"{i / 100}"
+            for i in range(0, int(self.max_depth), Y_LABEL_DISTANCE)
+        }
+
+    def _refresh_axes_and_grid(self):
+        inverted_depth_labels = list(self.depth_labels.items())[::-1]
+        self.waterfall.getAxis("left").setTicks([inverted_depth_labels])
+        self.waterfall.getAxis("right").setTicks([inverted_depth_labels])
+
+        # Remove old grid lines
+        if hasattr(self, "_depth_lines"):
+            for ln in self._depth_lines:
+                try:
+                    self.waterfall.removeItem(ln)
+                except Exception:
+                    pass
+        self._depth_lines = []
+
+        # Add new grid lines
+        for i in range(0, int(self.max_depth), Y_LABEL_DISTANCE):
+            row_index = int(i / self.sample_resolution)
+            hline = pg.InfiniteLine(
+                pos=row_index,
+                angle=0,
+                pen=pg.mkPen(color="w", style=pg.QtCore.Qt.DotLine),
+            )
+            self.waterfall.addItem(hline)
+            self._depth_lines.append(hline)
+
+    def set_num_samples(self, n: int):
+        try:
+            n = int(n)
+        except Exception:
+            return
+        if n <= 0:
+            return
+        if n == self.num_samples:
+            return
+        self.num_samples = n
+        # Resize data buffer
+        self.data = np.zeros((MAX_ROWS, self.num_samples))
+        self._recompute_sampling_derived()
+        self._refresh_axes_and_grid()
+
+    def set_sample_time(self, seconds: float):
+        try:
+            seconds = float(seconds)
+        except Exception:
+            return
+        if seconds <= 0:
+            return
+        if abs(seconds - self.sample_time) < 1e-12:
+            return
+        self.sample_time = seconds
+        self._recompute_sampling_derived()
+        self._refresh_axes_and_grid()
 
 
 def set_gradient(self, gradient_name):

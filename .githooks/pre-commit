@@ -24,7 +24,7 @@ git add -A
 
 # Run tests
 echo "[pre-commit] Pytest"
-uv run pytest -q
+uv run pytest -q python/
 
 # Type checking
 echo "[pre-commit] Mypy"

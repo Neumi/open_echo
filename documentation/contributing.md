@@ -10,7 +10,7 @@ nav_order: 2
 
 This project welcomes contributions from the community. There are 3 main aspects to the project:
 
-- Hardware, the TUSS4470 shields which can be used to power transducers
+- Hardware, the TUSS4470 shields which can be used to drive transducers
 - Firmware, written in arduino IDE and uploaded to various microcontroller boards (which the TUSS4470 shields connect to)
 - Software, python code for viewing the outputs from the firmware/hardware (in future also to be used for configuring them!)
 
@@ -24,9 +24,10 @@ This project welcomes contributions from the community. There are 3 main aspects
 1. Clone the repository
 2. Open arduino IDE (or VSCode with Arduino community extension) the sketch for the board you are planning to develop for
 3. Select your board - you may need to install the relevant library.
-4. Upload the sketch!
+4. Make your changes
+5. Upload the sketch!
 
-## Software
+## Python Software
 
 ### Prerequisites
 - Git
@@ -42,7 +43,7 @@ This project welcomes contributions from the community. There are 3 main aspects
     This will create a virtual environment and install dependencies defined in pyproject.toml.
 
 ### Git hooks
-The repository provides Git hooks to run typechecking, linting and unit tests:
+The repository provides optional Git hooks to run typechecking, linting and unit tests:
 
 ```
 git config core.hooksPath .githooks
@@ -51,7 +52,7 @@ chmod +x .githooks/*
 
 If you want to commit without these checks (e.g. when you haven't written unit tests yet!) you can use `git commit --no-verify`
 
-### Formatting, linting and typechecks
+### Formatting, linting, typecheck and test
 - Format:
   ```
   uvx ruff format
@@ -64,12 +65,10 @@ If you want to commit without these checks (e.g. when you haven't written unit t
   ```
   uv run mypy
   ```
-
-### Testing
-Run tests locally:
-```
-uv run pytest
-```
+- Unit test
+  ```
+  uv run pytest
+  ```
 
 ## Contribution workflow
 - Fork and create a new branch for your changes.
