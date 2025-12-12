@@ -7,7 +7,7 @@ nav_order: 1
 
 Getting started guides for Open Echo.
 
-First, you will need the [Open Echo TUSS4470 Arduino Shield](documentation/getting_started/TUSS4470_hardware.md).
+First, you will need an [Open Echo TUSS4470 Arduino Shield](documentation/getting_started/TUSS4470_hardware.md).
 
 This repository provides two software components to support the TUSS4470 Arduino Shield:
 - [Arduino Firmware](documentation/getting_started/TUSS4470_firmware.md) - Runs on an Arduino UNO board with the TUSS4470 shield and handles signal generation, echo capture, and communication.
