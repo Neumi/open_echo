@@ -20,7 +20,7 @@ The Arduino firmware initializes the TUSS4470 device and manages the ultrasonic 
 - Binary data transfer to Python software
 
 > [!NOTE]
-> The firmware is designed to be easily modified. Users are encouraged to experiment with parameters to suit their application needs.
+> The firmware is designed to be easily modified. Users are encouraged to experiment with parameters to suit their needs.
 
 ## Uploading the Firmware
 1. Open the Arduino IDE.
