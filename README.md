@@ -25,7 +25,7 @@ If something is unclear or you find a bug, please open an issue.
 
 
 Raw Data Waterfall chart in the Python Desktop software:  
-<img alt="Open Echo Interface Software" src="/documentation/images/echo_software_screenshot.jpg">
+<img alt="Open Echo Interface Software" src="documentation/images/echo_software_screenshot.jpg">
 
 
 ## Getting the Hardware

@@ -38,7 +38,7 @@ openecho desktop
 Select the correct COM port, then click Connect or press c on your keyboard. Once connected, the Open Echo board will begin streaming data, which will appear on the right side of the interface.
 The red horizontal line indicates the currently detected depth, based on the strongest first echo received after the ring-down delay.
 
-<img alt="Open Echo Interface Software" src="/documentation/images/echo_software_screenshot.jpg">
+<img alt="Open Echo Interface Software" src="documentation/images/echo_software_screenshot.jpg">
 
 
 ### 4. Change to your own needs

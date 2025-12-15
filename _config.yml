@@ -33,11 +33,11 @@ plugins:
   - jekyll-feed
   - jekyll-readme-index
   - jekyll-gfm-admonitions
-  - jekyll-relative-links
+#   - jekyll-relative-links
 
-relative_links:
-  enabled: true
-  collections: true
+# relative_links:
+#   enabled: true
+#   collections: true
 
 # Use README.md as the site's index
 readme_index:
