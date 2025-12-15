@@ -43,7 +43,7 @@ This project welcomes contributions from the community. There are 3 main aspects
     This will create a virtual environment and install dependencies defined in pyproject.toml.
 
 ### Git hooks
-The repository provides optional Git hooks to run typechecking, linting and unit tests:
+The repository provides optional Git hooks to run typechecks, linting and unit tests:
 
 ```
 git config core.hooksPath .githooks
