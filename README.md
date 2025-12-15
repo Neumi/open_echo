@@ -30,7 +30,7 @@ Raw Data Waterfall chart in the Python Desktop software:
 
 ## Getting the Hardware
 
-If you need the hardware, you can order it using the [Hardware Files](TUSS4470_shield_002/TUSS4470_shield_hardware/TUSS4470_shield) from a board + SMT house ([JLC recommended](https://jlcpcb.com/?from=Neumi)).
+If you need the hardware, you can order it using the [Hardware Files](https://github.com/neumi/open_echo/tree/main/TUSS4470_shield_002/TUSS4470_shield_hardware/TUSS4470_shield) from a board + SMT house ([JLC recommended](https://jlcpcb.com/?from=Neumi)).
 
 They can also be bought as a complete and tested set direclty from Elecrow: https://www.elecrow.com/open-echo-tuss4470-development-shield.html
 
@@ -40,15 +40,15 @@ All profits go directly toward supporting and advancing the Open Echo project!
 
 <b>If you don't order the boards directly from me or Elecrow, please be aware that I can't provide support.</b>
 
-[TUSS4470 Arduino Shield](TUSS4470_shield_002/):  
-<img alt="PCB overview TUSS4470" src="/TUSS4470_shield_002/TUSS4470_shield_hardware/images/top.jpg">
+[TUSS4470 Arduino Shield](documentation/getting_started/TUSS4470_hardware.md):  
+<img alt="PCB overview TUSS4470" src="TUSS4470_shield_002/TUSS4470_shield_hardware/images/top.jpg">
 
-### This project is currently in development. The [TUSS4470 Development Shield](TUSS4470_shield_002/) is ready for external use!  
+### This project is currently in development. The [TUSS4470 Development Shield](documentation/getting_started/TUSS4470_hardware.md) is ready for external use!  
 Development is ongoing—check the documentation and Discord channel for the latest updates.  
 
 Want to stay updated or participate? Join the [Discord](https://discord.com/invite/rerCyqAcrw)!  
 
-Check the [Getting Started Guide](TUSS4470_shield_002/README.md).  
+Check the [Getting Started Guide](documentation/getting_started/).  
 
 ## Vision
 An accessible Open Source SONAR stack for development, research and real use:

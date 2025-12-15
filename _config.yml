@@ -24,7 +24,7 @@ description: >-
   An ongoing open-source hardware and software project for building 
   sonar systems for testing, boating, bathymetry, and research.
 baseurl: "/open_echo"
-url: "https://neumi.github.io/" 
+url: "https://neumi.github.io" 
 github_username: Neumi
 
 # Build settings
@@ -63,7 +63,6 @@ include:
 exclude:
   - development/
   - software/
-  - TUSS4470_shield_002/
   - Gemfile
   - Gemfile.lock
   - .githooks
@@ -76,7 +75,6 @@ exclude:
   - '**/*.ino'
   - '**/*.h'
   - '**/*.cpp'
-  - '**/*.md'
   - '**/*.json'
   - '**/*.yml'
   - '**/*.toml'
