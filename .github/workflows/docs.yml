@@ -1,14 +1,8 @@
 name: Publish Docs to GitHub Pages
 
 on:
-  push:
-    branches:
-      - main
-      - refactor-python-code
-    paths:
-      - documentation/**
-      - README.md
-      - .github/workflows/docs.yml
+  release:
+    types: [published]
 
 permissions:
   contents: read
