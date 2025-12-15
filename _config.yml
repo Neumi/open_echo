@@ -23,7 +23,8 @@ description: >-
   Universal Open-Source SONAR Controller and Development Stack. 
   An ongoing open-source hardware and software project for building 
   sonar systems for testing, boating, bathymetry, and research.
-url: "https://neumi.github.io/open_echo" 
+baseurl: "/open_echo"
+url: "https://neumi.github.io/" 
 github_username: Neumi
 
 # Build settings
@@ -32,6 +33,11 @@ plugins:
   - jekyll-feed
   - jekyll-readme-index
   - jekyll-gfm-admonitions
+  - jekyll-relative-links
+
+relative_links:
+  enabled: true
+  collections: true
 
 # Use README.md as the site's index
 readme_index:
