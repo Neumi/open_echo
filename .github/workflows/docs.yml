@@ -27,8 +27,10 @@ jobs:
         with:
           ruby-version: '3.4' # Not needed with a .ruby-version, .tool-versions or mise.toml
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
-      - name: Build
-        uses: actions/jekyll-build-pages@v1
+      - name: Build with Jekyll
+        run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
+        env:
+          JEKYLL_ENV: production
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
   deploy:
