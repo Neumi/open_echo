@@ -37,9 +37,3 @@ Run the following command to start the web server.
 openecho web
 ```
 Then go to http://localhost:8000. The first connection will be redirected to /config to set up the connection, then you should see your echoes.
-
-
---- 
-Want to stay updated, have questions or want to participate? Join my [Discord](https://discord.com/invite/rerCyqAcrw)!
-
-Or write an issue. Thanks!
