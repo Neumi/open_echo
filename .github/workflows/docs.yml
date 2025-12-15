@@ -9,6 +9,8 @@ on:
       - documentation/**
       - README.md
 
+  workflow_dispatch:
+
 permissions:
   contents: read
   pages: write
