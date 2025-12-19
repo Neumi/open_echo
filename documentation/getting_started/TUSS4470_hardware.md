@@ -20,7 +20,7 @@ Upload one of the provided example sketches to explore different features of the
 Use the Python software to see the echoes.
 
 ### Ordering
-If you need the hardware, you can order it using the [Hardware Files](https://github.com/neumi/open_echo/TUSS4470_shield_002/TUSS4470_shield_hardware/TUSS4470_shield) from a board + SMT house ([JLC recommended](https://jlcpcb.com/?from=Neumi)).
+If you need the hardware, you can order it using the [Hardware Files](https://github.com/neumi/open_echo/tree/main/TUSS4470_shield_002/TUSS4470_shield_hardware/TUSS4470_shield) from a board + SMT house ([JLC recommended](https://jlcpcb.com/?from=Neumi)).
 
 They can also be bought as a complete and tested set direclty from Elecrow: https://www.elecrow.com/open-echo-tuss4470-development-shield.html
 
@@ -30,7 +30,7 @@ All profits go directly toward supporting and advancing the Open Echo project!
 
 <b>If you don't order the boards directly from me or Elecrow, please be aware that I can't provide support.</b>
 
-<img alt="PCB overview TUSS4470" src="/documentation/images/shield_pinout.png">
+<img alt="PCB overview TUSS4470" src="documentation/images/shield_pinout.png">
 
 
 ## Electrical Connections
@@ -59,7 +59,7 @@ If you need to drive transducers at frequencies other than the provided presets 
 > On board version 002, "Custom" is pre-selected to match the right capacitances <b/>together</b> with the 200kHz capacitors for 150kHz. 
 
 Below is the electrical connection layout for the cINN and cFLT capacitors and jumpers:
-<img alt="TUSS4470 schematic" src="/documentation/images/schematic_TUSS4470.png">
+<img alt="TUSS4470 schematic" src="documentation/images/schematic_TUSS4470.png">
 
 ### Power Supply Options
 The board supports two power input options:
@@ -72,7 +72,7 @@ Use this if you require higher voltage (up to 28V max) for more powerful transdu
 - MT3608 Boost Converter:
 You can add an MT3608 boost converter to your board to generate a higher vDRV from the USB 5V supply. This solution is reliable and works well in many applications, such as powering marine transducers.
 Simply take the MT3608 module (included in the starter kits), secure it to the shield with double-sided tape, and connect the three wires as shown:
-<img alt="TUSS4470 schematic" src="/documentation/images/TUSS4470_MT3608.jpg">
+<img alt="TUSS4470 schematic" src="documentation/images/TUSS4470_MT3608.jpg">
 
 > [!Tip]
 > To get started, use a 12V power supply. Many ultrasonic transducers operate reliably at this voltage.
@@ -95,14 +95,14 @@ Connect your PZT crystal or preassembled ultrasonic transducer to the "Transduce
 > For transducer connections exceeding 10 cm in length, use coaxial cable. Connect the cable shield to the transducer ground (GND).
 
 The recommended setup is illustrated below:
-<img alt="TUSS4470 Board ready to use" src="/documentation/images/TUSS4470_shield002.jpg">
+<img alt="TUSS4470 Board ready to use" src="documentation/images/TUSS4470_shield002.jpg">
 
 > [!Important]
 > Always connect GND/Shield to the TOP pin on the transducer.
 > Using the wrong pin increases powerline noise and significantly weakens the signal.
 
 Below: Comparison of a transducer wired incorrectly (left half) vs. correctly (right half).
-<img alt="Powerline noise on transducer cable shield" src="/documentation/images/powerline_noise.jpg">
+<img alt="Powerline noise on transducer cable shield" src="documentation/images/powerline_noise.jpg">
 
 
 <b/>Next Steps: Proceed to [Getting Started with Arduino TUSS4470 Firmware](getting_started_TUSS4470_firmware.md).</b>
