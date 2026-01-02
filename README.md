@@ -34,10 +34,10 @@ All profits go directly toward supporting and advancing the Open Echo project!
 <b>If you don't order the boards directly from me or Elecrow, please be aware that I can't provide support.</b>
 
 [TUSS4470 Arduino Shield](TUSS4470_shield_002/):  
-<img alt="PCB overview TUSS4470" src="/TUSS4470_shield_002/TUSS4470_shield_hardware/images/top.jpg">
+<img alt="PCB overview TUSS4470" src="/documentation/images/TUSS4470_shield002.jpg">
 
 ### This project is currently in development. The [TUSS4470 Development Shield](TUSS4470_shield_002/) is ready for external use!  
-Development is ongoing—check the documentation and Discord channel for the latest updates.  
+Development is ongoing! Check the documentation and Discord channel for the latest updates.  
 
 Want to stay updated or participate? Join the [Discord](https://discord.com/invite/rerCyqAcrw)!  
 
