@@ -153,7 +153,7 @@ https://www.youtube.com/watch?v=ZtUkt8Q4EJE
 > [!Tip]
 > As a general rule of thumb, lower frequencies propagate farther, while higher frequencies produce narrower beams and more detailed echoes.
 >
-> If you need a transducer for bathymetry, choose one of the first four options. Most commercial marine-grade (boating) transducers are also suitable, as long as they operate in the 40-200 kHz range.
+> If you need a transducer for bathymetry, choose one of the first four options. Most commercial marine-grade (boating) transducers are also suitable, as long as they operate in the 40-1000 kHz range.
 
 
 # Big Thanks for Your Support!
