@@ -1,7 +1,8 @@
-import serial
+import time
+
 import matplotlib.pyplot as plt
 import numpy as np
-import time
+import serial
 
 # Serial port configuration
 serial_port = "/dev/tty.usbserial-1120"  # Updated to the specified serial port

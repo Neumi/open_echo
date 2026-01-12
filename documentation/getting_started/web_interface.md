@@ -1,6 +1,13 @@
+---
+layout: default
+title: Web Interface
+parent: Getting Started
+nav_order: 4
+---
+
 # Getting Started Open Echo Interface Software
 
-The [***Open Echo Web Interface***](echo_interface.py) is a cross-platform Python application that interacts with the Arduino + TUSS4470 Shield. 
+The ***Open Echo Web Interface*** is a cross-platform Python application that interacts with the Arduino + TUSS4470 Shield. 
 It displays ultrasonic echo data in real-time in the browser using a waterfall chart visualization. 
 <!-- The application is intended primarily as a testing and development tool, but is stable enough for continuous use -tested for several days on a Raspberry Pi 4 without issues. -->
 
@@ -19,28 +26,14 @@ It displays ultrasonic echo data in real-time in the browser using a waterfall c
 
 ## Installation & Setup
 
-### 1. Create and activate a virtual environment
-
+### 1. Install openecho
 ```bash
-cd open_echo/TUSS4470_shield_002/web
-python3 -m venv venv 
-source venv/bin/activate 
+pip install open-echo
 ```
 
-### 2. Install requirements
-```bash
-pip install -r requirements.txt 
-```
-
-### 3. Start Open Echo Interface Software
+### 2. Start Open Echo Interface Software
 Run the following command to start the web server. 
 ```bash
-python3 -m uvicorn --host=0.0.0.0 --port=8000 app:app
+openecho web
 ```
 Then go to http://localhost:8000. The first connection will be redirected to /config to set up the connection, then you should see your echoes.
-
-
---- 
-Want to stay updated, have questions or want to participate? Join my [Discord](https://discord.com/invite/rerCyqAcrw)!
-
-Or write an issue. Thanks!
