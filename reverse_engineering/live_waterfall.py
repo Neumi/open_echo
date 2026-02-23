@@ -1,7 +1,11 @@
-import serial
+import time
+
 import matplotlib.pyplot as plt
 import numpy as np
-import time
+import serial
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Serial port configuration
 serial_port = "/dev/tty.usbserial-1120"  # Updated to the specified serial port
@@ -68,7 +72,7 @@ def parse_data(line):
             values = [int(x) for x in parts]
             return values
     except Exception as e:
-        print(f"Error parsing line: {line} - {e}")
+        logger.exception("Error parsing line: %s - %s", line, e)
     return None
 
 
@@ -100,7 +104,7 @@ while True:
             plt.pause(0.1)
 
     except KeyboardInterrupt:
-        print("Exiting...")
+        logger.info("Exiting...")
         break
 
 # Close serial connection

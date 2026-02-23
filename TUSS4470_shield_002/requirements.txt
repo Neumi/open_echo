@@ -1,5 +1,0 @@
-numpy
-pyserial==3.4
-PyQt5
-pyqtgraph
-pyqtdarktheme

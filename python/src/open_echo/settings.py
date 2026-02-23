@@ -1,7 +1,8 @@
 from enum import StrEnum
 from typing import Annotated
-from echo import ConnectionTypeEnum
-from pydantic import BaseModel, Field, field_validator, PlainSerializer
+
+from open_echo.echo import ConnectionTypeEnum
+from pydantic import BaseModel, Field, PlainSerializer, field_validator
 
 
 class Medium(StrEnum):
@@ -22,7 +23,12 @@ speed_of_sound_map = {
 
 
 class Settings(BaseModel):
-    connection_type: Annotated[ConnectionTypeEnum, PlainSerializer(lambda v: v.name, return_type=str)] | None = None
+    connection_type: (
+        Annotated[
+            ConnectionTypeEnum, PlainSerializer(lambda v: v.name, return_type=str)
+        ]
+        | None
+    ) = None
     udp_port: int = 9999
     serial_port: str = "init"
     baud_rate: int = 250000
@@ -87,7 +93,7 @@ class Settings(BaseModel):
 
     @classmethod
     def load(cls, filename=".settings.json"):
-        with open(filename, "r", encoding="utf-8") as f:
+        with open(filename, encoding="utf-8") as f:
             data = f.read()
-        
+
         return cls.model_validate_json(data)
