@@ -164,7 +164,26 @@ Check this Cheap Yellow Display implementation out: https://github.com/matztam/o
   
 And all the great stuff JohnCHarrington contributed: https://github.com/JohnCHarrington/open_echo
 
-
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=Neumi/open_echo&type=date&legend=top-left)](https://www.star-history.com/#Neumi/open_echo&type=date&legend=top-left)
+
+## Citation
+
+If you use `open_echo` in your work or research, please cite the project using the details below:
+
+* **ORCID:** [![ORCID](https://img.shields.io/badge/ORCID-0009--0003--9829--8959-green?logo=orcid&logoColor=white)](https://orcid.org/0009-0003-9829-8959) [https://orcid.org/0009-0003-9829-8959](https://orcid.org/0009-0003-9829-8959)
+
+### BibTeX
+
+```bibtex
+@misc{open_echo,
+  author       = {Jan Neumann},
+  title        = {open\_echo},
+  year         = {x},
+  publisher    = {GitHub},
+  journal      = {GitHub Repository},
+  howpublished = {\url{[https://github.com/neumi/open_echo](https://github.com/neumi/open_echo)}},
+  note         = {ORCID: [https://orcid.org/0009-0003-9829-8959](https://orcid.org/0009-0003-9829-8959)}
+}
+```
