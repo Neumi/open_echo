@@ -166,7 +166,7 @@ And all the great stuff JohnCHarrington contributed: https://github.com/JohnCHar
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=Neumi/open_echo&type=date&legend=top-left)](https://www.star-history.com/#Neumi/open_echo&type=date&legend=top-left)
+[![Star History Chart](https://star-history.dera.page/svg?repos=Neumi/open_echo&type=date&legend=top-left)](https://star-history.dera.page/#Neumi/open_echo&type=date&legend=top-left)
 
 ## Citation
 
