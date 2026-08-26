@@ -57,8 +57,8 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 async def update_settings(new_settings: Settings):
     settings = Settings.model_validate(
         {
-            **app.state.settings.model_dump(exclude_none=True, exclude_unset=True, exclude_defaults=True),
-            **new_settings.model_dump(exclude_none=True, exclude_unset=True, exclude_defaults=True),
+            **app.state.settings.model_dump(exclude_none=True, exclude_unset=True),
+            **new_settings.model_dump(exclude_none=True, exclude_unset=True),
         }
     )
 
