@@ -111,11 +111,11 @@ Open Echo has been tested with multiple transducers. Here is a curated list of t
 
 [![Latest Project Update](https://img.youtube.com/vi/XF7rNGt6UYA/maxresdefault.jpg)](https://www.youtube.com/watch?v=XF7rNGt6UYA)
 
-* [Field Test 1](https://www.youtube.com/watch?v=R3_NO2F7PsI)
-* [Field Test 2](https://www.youtube.com/watch?v=msbLVsY8xhQ)
-* [Hardware Demo 1](https://www.youtube.com/watch?v=eJ8jVEQSx_Y)
-* [Hardware Demo 2](https://www.youtube.com/watch?v=Bxh3rWd5RZk)
-* [Interface Software Demo](https://www.youtube.com/watch?v=UDYWQIizN7A)
+https://www.youtube.com/watch?v=R3_NO2F7PsI  
+https://www.youtube.com/watch?v=msbLVsY8xhQ  
+https://www.youtube.com/watch?v=eJ8jVEQSx_Y  
+https://www.youtube.com/watch?v=Bxh3rWd5RZk  
+https://www.youtube.com/watch?v=UDYWQIizN7A  
 
 ### Links
 
