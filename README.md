@@ -1,7 +1,5 @@
-<br>
-
 <div align="center">
-  <img alt="Open Echo Cover" src="documentation/images/open_echo_logo.svg" width="400">
+  <img align="right" style="width:300px" alt="Open Echo Cover" src="documentation/images/open_echo_logo.svg">
 </div>
 
 ## Universal Open-Source SONAR Controller and Development Stack
