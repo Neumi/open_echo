@@ -165,8 +165,39 @@ class EchoReader:
 
     def update_settings(self, new_settings):
         log.info("EchoReader updating settings...")
-        self.settings = new_settings
-        self._restart_event.set()  # Signal restart
+        restart_fields = {
+            "connection_type",
+            "udp_port",
+            "serial_port",
+            "baud_rate",
+            "num_samples",
+        }
+
+        field_names = new_settings.model_fields.keys()
+        new_values = {key: getattr(new_settings, key) for key in field_names}
+
+        restart_needed = False
+        if self.settings is None:
+            restart_needed = True
+            changed_fields = restart_fields
+        else:
+            changed_fields = {
+                key for key, value in new_values.items() if getattr(self.settings, key) != value
+            }
+            restart_needed = bool(restart_fields & changed_fields)
+
+        if self.settings is None:
+            self.settings = new_settings
+        else:
+            for key, value in new_values.items():
+                setattr(self.settings, key, value)
+
+        if restart_needed:
+            log.info(
+                "Restart requested due to changes in: %s",
+                ", ".join(sorted(restart_fields & changed_fields)),
+            )
+            self._restart_event.set()  # Signal restart
 
     def __enter__(self):
         self._task = asyncio.create_task(self.run_forever())
