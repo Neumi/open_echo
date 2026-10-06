@@ -1,0 +1,55 @@
+# KiCad project files to include in the repository
+!*.kicad_pro
+!*.kicad_sch
+!*.kicad_pcb
+!*.kicad_sym
+!*.kicad_mod
+!*.kicad_wks
+
+# Ignore backup and autosave files
+*.bak
+*.b#*
+*.s#*
+*.~*
+*.kicad_prl
+*-backups
+_autosave-*
+
+# Ignore user settings and logs
+*.prl
+*.net
+*.xml
+*.dcm
+*.emp
+fp-info-cache
+sym-lib-table
+fp-lib-table
+*~
+
+# Ignore gerber and fabrication outputs
+*.gbr
+*.drl
+*.gbo
+*.gtl
+*.gts
+*.gbs
+*.gm1
+*.gm2
+*.fab
+*.pos
+*.gko
+
+# Ignore simulation-related files
+*.cir
+*.spice
+
+# Ignore intermediate build or temporary files
+__pycache__/
+.cache/
+*.pyc
+
+# Ignore debugging and crash logs
+*.log
+
+# Ignore specific files for user/system configurations
+*.config.json
