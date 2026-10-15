@@ -1,0 +1,21 @@
+﻿Designator,Footprint,Quantity,Value,LCSC Part #
+A1,RaspberryPi_Pico_Common_Unspecified,1,RaspberryPi_Pico_W,
+"C10, C11, C16, C17, C18, C19, C8, C9",0603,8,1uF,C15849
+"C12, C13, C14, C15",0603,4,100nF,C1525
+C3,0603,1,10uF,C19702
+J2,PinHeader_1x03_P2.54mm_Vertical,1,OUT_SELECT,
+J3,PinHeader_1x01_P2.54mm_Vertical,1,MT3608_OUT,
+J4,PinHeader_1x01_P2.54mm_Vertical,1,MT3608_IN,
+"J5, J6",PinHeader_1x01_P2.54mm_Vertical,2,MT3608_GND,
+J7,PinHeader_1x03_P2.54mm_Vertical,1,BOOST_ENABLE,
+"MK1, MK2, MK3, MK4, MK5, MK6, MK7, MK8",JST_EH_S2B-EH_1x02_P2.50mm_Horizontal,8,Microphone_Crystal,
+MK9,JST_EH_S2B-EH_1x02_P2.50mm_Horizontal,1,Transducer_TX,
+Q1,SOT-23,1,MMBT2222A,C8512
+"R1, R10, R14, R18, R2, R22, R26, R30, R34, R6",0603,10,10k,C25804
+"R11, R12, R13, R15, R16, R5, R7, R8, R9",0603,9,1k,C21190
+"R17, R21, R25, R29, R33, R35, R36, R37",0603,8,100k,C25803
+"R19, R23, R27, R31, R38, R39, R40, R41",0603,8,1M,C22935
+TP1,TestPoint_Loop_D2.54mm_Drill1.5mm_Beaded,1,U_TRIGG,
+TP2,TestPoint_Loop_D2.54mm_Drill1.5mm_Beaded,1,GND,
+"U1, U3",SOIC-14_3.9x8.7mm_P1.27mm,2,LM339,C7948
+"U2, U5",SOIC-14_3.9x8.7mm_P1.27mm,2,MCP6004,C7378

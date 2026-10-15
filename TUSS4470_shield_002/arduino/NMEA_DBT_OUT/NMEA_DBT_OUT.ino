@@ -18,7 +18,7 @@ const int analogIn = A0;
 
 // Threshold level for detecting the bottom echo
 // The first echo stronger than this value (after the blind zone) is considered the bottom
-#define THRESHOLD_VALUE 0x19
+#define THRESHOLD_VALUE 0x1F
 
 
 // ---------------------- DRIVE FREQUENCY SETTINGS ----------------------
