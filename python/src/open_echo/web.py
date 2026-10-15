@@ -177,16 +177,16 @@ async def home(request: Request):
         return RedirectResponse("/config", status_code=303)
 
     return templates.TemplateResponse(
-        "frontend.html", {"request": request, "settings": app.state.settings}
+        request, "frontend.html", {"settings": app.state.settings}
     )
 
 
 @app.get("/config")
 async def config(request: Request):
     return templates.TemplateResponse(
+        request,
         "config.html",
         {
-            "request": request,
             "settings": app.state.settings,
             "ports": SerialReader.get_serial_ports(),
         },
