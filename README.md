@@ -1,3 +1,10 @@
+---
+layout: home
+title: Open Echo
+nav_exclude: true
+---
+
+
 <div align="center">
   <img align="right" style="width:300px" alt="Open Echo Cover" src="documentation/images/open_echo_logo.svg">
 </div>
@@ -6,7 +13,7 @@
 
 An ongoing open-source hardware and software project for building sonar systems for testing, boating, bathymetry, and research.
 
-[Discord](https://discord.com/invite/rerCyqAcrw) | [Getting Started Guide](TUSS4470_shield_002/README.md) | [Hardware Files](TUSS4470_shield_002/TUSS4470_shield_hardware/TUSS4470_shield)
+[Discord](https://discord.com/invite/rerCyqAcrw) | [Getting Started Guide](documentation/getting_started/index.md) | [Hardware Files](https://github.com/neumi/open_echo/tree/main/TUSS4470_shield_002/TUSS4470_shield_hardware/TUSS4470_shield)
 
 ## Overview
 
@@ -17,14 +24,14 @@ Use cases range from reverse-engineering car parking sensors and reading depth d
 ### Key Features
 
 * **Universal Transducer Support:** Works with commercial and DIY transducers in water and air.
-* **Flexible Firmware:** Run the [RAW Data Firmware](TUSS4470_shield_002/getting_started_TUSS4470_firmware.md) to process echoes yourself, or the [NMEA Output Firmware](TUSS4470_shield_002/arduino/NMEA_DBT_OUT/NMEA_DBT_OUT.ino) for NMEA0183 DBT compatibility (sends depth data directly to PCs, Pixhawk, or marine controllers).
-* **Python Interface:** The [desktop software](TUSS4470_shield_002/getting_started_interface.md) provides live raw data visualization and TCP data streaming.
+* **Flexible Firmware:** Run the [RAW Data Firmware](documentation/getting_started/TUSS4470_firmware.md) to process echoes yourself, or the [NMEA Output Firmware](https://github.com/neumi/open_echo/tree/main/TUSS4470_shield_002/arduino/NMEA_DBT_OUT/NMEA_DBT_OUT.ino) for NMEA0183 DBT compatibility (sends depth data directly to PCs, Pixhawk, or marine controllers).
+* **Python Interface:** The [desktop software](documentation/getting_started/desktop_interface.md) provides live raw data visualization and TCP data streaming.
 * **Tested Range:** Confirmed depth tracking of >50 m in water.
 * **Network Ready:** Includes a PicoW implementation (software only, the shield itself is Arduino UNO R3 compatible) that transfers RAW data over UDP directly to the Python interface.
 
 ## Hardware & Getting Started
 
-The primary development platform is the [TUSS4470 Arduino Shield](TUSS4470_shield_002/). It stacks directly on top of an Arduino Uno to drive the TUSS4470 ultrasonic driver.
+The primary development platform is the [TUSS4470 Arduino Shield](documentation/getting_started/TUSS4470_hardware.md). It stacks directly on top of an Arduino Uno to drive the TUSS4470 ultrasonic driver.
 
 **Upcoming Board:** A new development version is in the works and will hopefully be released in the coming weeks. It features an on-board boost converter and slightly improved signal routing.
 
@@ -34,14 +41,14 @@ The primary development platform is the [TUSS4470 Arduino Shield](TUSS4470_shiel
 ### Getting the Hardware
 
 1. **Elecrow (Pre-Built):** Buy a fully assembled and tested board here: [Elecrow Open Echo TUSS4470](https://www.elecrow.com/open-echo-tuss4470-development-shield.html)
-2. **Build Your Own:** Order the [Hardware Files](TUSS4470_shield_002/TUSS4470_shield_hardware/TUSS4470_shield) from your preferred PCB manufacturer (JLCPCB recommended).
+2. **Build Your Own:** Order the [Hardware Files](https://github.com/neumi/open_echo/tree/main/TUSS4470_shield_002/TUSS4470_shield_hardware/TUSS4470_shield) from your preferred PCB manufacturer (JLCPCB recommended).
 3. **Directly from me (Germany/EU):** If Elecrow is out of stock or you want to reduce shipping costs within Germany, email me at: `openechoes@gmail.com`.
 
 > **Note:** All profits go directly toward supporting the project. Please understand that I can only provide support if you order the boards directly from me or Elecrow.
 
 ## Open Echo Interface Software
 
-The [Python Interface Software](TUSS4470_shield_002/echo_interface.py) connects to boards running the RAW Data Firmware. It serves as a simple backend to view live echograms and output TCP depth data streams. (Configuration tweaking directly from the UI will be added later).
+The [Python Interface Software](documentation/getting_started/desktop_interface.md) connects to boards running the RAW Data Firmware. It serves as a simple backend to view live echograms and output TCP depth data streams. (Configuration tweaking directly from the UI will be added later).
 
 Live echogram in water (6x speed):  
 <img alt="Software running with live echo data" src="documentation/images/echogram_fast.gif" width="600">

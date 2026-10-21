@@ -1,15 +1,17 @@
+---
+layout: default
+title: TUSS4470 Firmware
+parent: Getting Started
+nav_order: 2
+---
 
 # Getting Started with Arduino TUSS4470 Firmware
-
-This repository provides two software components to support the TUSS4470 Arduino Shield:
-- [Arduino Firmware](arduino/TUSS4470_arduino/TUSS4470_arduino.ino) - Runs on an Arduino UNO board with the TUSS4470 shield and handles signal generation, echo capture, and communication.
-- [Open Echo Interface](echo_interface.py) - A desktop application that communicates with the Arduino, displays echo data as a real-time waterfall chart, and will soon allow runtime configuration of the system.
 
 
 ## Arduino Firmware
 The Arduino firmware initializes the TUSS4470 device and manages the ultrasonic signal transmission and echo reception cycle. It sends digitized echo data over the serial interface to a host computer for analysis.
 
-<b/>Key Features</b>
+**Key Features**
 - SPI communication with TUSS4470 chip
 - Configurable drive frequency
 - Adjustable sampling size (defines detection range)
@@ -18,18 +20,18 @@ The Arduino firmware initializes the TUSS4470 device and manages the ultrasonic 
 - Binary data transfer to Python software
 
 > [!NOTE]
-> The firmware is designed to be easily modified. Users are encouraged to experiment with parameters to suit their application needs.
+> The firmware is designed to be easily modified. Users are encouraged to experiment with parameters to suit their needs.
 
 ## Uploading the Firmware
 1. Open the Arduino IDE.
 2. Select your Arduino UNO board and the correct COM port.
 3. Set the configuration as described below.
-4. Load the firmware sketch [TUSS4470_arduino.ino](arduino/TUSS4470_arduino/TUSS4470_arduino.ino).
+4. Load the firmware sketch [TUSS4470_arduino.ino](https://github.com/neumi/open_echo/tree/main/TUSS4470_shield_002/arduino/TUSS4470_arduino/TUSS4470_arduino.ino).
 5. Upload the sketch to the Arduino UNO.
 
 
 ## ⚙️ Configuration Parameters
-Below are the key parameters used to control the ultrasonic transducer behavior, echo processing, filtering and outputs. `NUM_SAMPLES` must be kept in sync with the [Open Echo Interface](echo_interface.py). Due to RAM limitations on the Arduino UNO R3, it can't exceed ~1800 samples. The Arduino UNO R4 can reach ~12000 samples.
+Below are the key parameters used to control the ultrasonic transducer behavior, echo processing, filtering and outputs. `NUM_SAMPLES` must be kept in sync with the [Open Echo Interface](documentation/getting_started/desktop_interface.md). Due to RAM limitations on the Arduino UNO R3, it can't exceed ~1800 samples. The Arduino UNO R4 can reach ~12000 samples.
 
 ### 📊 Settings
 
